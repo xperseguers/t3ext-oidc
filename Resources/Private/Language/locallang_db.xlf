@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2017-01-25T14:43:14Z" product-name="oidc">
+		<header/>
+		<body>
+			<trans-unit id="settings.enableFrontendAuthentication">
+				<source>Frontend authentication: Enable OpenID Connect authentication for the frontend.</source>
+			</trans-unit>
+			<trans-unit id="settings.enableBackendAuthentication">
+				<source>Backend authentication: Enable OpenID Connect authentication for the backend.</source>
+			</trans-unit>
+
+			<trans-unit id="tx_oidc_application">
+				<source>OpenID Connect Application</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.name">
+				<source>Application Name:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.domains">
+				<source>Associated Domains:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.oauth_client_key">
+				<source>Client Key:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.oauth_client_secret">
+				<source>Client Secret:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.endpoint_authorize">
+				<source>Endpoint URI for authorization:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.endpoint_token">
+				<source>Endpoint URI for retrieving a token:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.endpoint_revoke">
+				<source>Endpoint URI for revoking a token:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.endpoint_userinfo">
+				<source>Endpoint URI for fetching user information:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.endpoint_checksession">
+				<source>Endpoint URI for checking session:</source>
+			</trans-unit>
+			<trans-unit id="tx_oidc_application.endpoint_logout">
+				<source>Endpoint URI for logout:</source>
+			</trans-unit>
+
+			<trans-unit id="tabs.oauth2">
+				<source>OAuth2</source>
+			</trans-unit>
+			<trans-unit id="tabs.endpoint">
+				<source>Endpoint</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

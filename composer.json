@@ -8,9 +8,9 @@
     "OIDC",
     "Authentication"
   ],
-  "homepage": "https://git.causal.ch",
+  "homepage": "https://github.com/xperseguers/t3ext-oidc",
   "support": {
-    "issues": "https://git.causal.ch"
+    "issues": "https://github.com/xperseguers/t3ext-oidc/issues"
   },
   "authors": [
     {

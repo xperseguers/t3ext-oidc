@@ -1,0 +1,5 @@
+# cat=basic/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableFrontendAuthentication
+enableFrontendAuthentication = 0
+
+# cat=basic/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableBackendAuthentication
+enableBackendAuthentication = 0
