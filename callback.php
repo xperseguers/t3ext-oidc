@@ -14,9 +14,15 @@
 
 // see https://github.com/thephpleague/oauth2-client
 if (!(empty($_GET['state']) || empty($_GET['code']))) {
-    $referer = $_SERVER['HTTP_REFERER'];
-    if (($pos = strpos($referer, 'typo3/index.php')) !== false) {
-        $ajaxUrl = substr($referer, 0, $pos) . 'typo3/index.php?ajaxID=TxOidc::callback&state=' . $_GET['state'] . '&code=' . $_GET['code'];
+    $schema = (@$_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
+    $currentUrl = $schema . $_SERVER['SERVER_NAME'];
+    if ($_SERVER['SERVER_PORT'] !== '80' && $_SERVER['SERVER_PORT'] !== '443') {
+        $currentUrl .= ':' . $_SERVER['SERVER_PORT'];
+    }
+    $currentUrl .= $_SERVER['REQUEST_URI'];
+
+    if (($pos = strpos($currentUrl, 'typo3conf/ext/oidc/callback.php')) !== false) {
+        $ajaxUrl = substr($currentUrl, 0, $pos) . 'typo3/index.php?ajaxID=TxOidc::callback&state=' . $_GET['state'] . '&code=' . $_GET['code'];
         header('Location: ' . $ajaxUrl);
         exit();
     }
