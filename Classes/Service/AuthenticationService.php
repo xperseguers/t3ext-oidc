@@ -47,7 +47,6 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     {
         $config = $GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc'];
         $this->config = $config ? unserialize($config) : [];
-        $this->requireLibraries();
     }
 
     /**
@@ -70,19 +69,5 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     {
         return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
     }
-
-    /**
-     * Requires 3rd-party libraries, in case TYPO3 does not run in composer mode.
-     *
-     * @return void
-     */
-    protected function requireLibraries()
-    {
-        $pharFileName = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath($_EXTKEY) . 'Libraries/league-oauth2-client.phar';
-        if (is_file($pharFileName)) {
-            @include 'phar://' . $pharFileName . '/vendor/autoload.php';
-        }
-    }
-
 
 }

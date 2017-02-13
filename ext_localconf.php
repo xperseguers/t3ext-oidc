@@ -39,6 +39,12 @@ $boot = function ($_EXTKEY) {
             'className' => $authenticationClassName,
         ]
     );
+
+    // Require 3rd-party libraries, in case TYPO3 does not run in composer mode
+    $pharFileName = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath($_EXTKEY) . 'Libraries/league-oauth2-client.phar';
+    if (is_file($pharFileName)) {
+        @include 'phar://' . $pharFileName . '/vendor/autoload.php';
+    }
 };
 
 $boot($_EXTKEY);

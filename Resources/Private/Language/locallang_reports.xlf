@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.0">
+    <file source-language="en" datatype="plaintext" original="messages" date="2017-03-13T15:22:15Z" product-name="oidc">
+        <header/>
+        <body>
+            <trans-unit id="configuration.records.title">
+                <source>OAuth Applications</source>
+            </trans-unit>
+            <trans-unit id="configuration.records.value">
+                <source>%s application(s) configured</source>
+            </trans-unit>
+
+            <trans-unit id="configuration.incomplete.title">
+                <source>Configuration is incomplete</source>
+            </trans-unit>
+            <trans-unit id="configuration.incomplete.message">
+                <source>Please check that fields "Client Key", "Client Secret", "Endpoint URI for authorization" and "Endpoint URI for retrieving a token" are properly configured.</source>
+            </trans-unit>
+
+            <trans-unit id="configuration.unauthorized.value">
+                <source>Client is not authorized</source>
+            </trans-unit>
+            <trans-unit id="configuration.unauthorized.message">
+                <source>%s to initialize the client registration.</source>
+            </trans-unit>
+            <trans-unit id="configuration.unauthorized.message.link">
+                <source>Click here</source>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

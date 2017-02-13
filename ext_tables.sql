@@ -21,7 +21,8 @@ CREATE TABLE tx_oidc_application (
 	endpoint_checksession varchar(255) DEFAULT '' NOT NULL,
 	endpoint_logout varchar(255) DEFAULT '' NOT NULL,
 	domains text NOT NULL,
-	token text NOT NULL,
+	access_token text NOT NULL,
+	state varchar(255) DEFAULT '' NOT NULL,
 
 	PRIMARY KEY (uid),
 	KEY parent (pid)
