@@ -10,6 +10,10 @@
                 <source>%s application(s) configured</source>
             </trans-unit>
 
+            <trans-unit id="configuration.authorized.value">
+                <source>Client is authorized</source>
+            </trans-unit>
+
             <trans-unit id="configuration.incomplete.title">
                 <source>Configuration is incomplete</source>
             </trans-unit>

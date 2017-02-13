@@ -117,7 +117,31 @@ class OAuthService
             ]);
 
             // We have an access token, which we may use in authenticated
-            // requests against the service provider's API.
+            // requests against the service provider's API
+            static::getDatabaseConnection()->exec_UPDATEquery(
+                'tx_oidc_application',
+                'uid=' . $this->application['uid'],
+                [
+                    'state' => '',
+                    'access_token' => json_encode($accessToken),
+                ]
+            );
+
+            echo <<<HTML
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<body>
+
+<h1>Please close this browser window and go back to the Reports module to check the connection.</h1>
+
+</body>
+</html>
+
+HTML;
+
+            die();
+
+            /*
             echo $accessToken->getToken() . LF;
             echo $accessToken->getRefreshToken() . LF;
             echo $accessToken->getExpires() . LF;
@@ -137,12 +161,23 @@ class OAuthService
                 'http://brentertainment.com/oauth2/lockdin/resource',
                 $accessToken
             );
+            */
 
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
 
             // Failed to get the access token or user details.
             exit($e->getMessage());
         }
+    }
+
+    /**
+     * Returns the database connection.
+     *
+     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
+     */
+    protected static function getDatabaseConnection()
+    {
+        return $GLOBALS['TYPO3_DB'];
     }
 
 }

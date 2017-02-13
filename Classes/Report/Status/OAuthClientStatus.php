@@ -74,8 +74,7 @@ class OAuthClientStatus implements \TYPO3\CMS\Reports\StatusProviderInterface
             $value = $this->translate('configuration.incomplete.title');
             $message = $this->translate('configuration.incomplete.message');
         } else {
-            // Application is configured, check if authencated
-
+            // Application is configured, check if authenticated
             if (empty($row['access_token'])) {
                 /** @var \Causal\Oidc\Service\OAuthService $service */
                 $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class)
@@ -102,7 +101,7 @@ class OAuthClientStatus implements \TYPO3\CMS\Reports\StatusProviderInterface
                 $message = sprintf($this->translate('configuration.unauthorized.message'), $link);
             } else {
                 $status = \TYPO3\CMS\Reports\Status::OK;
-                $value = 'that\'s good!';
+                $value = $this->translate('configuration.authorized.value');
                 $message = '';
             }
         }
