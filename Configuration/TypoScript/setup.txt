@@ -1,0 +1,23 @@
+OidcAuth = PAGE
+OidcAuth {
+    typeNum = 1489657462
+    config {
+        xhtml_cleaning = 0
+        disableAllHeaderCode = 1
+        admPanel = 0
+    }
+    headerData >
+    10 = USER_INT
+    10 {
+        userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
+        vendorName = Causal
+        extensionName = Oidc
+        pluginName = Pi1
+        controller = Authentication
+        switchableControllerActions {
+            Authentication {
+                1 = connect
+            }
+        }
+    }
+}

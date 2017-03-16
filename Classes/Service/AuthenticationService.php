@@ -13,6 +13,8 @@
  */
 
 namespace Causal\Oidc\Service;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\HttpUtility;
 
 /**
  * OpenID Connect authentication service.
@@ -56,7 +58,25 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     public function getUser()
     {
-        return [];
+        $params = GeneralUtility::_GET('tx_oidc');
+        if (empty($params['code'])) {
+            return false;
+        }
+
+        /** @var \Causal\Oidc\Service\OAuthService $service */
+        $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
+        $service->setSettings($this->config);
+
+        // Try to get an access token using the authorization code grant
+        $accessToken = $service->getAccessToken($params['code']);
+
+        // Using the access token, we may look up details about the resource owner
+        $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
+        $user = $this->convertResourceOwner($resourceOwner);
+
+        $user['tx_oidc'] = true;
+
+        return $user;
     }
 
     /**
@@ -67,7 +87,87 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     public function authUser(array $user)
     {
-        return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+        $status = static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+
+        if (!empty($user['tx_oidc'])) {
+            $status = static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
+        }
+
+        return $status;
+    }
+
+    protected function convertResourceOwner(array $info)
+    {
+        $user = [];
+        $database = $this->getDatabaseConnection();
+        $row = $database->exec_SELECTgetSingleRow(
+            '*',
+            'fe_users',
+            'tx_oidc=' . (int)$info['contact_number']
+        );
+
+        /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
+        $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
+        $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
+        $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
+
+        $data = [
+            'username' => 'contact_' . $info['contact_number'],
+            'password' => $hashedPassword,
+            'disable' => 0,
+            'name' => $info['name'],
+            'first_name' => $info['given_name'],
+            'last_name' => $info['family_name'],
+            'address' => $info['street_address'],
+            'title' => $info['title'],
+            'zip' => $info['postal_code'],
+            'city' => $info['locality'],
+            'country' => $info['country'],
+        ];
+
+        if ($row) { // fe_users record already exists => update it
+            $user = array_merge($row, $data);
+            if ($user != $row) {
+                $user['tstamp'] = $GLOBALS['EXEC_TIME'];
+                $database->exec_UPDATEquery(
+                    'fe_users',
+                    'uid=' . $user['uid'],
+                    $user
+                );
+            }
+        } else {    // fe_users record does not already exist => create it
+            $data = array_merge($data, [
+                'pid' => 1, // TODO
+                'usergroup' => '1',  // TODO
+                'crdate' => $GLOBALS['EXEC_TIME'],
+                'tx_oidc' => (int)$info['contact_number'],
+            ]);
+            $database->exec_INSERTquery(
+                'fe_users',
+                $data
+            );
+            if ($database->sql_affected_rows() == 1) {
+                // Retrieve the created user from database to get all columns
+                $user = $database->exec_SELECTgetSingleRow(
+                    '*',
+                    'fe_users',
+                    'uid=' . $database->sql_insert_id()
+                );
+            }
+        }
+
+        return $user;
+    }
+
+    /**
+     * Returns the database connection
+     * This method only exists in TYPO3 v7 in parent class.
+     *
+     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
+     */
+    protected function getDatabaseConnection()
+    {
+        return $GLOBALS['TYPO3_DB'];
     }
 
 }

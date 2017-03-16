@@ -22,8 +22,9 @@ if (!(empty($_GET['state']) || empty($_GET['code']))) {
     $currentUrl .= $_SERVER['REQUEST_URI'];
 
     if (($pos = strpos($currentUrl, 'typo3conf/ext/oidc/callback.php')) !== false) {
-        $ajaxUrl = substr($currentUrl, 0, $pos) . 'typo3/index.php?ajaxID=TxOidc::callback&state=' . $_GET['state'] . '&code=' . $_GET['code'];
-        header('Location: ' . $ajaxUrl);
+        $connectUrl = substr($currentUrl, 0, $pos) . '?type=1489657462&state=' . $_GET['state'] . '&code=' . $_GET['code'];
+        //$ajaxUrl = substr($currentUrl, 0, $pos) . 'typo3/index.php?ajaxID=TxOidc::callback&state=' . $_GET['state'] . '&code=' . $_GET['code'];
+        header('Location: ' . $connectUrl);
         exit();
     }
 }

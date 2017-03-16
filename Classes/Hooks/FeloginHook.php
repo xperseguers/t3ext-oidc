@@ -44,6 +44,27 @@ class FeloginHook
             $service->setSettings($settings);
             $authorizationUrl = $service->getAuthorizationUrl();
 
+            // Store the state
+            $state = $service->getState();
+
+            $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
+            // Sanitize the URL
+            $parts = parse_url($loginUrl);
+            $queryParts = array_filter(explode('&', $parts['query']), function ($v) {
+                list ($k,) = explode('=', $v, 2);
+                return !in_array($k, ['logintype', 'tx_oidc[code]']);
+            });
+            $parts['query'] = implode('&', $queryParts);
+            $loginUrl = $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+            if (!empty($parts['query'])) {
+                $loginUrl .= '?' . $parts['query'];
+            }
+
+            $frontendController = $this->getTypoScriptFrontendController();
+            $type = $frontendController->loginUser ? 'user' : 'ses';
+            $frontendController->fe_user->setKey($type, 'state', $state);
+            $frontendController->fe_user->setKey($type, 'loginUrl', $loginUrl);
+
             $wrap = $pObj->conf['oidc.'];
             $linkTag = $pObj->cObj->stdWrap($authorizationUrl, $wrap);
 
@@ -51,6 +72,14 @@ class FeloginHook
         }
 
         return $pObj->cObj->substituteMarkerArrayCached($params['content'], $markerArray);
+    }
+
+    /**
+     * @return \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController
+     */
+    protected function getTypoScriptFrontendController()
+    {
+        return $GLOBALS['TSFE'];
     }
 
 }

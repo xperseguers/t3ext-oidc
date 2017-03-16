@@ -36,6 +36,18 @@ $boot = function ($_EXTKEY) {
         ]
     );
 
+    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+        'Causal.' . $_EXTKEY,
+        'Pi1',
+        [
+            'Authentication' => 'connect',
+        ],
+        // non-cacheable actions
+        [
+            'Authentication' => 'connect'
+        ]
+    );
+
     if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('felogin')) {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['felogin']['postProcContent'][$_EXTKEY] = \Causal\Oidc\Hooks\FeloginHook::class . '->postProcContent';
     }

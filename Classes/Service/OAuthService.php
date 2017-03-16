@@ -16,6 +16,8 @@ namespace Causal\Oidc\Service;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
+use League\OAuth2\Client\Token\AccessToken;
+use TYPO3\CMS\Core\Utility\HttpUtility;
 
 /**
  * Class OAuthService.
@@ -68,6 +70,30 @@ class OAuthService
     }
 
     /**
+     * Returns an AccessToken.
+     *
+     * @param string $code
+     * @return AccessToken
+     */
+    public function getAccessToken($code)
+    {
+        return $this->getProvider()->getAccessToken('authorization_code', [
+            'code' => $code
+        ]);
+    }
+
+    /**
+     * Returns the resource owner.
+     *
+     * @param AccessToken $token
+     * @return \League\OAuth2\Client\Provider\ResourceOwnerInterface
+     */
+    public function getResourceOwner(AccessToken $token)
+    {
+        return $this->getProvider()->getResourceOwner($token);
+    }
+
+    /**
      * Returns the OAuth client provider.
      *
      * @return \League\OAuth2\Client\Provider\GenericProvider
@@ -90,95 +116,30 @@ class OAuthService
         return $this->provider;
     }
 
-    /**
-     * @internal
-     */
-    public function callback()
+    public function getFreshAccessToken()
     {
-        if ((empty($_GET['state']) || empty($_GET['code']))) {
-            throw new \RuntimeException('No state or code detected', 1487001047);
+        $serializedToken = $this->settings['access_token'];
+        $options = json_decode($serializedToken, true);
+        if (empty($serializedToken) || empty($options)) {
+            // Invalid token
+            return null;
         }
-        $rows = BackendUtility::getRecordsByField(
-            'tx_oidc_application',
-            'state',
-            $_GET['state']
-        );
-        if (count($rows) !== 1) {
-            throw new \RuntimeException('Invalid state provided', 1487001084);
+        $accessToken = new \League\OAuth2\Client\Token\AccessToken($options);
+
+        if ($accessToken->hasExpired()) {
+            try {
+                $newAccessToken = $this->getProvider()->getAccessToken('refresh_token', [
+                    'refresh_token' => $accessToken->getRefreshToken(),
+                ]);
+
+                // TODO
+            } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+                // TODO: log problem
+                return null;
+            }
         }
 
-        $this->setApplication($rows[0]);
-        $provider = $this->getProvider();
-
-        try {
-
-            // Try to get an access token using the authorization code grant.
-            $accessToken = $provider->getAccessToken('authorization_code', [
-                'code' => $_GET['code']
-            ]);
-
-            // We have an access token, which we may use in authenticated
-            // requests against the service provider's API
-            static::getDatabaseConnection()->exec_UPDATEquery(
-                'tx_oidc_application',
-                'uid=' . $this->application['uid'],
-                [
-                    'state' => '',
-                    'access_token' => json_encode($accessToken),
-                ]
-            );
-
-            echo <<<HTML
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<body>
-
-<h1>Please close this browser window and go back to the Reports module to check the connection.</h1>
-
-</body>
-</html>
-
-HTML;
-
-            die();
-
-            /*
-            echo $accessToken->getToken() . LF;
-            echo $accessToken->getRefreshToken() . LF;
-            echo $accessToken->getExpires() . LF;
-            echo ($accessToken->hasExpired() ? 'expired' : 'not expired') . LF;
-
-            // Using the access token, we may look up details about the
-            // resource owner.
-            $resourceOwner = $provider->getResourceOwner($accessToken);
-
-            var_export($resourceOwner->toArray());
-
-            // The provider provides a way to get an authenticated API request for
-            // the service, using the access token; it returns an object conforming
-            // to Psr\Http\Message\RequestInterface.
-            $request = $provider->getAuthenticatedRequest(
-                'GET',
-                'http://brentertainment.com/oauth2/lockdin/resource',
-                $accessToken
-            );
-            */
-
-        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-
-            // Failed to get the access token or user details.
-            exit($e->getMessage());
-        }
-    }
-
-    /**
-     * Returns the database connection.
-     *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
-     */
-    protected static function getDatabaseConnection()
-    {
-        return $GLOBALS['TYPO3_DB'];
+        return $accessToken;
     }
 
 }

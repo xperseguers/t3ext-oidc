@@ -1,20 +1,20 @@
 # cat=basic/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableFrontendAuthentication
 enableFrontendAuthentication = 0
 
-# cat=basic//1; type=string; label=OpenID Connect Client Key
+# cat=basic//1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientKey
 oidcClientKey =
 
-# cat=basic//2; type=string; label=OpenID Connect Secret
+# cat=basic//2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientSecret
 oidcClientSecret =
 
-# cat=advanced/links/1; type=string; label=OpenID Connect Endpoint Authorized
+# cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointAuthorize
 oidcEndpointAuthorize = https://ids02.sac-cas.ch:443/oauth2/authorize
 
-# cat=advanced/links/2; type=string; label=OpenID Connect Endpoint Token
+# cat=advanced/links/2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointToken
 oidcEndpointToken = https://ids02.sac-cas.ch:443/oauth2/token
 
-# cat=advanced/links/3; type=string; label=OpenID Connect Endpoint User Information
+# cat=advanced/links/3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointUserInfo
 oidcEndpointUserInfo = https://ids02.sac-cas.ch:443/oauth2/userinfo
 
-# cat=advanced/links/4; type=string; label=OpenID Connect Endpoint Logout
+# cat=advanced/links/4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointLogout
 oidcEndpointLogout = https://ids02.sac-cas.ch:443/oauth2/logout
