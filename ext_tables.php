@@ -13,6 +13,11 @@ $boot = function ($_EXTKEY) {
         \Causal\Oidc\Service\OAuthService::class . '->callback',
         false
     );
+
+    // Register TypoScript
+    if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('felogin')) {
+        \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addStaticFile($_EXTKEY, 'Configuration/TypoScript/felogin', 'OpenID Connect for felogin');
+    }
 };
 
 $boot($_EXTKEY);

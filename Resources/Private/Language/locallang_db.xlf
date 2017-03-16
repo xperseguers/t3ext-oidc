@@ -6,9 +6,6 @@
 			<trans-unit id="settings.enableFrontendAuthentication">
 				<source>Frontend authentication: Enable OpenID Connect authentication for the frontend.</source>
 			</trans-unit>
-			<trans-unit id="settings.enableBackendAuthentication">
-				<source>Backend authentication: Enable OpenID Connect authentication for the backend.</source>
-			</trans-unit>
 
 			<trans-unit id="tx_oidc_application">
 				<source>OpenID Connect Application</source>

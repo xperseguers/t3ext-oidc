@@ -26,7 +26,7 @@ class OAuthService
     /**
      * @var array
      */
-    protected $application;
+    protected $settings;
 
     /**
      * @var \League\OAuth2\Client\Provider\GenericProvider
@@ -34,14 +34,14 @@ class OAuthService
     protected $provider;
 
     /**
-     * Sets the application.
+     * Sets the settings.
      *
-     * @param array $application Record from table tx_oidc_application
+     * @param array $settings
      * @return $this
      */
-    public function setApplication(array $application)
+    public function setSettings(array $settings)
     {
-        $this->application = $application;
+        $this->settings = $settings;
         return $this;
     }
 
@@ -78,12 +78,13 @@ class OAuthService
             $redirectUri = GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST') . '/typo3conf/ext/oidc/callback.php';
 
             $this->provider = new \League\OAuth2\Client\Provider\GenericProvider([
-                'clientId' => $this->application['oauth_client_key'],
-                'clientSecret' => $this->application['oauth_client_secret'],
+                'clientId' => $this->settings['oidcClientKey'],
+                'clientSecret' => $this->settings['oidcClientSecret'],
                 'redirectUri' => $redirectUri,
-                'urlAuthorize' => $this->application['endpoint_authorize'],
-                'urlAccessToken' => $this->application['endpoint_token'],
-                'urlResourceOwnerDetails' => $this->application['endpoint_userinfo'],
+                'urlAuthorize' => $this->settings['oidcEndpointAuthorize'],
+                'urlAccessToken' => $this->settings['oidcEndpointToken'],
+                'urlResourceOwnerDetails' => $this->settings['oidcEndpointUserInfo'],
+                'scopes' => ['openid'],
             ]);
         }
         return $this->provider;
