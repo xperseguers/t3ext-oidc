@@ -96,6 +96,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         return $status;
     }
 
+    /**
+     * Converts a resource owner into a TYPO3 Frontend user.
+     *
+     * @param array $info
+     * @return array
+     */
     protected function convertResourceOwner(array $info)
     {
         $user = [];
@@ -137,8 +143,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             }
         } else {    // fe_users record does not already exist => create it
             $data = array_merge($data, [
-                'pid' => 1, // TODO
-                'usergroup' => '1',  // TODO
+                'pid' => $this->config['usersStoragePid'],
+                'usergroup' => $this->config['usersDefaultGroup'],
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => (int)$info['contact_number'],
             ]);
@@ -146,14 +152,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'fe_users',
                 $data
             );
-            if ($database->sql_affected_rows() == 1) {
-                // Retrieve the created user from database to get all columns
-                $user = $database->exec_SELECTgetSingleRow(
-                    '*',
-                    'fe_users',
-                    'uid=' . $database->sql_insert_id()
-                );
-            }
+            // Retrieve the created user from database to get all columns
+            $user = $database->exec_SELECTgetSingleRow(
+                '*',
+                'fe_users',
+                'uid=' . $database->sql_insert_id()
+            );
         }
 
         return $user;

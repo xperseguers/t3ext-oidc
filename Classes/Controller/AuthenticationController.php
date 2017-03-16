@@ -14,9 +14,21 @@
 
 namespace Causal\Oidc\Controller;
 
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
+/**
+ * Class AuthenticationController
+ *
+ * @package Causal\Oidc\Controller
+ */
 class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
 {
 
+    /**
+     * Initiates the silent authentication action.
+     *
+     * @return void
+     */
     public function connectAction()
     {
         if ((empty($_GET['state']) || empty($_GET['code']))) {

@@ -1,10 +1,16 @@
 # cat=basic/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableFrontendAuthentication
 enableFrontendAuthentication = 0
 
-# cat=basic//1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientKey
+# cat=basic//1; type=int; label=Storage Pid: The Storage Pid of the Page, where the fe_users should be stored
+usersStoragePid =
+
+# cat=basic//2; type=string; label=Default user group(s) (comma-separated list of UIDs)
+usersDefaultGroup =
+
+# cat=basic//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientKey
 oidcClientKey =
 
-# cat=basic//2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientSecret
+# cat=basic//4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientSecret
 oidcClientSecret =
 
 # cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointAuthorize
