@@ -68,7 +68,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $service->setSettings($this->config);
 
         // Try to get an access token using the authorization code grant
-        $accessToken = $service->getAccessToken($params['code']);
+        try {
+            $accessToken = $service->getAccessToken($params['code']);
+        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+            // Probably a "server_error", meaning the code is not valid anymore
+            throw new \RuntimeException('The code has been refused by the authentication server. Maybe it was used twice.', 1489743507);
+        }
 
         // Using the access token, we may look up details about the resource owner
         $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
