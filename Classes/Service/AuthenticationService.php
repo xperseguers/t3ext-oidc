@@ -54,7 +54,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     /**
      * Finds a user.
      *
-     * @return int|bool|array
+     * @return array|bool
      */
     public function getUser()
     {
@@ -78,8 +78,6 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         // Using the access token, we may look up details about the resource owner
         $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
         $user = $this->convertResourceOwner($resourceOwner);
-
-        $user['tx_oidc'] = true;
 
         return $user;
     }
@@ -117,6 +115,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             'tx_oidc=' . (int)$info['contact_number']
         );
 
+        if ($row && (bool)$row['disable']) {
+            // User was manually disabled, it should not get automatically re-enabled
+            return false;
+        }
+
         /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
         $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
@@ -125,7 +128,6 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $data = [
             'username' => 'contact_' . $info['contact_number'],
             'password' => $hashedPassword,
-            'disable' => 0,
             'name' => $info['name'],
             'first_name' => $info['given_name'],
             'last_name' => $info['family_name'],
@@ -165,6 +167,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             );
         }
 
+        // We need that for the upcoming call to authUser()
+        $user['tx_oidc'] = true;
         return $user;
     }
 
