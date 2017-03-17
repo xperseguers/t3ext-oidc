@@ -35,27 +35,19 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
             throw new \RuntimeException('No state or code detected', 1487001047);
         }
 
-        $frontendController = $this->getTypoScriptFrontendController();
-        $type = $frontendController->loginUser ? 'user' : 'ses';
-        $state = $frontendController->fe_user->getKey($type, 'state');
+        if (session_id() === '') {
+            session_start();
+        }
 
-        if ($state !== $_GET['state']) {
+        if ($_GET['state'] !== $_SESSION['oidc_state']) {
             throw new \RuntimeException('Invalid state', 1489658206);
         }
 
-        $loginUrl = $frontendController->fe_user->getKey($type, 'loginUrl');
+        $loginUrl = $_SESSION['oidc_login_url'];
         $loginUrl .= strpos($loginUrl, '?') !== false ? '&' : '?';
         $loginUrl .= 'logintype=login&tx_oidc[code]=' . $_GET['code'];
 
         $this->redirectToUri($loginUrl);
-    }
-
-    /**
-     * @return \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController
-     */
-    protected function getTypoScriptFrontendController()
-    {
-        return $GLOBALS['TSFE'];
     }
 
 }
