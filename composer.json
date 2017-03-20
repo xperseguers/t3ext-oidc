@@ -53,7 +53,7 @@
       "rm -rf Libraries/temp"
     ],
     "extension-build": [
-      "@extension-create-libs",
+      "@extension-create-libs"
     ],
     "extension-release": [
       "@extension-build",
