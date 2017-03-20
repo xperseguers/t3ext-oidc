@@ -62,7 +62,7 @@
       "rm .gitignore"
     ],
     "extension-clean": [
-      "rm -rf Libraries",
+      "rm -rf Libraries"
     ]
   },
   "extra": {
