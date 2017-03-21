@@ -55,6 +55,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Finds a user.
      *
      * @return array|bool
+     * @throws \RuntimeException
      */
     public function getUser()
     {
@@ -104,9 +105,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      *
      * @param array $info
      * @return array
+     * @throws \RuntimeException
      */
     protected function convertResourceOwner(array $info)
     {
+        if (empty($info['contact_number'])) {
+            throw new \RuntimeException('Resource owner does not have a contact number: ' . json_encode($info), 1490086626);
+        }
+
         $user = [];
         $database = $this->getDatabaseConnection();
         $row = $database->exec_SELECTgetSingleRow(
