@@ -22,8 +22,11 @@
 			<trans-unit id="settings.oidcEndpointUserInfo">
 				<source>Endpoint URI for fetching user information</source>
 			</trans-unit>
-			<trans-unit id="tx_oidc_application.settings.oidcEndpointLogout">
+			<trans-unit id="settings.oidcEndpointLogout">
 				<source>Endpoint URI for logout</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcEndpointRevoke">
+				<source>Endpoint URI for revoking the token</source>
 			</trans-unit>
 		</body>
 	</file>

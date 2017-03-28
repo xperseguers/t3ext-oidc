@@ -94,6 +94,28 @@ class OAuthService
     }
 
     /**
+     * Revokes the access token.
+     *
+     * @param AccessToken $token
+     * @return bool
+     */
+    public function revokeToken(AccessToken $token)
+    {
+        if (empty($this->settings['oidcEndpointRevoke'])) {
+            return false;
+        }
+
+        $provider = $this->getProvider();
+        $request = $provider->getAuthenticatedRequest(
+            \League\OAuth2\Client\Provider\AbstractProvider::METHOD_POST,
+            $this->settings['oidcEndpointRevoke'],
+            $token
+        );
+        $response = $provider->getParsedResponse($request);
+        return true;
+    }
+
+    /**
      * Returns the OAuth client provider.
      *
      * @return \League\OAuth2\Client\Provider\GenericProvider
