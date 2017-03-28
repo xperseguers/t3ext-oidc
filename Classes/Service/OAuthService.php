@@ -106,10 +106,16 @@ class OAuthService
         }
 
         $provider = $this->getProvider();
-        $request = $provider->getAuthenticatedRequest(
+        $request = $provider->getRequest(
             \League\OAuth2\Client\Provider\AbstractProvider::METHOD_POST,
             $this->settings['oidcEndpointRevoke'],
-            $token
+            [
+                'headers' => [
+                    'Authorization' => 'Basic ' . base64_encode($this->settings['oidcClientKey'] . ':' . $this->settings['oidcClientSecret']),
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                'body' => 'token=' . $token->getToken(),
+            ]
         );
         $response = $provider->getParsedResponse($request);
         return true;
