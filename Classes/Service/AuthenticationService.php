@@ -78,7 +78,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         // Using the access token, we may look up details about the resource owner
         $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
-        if (empty($info['contact_number'])) {
+        if (empty($resourceOwner['contact_number'])) {
             $service->revokeToken($accessToken);
             throw new \RuntimeException('Resource owner does not have a contact number: ' . json_encode($info) . '. Your access token has been revoked. Please try again.', 1490086626);
         }
