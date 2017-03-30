@@ -80,10 +80,15 @@ class FeloginHook
             $markerArray['###OPENID_CONNECT###'] = $linkTag;
         }
 
-        /** @var \TYPO3\CMS\Core\Service\MarkerBasedTemplateService $templateService */
-        $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Service\MarkerBasedTemplateService::class);
+        if (version_compare(TYPO3_branch, '8', '>=')) {
+            /** @var \TYPO3\CMS\Core\Service\MarkerBasedTemplateService $templateService */
+            $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Service\MarkerBasedTemplateService::class);
+            $content = $templateService->substituteMarkerArrayCached($params['content'], $markerArray);
+        } else {
+            $content = $pObj->cObj->substituteMarkerArrayCached($params['content'], $markerArray);
+        }
 
-        return $templateService->substituteMarkerArrayCached($params['content'], $markerArray);
+        return $content;
     }
 
     /**
