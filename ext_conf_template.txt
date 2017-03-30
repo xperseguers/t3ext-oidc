@@ -14,16 +14,16 @@ oidcClientKey =
 oidcClientSecret =
 
 # cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointAuthorize
-oidcEndpointAuthorize = https://ids02.sac-cas.ch:443/oauth2/authorize
+oidcEndpointAuthorize = https://ids02.sac-cas.ch/oauth2/authorize
 
 # cat=advanced/links/2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointToken
-oidcEndpointToken = https://ids02.sac-cas.ch:443/oauth2/token
+oidcEndpointToken = https://ids02.sac-cas.ch/oauth2/token
 
 # cat=advanced/links/3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointUserInfo
-oidcEndpointUserInfo = https://ids02.sac-cas.ch:443/oauth2/userinfo
+oidcEndpointUserInfo = https://ids02.sac-cas.ch/oauth2/userinfo
 
 # cat=advanced/links/4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointLogout
-oidcEndpointLogout = https://ids02.sac-cas.ch:443/oauth2/logout
+oidcEndpointLogout = https://ids02.sac-cas.ch/oauth2/logout
 
 # cat=advanced/links/5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointRevoke
-oidcEndpointRevoke = https://ids02.sac-cas.ch:443/oauth2/revoke
+oidcEndpointRevoke = https://ids02.sac-cas.ch/oauth2/revoke
