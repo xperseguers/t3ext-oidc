@@ -28,6 +28,7 @@ class FeloginHook
      */
     public function postProcContent(array $params, \TYPO3\CMS\Felogin\Controller\FrontendLoginController $pObj)
     {
+        static::getLogger()->debug('Post-processing markers for felogin form');
         $markerArray['###OPENID_CONNECT###'] = '';
 
         $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
@@ -62,10 +63,16 @@ class FeloginHook
             }
 
             if (session_id() === '') { // If no session exists, start a new one
+                static::getLogger()->debug('No PHP session found');
                 session_start();
             }
             $_SESSION['oidc_state'] = $state;
             $_SESSION['oidc_login_url'] = $loginUrl;
+
+            static::getLogger()->debug('PHP session is available', [
+                'id' => session_id(),
+                'data' => $_SESSION,
+            ]);
 
             $wrap = $pObj->conf['oidc.'];
             $linkTag = $pObj->cObj->stdWrap($authorizationUrl, $wrap);
@@ -73,7 +80,26 @@ class FeloginHook
             $markerArray['###OPENID_CONNECT###'] = $linkTag;
         }
 
-        return $pObj->cObj->substituteMarkerArrayCached($params['content'], $markerArray);
+        /** @var \TYPO3\CMS\Core\Service\MarkerBasedTemplateService $templateService */
+        $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Service\MarkerBasedTemplateService::class);
+
+        return $templateService->substituteMarkerArrayCached($params['content'], $markerArray);
+    }
+
+    /**
+     * Returns a logger.
+     *
+     * @return \TYPO3\CMS\Core\Log\Logger
+     */
+    protected static function getLogger()
+    {
+        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        static $logger = null;
+        if ($logger === null) {
+            $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
+        }
+
+        return $logger;
     }
 
 }

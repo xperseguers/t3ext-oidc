@@ -44,6 +44,7 @@ class OAuthService
     public function setSettings(array $settings)
     {
         $this->settings = $settings;
+
         return $this;
     }
 
@@ -55,6 +56,7 @@ class OAuthService
     public function getAuthorizationUrl()
     {
         $authorizationUrl = $this->getProvider()->getAuthorizationUrl();
+
         return $authorizationUrl;
     }
 
@@ -78,7 +80,7 @@ class OAuthService
     public function getAccessToken($code)
     {
         return $this->getProvider()->getAccessToken('authorization_code', [
-            'code' => $code
+            'code' => $code,
         ]);
     }
 
@@ -118,6 +120,7 @@ class OAuthService
             ]
         );
         $response = $provider->getParsedResponse($request);
+
         return true;
     }
 
@@ -141,6 +144,7 @@ class OAuthService
                 'scopes' => ['openid'],
             ]);
         }
+
         return $this->provider;
     }
 

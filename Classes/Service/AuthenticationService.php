@@ -13,6 +13,7 @@
  */
 
 namespace Causal\Oidc\Service;
+
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 
@@ -64,23 +65,33 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             return false;
         }
 
+        static::getLogger()->debug('Initializing OpenID Connect service');
+
         /** @var \Causal\Oidc\Service\OAuthService $service */
         $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
         $service->setSettings($this->config);
 
         // Try to get an access token using the authorization code grant
         try {
+            static::getLogger()->debug('Retrieving an access token');
             $accessToken = $service->getAccessToken($params['code']);
+            static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
+            static::getLogger()->error('Code has been refused by the authentication server', [
+                'code' => $params['code'],
+                'message' => $e->getMessage(),
+            ]);
             throw new \RuntimeException('The code has been refused by the authentication server. Maybe it was used twice.', 1489743507);
         }
 
         // Using the access token, we may look up details about the resource owner
         $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
+        static::getLogger()->debug('Resource owner retrieved', $resourceOwner);
         if (empty($resourceOwner['contact_number'])) {
+            static::getLogger()->error('No "contact_number" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
-            throw new \RuntimeException('Resource owner does not have a contact number: ' . json_encode($info) . '. Your access token has been revoked. Please try again.', 1490086626);
+            throw new \RuntimeException('Resource owner does not have a contact number: ' . json_encode($resourceOwner) . '. Your access token has been revoked. Please try again.', 1490086626);
         }
         $user = $this->convertResourceOwner($resourceOwner);
 
@@ -122,6 +133,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         if ($row && (bool)$row['disable']) {
             // User was manually disabled, it should not get automatically re-enabled
+            static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
+
             return false;
         }
 
@@ -144,8 +157,13 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         ];
 
         if ($row) { // fe_users record already exists => update it
+            static::getLogger()->info('Detected a returning user');
             $user = array_merge($row, $data);
             if ($user != $row) {
+                static::getLogger()->debug('Updating existing user', [
+                    'old' => $row,
+                    'new' => $user,
+                ]);
                 $user['tstamp'] = $GLOBALS['EXEC_TIME'];
                 $database->exec_UPDATEquery(
                     'fe_users',
@@ -154,6 +172,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 );
             }
         } else {    // fe_users record does not already exist => create it
+            static::getLogger()->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
                 'pid' => $this->config['usersStoragePid'],
                 'usergroup' => $this->config['usersDefaultGroup'],
@@ -172,8 +191,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             );
         }
 
+        static::getLogger()->debug('Authentication user record processed', $user);
+
         // We need that for the upcoming call to authUser()
         $user['tx_oidc'] = true;
+
         return $user;
     }
 
@@ -186,6 +208,22 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     protected function getDatabaseConnection()
     {
         return $GLOBALS['TYPO3_DB'];
+    }
+
+    /**
+     * Returns a logger.
+     *
+     * @return \TYPO3\CMS\Core\Log\Logger
+     */
+    protected static function getLogger()
+    {
+        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        static $logger = null;
+        if ($logger === null) {
+            $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
+        }
+
+        return $logger;
     }
 
 }
