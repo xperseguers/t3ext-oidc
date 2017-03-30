@@ -48,6 +48,11 @@ class FeloginHook
             // Store the state
             $state = $service->getState();
 
+            static::getLogger()->debug('Generating authorization URL', [
+                'url' => $authorizationUrl,
+                'state' => $state,
+            ]);
+
             $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
             // Sanitize the URL
             $parts = parse_url($loginUrl);
