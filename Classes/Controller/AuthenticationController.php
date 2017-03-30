@@ -25,6 +25,21 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
 {
 
     /**
+     * @var array
+     */
+    protected $globalSettings;
+
+    /**
+     * Initializes the controller before invoking an action method.
+     *
+     * @return void
+     */
+    public function initializeAction()
+    {
+        $this->globalSettings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
+    }
+
+    /**
      * Initiates the silent authentication action.
      *
      * @return void
@@ -51,7 +66,10 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
                 'expected' => $_SESSION['oidc_state'],
                 'actual' => $_GET['state'],
             ]);
-            throw new \RuntimeException('Invalid state', 1489658206);
+            if (!(bool)$this->globalSettings['oidcDisableCSRFProtection']) {
+                throw new \RuntimeException('Invalid state', 1489658206);
+            }
+            static::getLogger()->warning('Bypassing CSRF attack mitigation protection according to the extension configuration');
         }
 
         $loginUrl = $_SESSION['oidc_login_url'];

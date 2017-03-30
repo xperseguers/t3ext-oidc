@@ -27,3 +27,6 @@ oidcEndpointLogout = https://ids02.sac-cas.ch/oauth2/logout
 
 # cat=advanced/links/5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointRevoke
 oidcEndpointRevoke = https://ids02.sac-cas.ch/oauth2/revoke
+
+# cat=advanced/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcDisableCSRFProtection
+oidcDisableCSRFProtection = 0

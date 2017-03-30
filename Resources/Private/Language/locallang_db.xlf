@@ -28,6 +28,9 @@
 			<trans-unit id="settings.oidcEndpointRevoke">
 				<source>Endpoint URI for revoking the token</source>
 			</trans-unit>
+			<trans-unit id="settings.oidcDisableCSRFProtection">
+				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>
