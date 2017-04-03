@@ -11,5 +11,5 @@ CREATE TABLE fe_users (
 # Table structure for table 'fe_groups'
 #
 CREATE TABLE fe_groups (
-	tx_oidc_pattern int(11) unsigned DEFAULT '0' NOT NULL
+	tx_oidc_pattern varchar(50) DEFAULT '' NOT NULL
 );
