@@ -1,6 +1,11 @@
 # OpenID Connect
 
-TODO: add some description
+This extension lets you authenticate Frontend users against an OpenID Connect server. It is preconfigured to work with
+the [WSO2 Identity Server](http://wso2.com/identity-and-access-management) from the Swiss Alpine Club but may be used
+with your own identity server as well.
+
+If you are a Swiss Alpine Club section, be sure to get in touch with Bern in order to get your dedicated private key and
+secret.
 
 
 ## Configuring
