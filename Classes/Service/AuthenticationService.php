@@ -120,6 +120,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      *
      * @param array $info
      * @return array
+     * @throws \InvalidArgumentException
      */
     protected function convertResourceOwner(array $info)
     {
@@ -235,6 +236,36 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         static::getLogger()->debug('Authentication user record processed', $user);
+
+        // Hook for post-processing the user record
+        $reloadUserRecord = false;
+        if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'])) {
+            foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
+                /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
+                $postProcessor = GeneralUtility::getUserObj($className);
+                if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
+                    $postProcessor->postProcessUser(TYPO3_mode, $user, $info);
+                    $reloadUserRecord = true;
+                } else {
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Invalid post-processing class %s. It must implement the \\\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
+                            $className
+                        ),
+                        1491229263
+                    );
+                }
+            }
+        }
+
+        if ($reloadUserRecord) {
+            $user = $database->exec_SELECTgetSingleRow(
+                '*',
+                'fe_users',
+                'uid=' . (int)$user['uid']
+            );
+            static::getLogger()->debug('User record reloaded', $user);
+        }
 
         // We need that for the upcoming call to authUser()
         $user['tx_oidc'] = true;
