@@ -153,7 +153,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
 
         $data = [
-            'username' => 'contact_' . $info['contact_number'],
+            'username' => $info['contact_number'],
             'password' => $hashedPassword,
             'name' => $info['name'],
             'first_name' => $info['given_name'],
