@@ -10,8 +10,6 @@ secret.
 
 ## Configuring
 
-TODO: add some description
-
 ### Mapping Frontend User Groups
 
 - Create your groups within TYPO3
