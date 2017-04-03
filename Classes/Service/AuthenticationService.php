@@ -156,8 +156,51 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             'country' => $info['country'],
         ];
 
+        $newUsergroups = [];
+        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup'], true);
+
+        if ($row) {
+            $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
+            if (!empty($currentUserGroups)) {
+                $oidcUserGroups = $database->exec_SELECTgetRows(
+                    'uid',
+                    'fe_groups',
+                    'uid IN (' . implode(',', $currentUserGroups) . ') AND tx_oidc_pattern<>\'\'',
+                    '',
+                    '',
+                    '',
+                    'uid'
+                );
+                // Remove OIDC-related groups
+                $newUsergroups = array_diff($currentUserGroups, array_keys($oidcUserGroups));
+            }
+        }
+
+        // Map OIDC roles to TYPO3 user groups
+        if (!empty($info['Roles'])) {
+            $typo3Roles = $database->exec_SELECTgetRows(
+                'uid, tx_oidc_pattern',
+                'fe_groups',
+                'tx_oidc_pattern<>\'\' AND hidden=0 AND deleted=0'
+            );
+            $roles = GeneralUtility::trimExplode(',', $info['Roles'], true);
+            $roles = ',' . implode(',', $roles) . ',';
+
+            foreach ($typo3Roles as $typo3Role) {
+                $pattern = $typo3Role['tx_oidc_pattern'];
+                $pattern = str_replace(['?', '+', '.', '*'], ['[?]', '[+]', '[.]', '[^,]*'], $pattern);
+                if (preg_match('/,' . $pattern . ',/', $roles)) {
+                    $newUsergroups[] = (int)$typo3Role['uid'];
+                }
+            }
+        }
+
+        // Add default user groups
+        $newUsergroups = array_unique(array_merge($newUsergroups, $defaultUserGroups));
+
         if ($row) { // fe_users record already exists => update it
             static::getLogger()->info('Detected a returning user');
+            $data['usergroup'] = implode(',', $newUsergroups);
             $user = array_merge($row, $data);
             if ($user != $row) {
                 static::getLogger()->debug('Updating existing user', [
@@ -175,7 +218,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             static::getLogger()->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
                 'pid' => $this->config['usersStoragePid'],
-                'usergroup' => $this->config['usersDefaultGroup'],
+                'usergroup' => implode(',', $newUsergroups),
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => (int)$info['contact_number'],
             ]);
