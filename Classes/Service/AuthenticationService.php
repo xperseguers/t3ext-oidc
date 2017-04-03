@@ -124,11 +124,19 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     protected function convertResourceOwner(array $info)
     {
+        if (TYPO3_MODE === 'FE') {
+            $userTable = 'fe_users';
+            $userGroupTable = 'fe_groups';
+        } else {
+            $userTable = 'be_users';
+            $userGroupTable = 'be_groups';
+        }
+
         $user = [];
         $database = $this->getDatabaseConnection();
         $row = $database->exec_SELECTgetSingleRow(
             '*',
-            'fe_users',
+            $userTable,
             'tx_oidc=' . (int)$info['contact_number']
         );
 
@@ -165,7 +173,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             if (!empty($currentUserGroups)) {
                 $oidcUserGroups = $database->exec_SELECTgetRows(
                     'uid',
-                    'fe_groups',
+                    $userGroupTable,
                     'uid IN (' . implode(',', $currentUserGroups) . ') AND tx_oidc_pattern<>\'\'',
                     '',
                     '',
@@ -181,7 +189,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         if (!empty($info['Roles'])) {
             $typo3Roles = $database->exec_SELECTgetRows(
                 'uid, tx_oidc_pattern',
-                'fe_groups',
+                $userGroupTable,
                 'tx_oidc_pattern<>\'\' AND hidden=0 AND deleted=0'
             );
             $roles = GeneralUtility::trimExplode(',', $info['Roles'], true);
@@ -210,7 +218,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 ]);
                 $user['tstamp'] = $GLOBALS['EXEC_TIME'];
                 $database->exec_UPDATEquery(
-                    'fe_users',
+                    $userTable,
                     'uid=' . $user['uid'],
                     $user
                 );
@@ -224,13 +232,13 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'tx_oidc' => (int)$info['contact_number'],
             ]);
             $database->exec_INSERTquery(
-                'fe_users',
+                $userTable,
                 $data
             );
             // Retrieve the created user from database to get all columns
             $user = $database->exec_SELECTgetSingleRow(
                 '*',
-                'fe_users',
+                $userTable,
                 'uid=' . $database->sql_insert_id()
             );
         }
@@ -244,7 +252,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
                 $postProcessor = GeneralUtility::getUserObj($className);
                 if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
-                    $postProcessor->postProcessUser(TYPO3_mode, $user, $info);
+                    $postProcessor->postProcessUser(TYPO3_MODE, $user, $info);
                     $reloadUserRecord = true;
                 } else {
                     throw new \InvalidArgumentException(
@@ -261,7 +269,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         if ($reloadUserRecord) {
             $user = $database->exec_SELECTgetSingleRow(
                 '*',
-                'fe_users',
+                $userTable,
                 'uid=' . (int)$user['uid']
             );
             static::getLogger()->debug('User record reloaded', $user);
