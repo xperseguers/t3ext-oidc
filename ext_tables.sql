@@ -6,3 +6,10 @@ CREATE TABLE fe_users (
 
 	KEY fk_oidc (tx_oidc)
 );
+
+#
+# Table structure for table 'fe_groups'
+#
+CREATE TABLE fe_groups (
+	tx_oidc_pattern int(11) unsigned DEFAULT '0' NOT NULL
+);
