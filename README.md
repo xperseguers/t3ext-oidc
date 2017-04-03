@@ -7,6 +7,13 @@ TODO: add some description
 
 TODO: add some description
 
+### Mapping Frontend User Groups
+
+- Create your groups within TYPO3
+- Use the additional pattern to relate it to roles within OpenID Connect
+- Local TYPO3 groups (not related to some role) will be kept upon authenticating
+- Default TYPO3 group(s) as configured in Extension Manager will always be added
+
 
 ## Logging
 
