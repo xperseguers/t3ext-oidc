@@ -75,6 +75,9 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
         $loginUrl = $_SESSION['oidc_login_url'];
         $loginUrl .= strpos($loginUrl, '?') !== false ? '&' : '?';
         $loginUrl .= 'logintype=login&tx_oidc[code]=' . $_GET['code'];
+        if (!empty($_SESSION['oidc_redirect_url']) && strpos($loginUrl, 'redirect_url=') === false) {
+            $loginUrl .= '&redirect_url=' . urlencode($_SESSION['oidc_redirect_url']);
+        }
 
         static::getLogger()->info('Redirecting to login URL', ['url' => $loginUrl]);
         $this->redirectToUri($loginUrl);
