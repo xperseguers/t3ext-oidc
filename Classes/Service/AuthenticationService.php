@@ -200,9 +200,15 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $roles = ',' . implode(',', $roles) . ',';
 
             foreach ($typo3Roles as $typo3Role) {
-                $pattern = $typo3Role['tx_oidc_pattern'];
-                $pattern = str_replace(['?', '+', '.', '*'], ['[?]', '[+]', '[.]', '[^,]*'], $pattern);
-                if (preg_match('/,' . $pattern . ',/', $roles)) {
+                // Convert the pattern into a proper regular expression
+                $subpatterns = GeneralUtility::trimExplode('|', $typo3Role['tx_oidc_pattern'], true);
+                foreach ($subpatterns as $k => $subpattern) {
+                    $pattern = preg_quote($subpattern, '/');
+                    $pattern = str_replace('\\*', '[^,]*', $pattern);
+                    $subpatterns[$k] = $pattern;
+                }
+                $pattern = '/,(' . implode('|', $subpatterns) . '),/i';
+                if (preg_match($pattern, $roles)) {
                     $newUsergroups[] = (int)$typo3Role['uid'];
                 }
             }
