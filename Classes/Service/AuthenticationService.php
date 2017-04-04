@@ -91,7 +91,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         if (empty($resourceOwner['contact_number'])) {
             static::getLogger()->error('No "contact_number" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
-            throw new \RuntimeException('Resource owner does not have a contact number: ' . json_encode($resourceOwner) . '. Your access token has been revoked. Please try again.', 1490086626);
+            throw new \RuntimeException(
+                'Resource owner does not have a contact number: ' . json_encode($resourceOwner)
+                    . '. Your access token has been revoked. Please try again.',
+                1490086626
+            );
         }
         $user = $this->convertResourceOwner($resourceOwner);
 
@@ -257,7 +261,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 } else {
                     throw new \InvalidArgumentException(
                         sprintf(
-                            'Invalid post-processing class %s. It must implement the \\\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
+                            'Invalid post-processing class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
                             $className
                         ),
                         1491229263
