@@ -165,20 +165,16 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
         $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
 
-        $data = [
-            'username' => $info['contact_number'],
-            'password' => $hashedPassword,
-            'name' => $info['name'],
-            'first_name' => $info['given_name'],
-            'last_name' => $info['family_name'],
-            'address' => $info['street_address'],
-            'title' => $info['title'],
-            'zip' => $info['postal_code'],
-            'city' => $info['locality'],
-            'country' => $info['country'],
-            'deleted' => 0,
-            'disable' => 0,
-        ];
+        $data = $this->applyMapping(
+            $userTable,
+            $info,
+            $row,
+            [
+                'password' => $hashedPassword,
+                'deleted' => 0,
+                'disable' => 0,
+            ]
+        );
 
         $newUsergroups = [];
         $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup'], true);
@@ -300,6 +296,178 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $user['tx_oidc'] = true;
 
         return $user;
+    }
+
+    /**
+     * Merges info from OIDC to TYPO3 using a mapping configuration.
+     *
+     * @param string $table
+     * @param array $oidc
+     * @param array $typo3
+     * @param array $baseData
+     * @param bool $reportErrors
+     * @return array
+     * @see \Causal\IgLdapSsoAuth\Library\Authentication::merge()
+     */
+    protected function applyMapping($table, array $oidc, array $typo3, array $baseData = [], $reportErrors = false)
+    {
+        $out = array_merge($typo3, $baseData);
+        $typoScriptKeys = [];
+        $mapping = $this->getMapping($table);
+
+        // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
+        foreach ($mapping as $field => $value) {
+            if (substr($field, -1) !== '.') {
+                if ($field !== 'usergroup' && $field !== 'parentGroup') {
+                    try {
+                        $out = $this->mergeSimple($oidc, $out, $field, $value);
+                    } catch (\UnexpectedValueException $uve) {
+                        if ($reportErrors) {
+                            $out['__errors'][] = $uve->getMessage();
+                        }
+                    }
+                }
+            } else {
+                $typoScriptKeys[] = $field;
+            }
+        }
+
+        if (count($typoScriptKeys) > 0) {
+            $backupTSFE = $GLOBALS['TSFE'];
+
+            // Advanced stdWrap methods require a valid $GLOBALS['TSFE'] => create the most lightweight one
+            $GLOBALS['TSFE'] = GeneralUtility::makeInstance(
+                \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController::class,
+                $GLOBALS['TYPO3_CONF_VARS'],
+                0,
+                ''
+            );
+            $GLOBALS['TSFE']->initTemplate();
+            $GLOBALS['TSFE']->renderCharset = 'utf-8';
+
+            /** @var $contentObj \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer */
+            $contentObj = GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class);
+            $contentObj->start($oidc, '');
+
+            // Process every TypoScript definition
+            foreach ($typoScriptKeys as $typoScriptKey) {
+                // Remove the trailing period to get corresponding field name
+                $field = substr($typoScriptKey, 0, -1);
+                $value = isset($out[$field]) ? $out[$field] : '';
+                $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
+                $out = $this->mergeSimple([$field => $value], $out, $field, $value);
+            }
+
+            // Instantiation of TypoScriptFrontendController instantiates PageRenderer which
+            // sets backPath to TYPO3_mainDir which is very bad in the Backend. Therefore,
+            // we must set it back to null to not get frontend-prefixed asset URLs.
+            if (TYPO3_MODE === 'BE') {
+                $pageRenderer = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Page\PageRenderer::class);
+                $pageRenderer->setBackPath(null);
+            }
+
+            $GLOBALS['TSFE'] = $backupTSFE;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Replaces all OIDC markers (e.g. <cn>) with their corresponding values
+     * in the OIDC data array.
+     *
+     * If no matching value was found in the array the marker will be removed.
+     *
+     * @param array $oidc
+     * @param array $typo3
+     * @param string $field
+     * @param string $value
+     * @return array Modified $typo3 array
+     * @throws \UnexpectedValueException
+     * @see \Causal\IgLdapSsoAuth\Library\Authentication::mergeSimple()
+     * @see \Causal\IgLdapSsoAuth\Library\Authentication::replaceLdapMarkers()
+     */
+    protected function mergeSimple(array $oidc, array $typo3, $field, $value)
+    {
+        // Constant by default
+        $mappedValue = $value;
+
+        if (preg_match("`<([^$]*)>`", $value, $attribute)) {    // OIDC attribute
+            preg_match_all('/<(.+?)>/', $value, $matches);
+
+            foreach ($matches[0] as $index => $fullMatchedMarker) {
+                $oidcProperty = strtolower($matches[1][$index]);
+
+                if (isset($oidc[$oidcProperty])) {
+                    $oidcValue = $oidc[$oidcProperty];
+                    if (is_array($oidcValue)) {
+                        $oidcValue = $oidcValue[0];
+                    }
+                    $mappedValue = str_replace($fullMatchedMarker, $oidcValue, $mappedValue);
+                } else {
+                    $mappedValue = str_replace($fullMatchedMarker, '', $mappedValue);
+                }
+            }
+        }
+
+        $typo3[$field] = $mappedValue;
+
+        return $typo3;
+    }
+
+    /**
+     * Returns the mapping configuration for OIDC fields.
+     *
+     * @param string $table
+     * @return array
+     */
+    protected function getMapping($table)
+    {
+        $defaultMapping = [
+            'username'   => '<contact_number>',
+            'name'       => '<name>',
+            'first_name' => '<given_name>',
+            'last_name'  => '<family_name>',
+            'address'    => '<street_address>',
+            'title'      => '<title>',
+            'zip'        => '<postal_code>',
+            'city'       => '<locality>',
+            'country'    => '<country>',
+        ];
+
+        if ($table === 'fe_users') {
+            $setup = $this->getTypoScriptSetup();
+            if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'])) {
+                $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'];
+            }
+        }
+
+        return $mapping;
+    }
+
+    /**
+     * Returns TypoScript Setup array from current environment.
+     *
+     * @return array the raw TypoScript setup
+     */
+    protected function getTypoScriptSetup()
+    {
+        // Note: $GLOBALS['TSFE']->tmpl->setup is not yet available at this point
+
+        /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageRepository */
+        $pageRepository = GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\Page\PageRepository::class);
+        $pageRepository->init(false);
+
+        /** @var \TYPO3\CMS\Core\TypoScript\TemplateService $templateService */
+        $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\TemplateService::class);
+        $templateService->init();
+        $templateService->tt_track = false;
+
+        $rootLine = $pageRepository->getRootLine((int)$GLOBALS['TSFE']->id);
+        $templateService->start($rootLine);
+
+        $setup = $templateService->setup;
+        return $setup;
     }
 
     /**
