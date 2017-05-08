@@ -4,7 +4,13 @@
 		<header/>
 		<body>
 			<trans-unit id="settings.enableFrontendAuthentication">
-				<source>Frontend authentication: Enable OpenID Connect authentication for the frontend.</source>
+				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
+			</trans-unit>
+			<trans-unit id="settings.reEnableFrontendUsers">
+				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as "disabled" upon successful authentication.</source>
+			</trans-unit>
+			<trans-unit id="settings.undeleteFrontendUsers">
+				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as "deleted" upon successful authentication</source>
 			</trans-unit>
 
 			<trans-unit id="settings.oidcClientKey">

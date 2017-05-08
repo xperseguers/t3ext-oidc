@@ -1,6 +1,12 @@
 # cat=basic/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableFrontendAuthentication
 enableFrontendAuthentication = 0
 
+# cat=basic/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.reEnableFrontendUsers
+reEnableFrontendUsers = 0
+
+# cat=basic/enable/3; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.undeleteFrontendUsers
+undeleteFrontendUsers = 0
+
 # cat=basic//1; type=int; label=Storage Pid: The Storage Pid of the Page, where the fe_users should be stored
 usersStoragePid =
 

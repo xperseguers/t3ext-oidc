@@ -144,7 +144,16 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             'tx_oidc=' . (int)$info['contact_number']
         );
 
-        if ($row && (bool)$row['disable']) {
+        $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
+        $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
+
+        if ($row && (bool)$row['deleted'] && !$undeleteUser) {
+            // User was manually deleted, it should not get automatically restored
+            static::getLogger()->info('User was manually deleted, denying access', ['user' => $row]);
+
+            return false;
+        }
+        if ($row && (bool)$row['disable'] && !$reEnableUser) {
             // User was manually disabled, it should not get automatically re-enabled
             static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
 
@@ -167,6 +176,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             'zip' => $info['postal_code'],
             'city' => $info['locality'],
             'country' => $info['country'],
+            'deleted' => 0,
+            'disable' => 0,
         ];
 
         $newUsergroups = [];
