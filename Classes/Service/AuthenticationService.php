@@ -448,11 +448,19 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     /**
      * Returns TypoScript Setup array from current environment.
      *
+     * Note: $GLOBALS['TSFE']->tmpl->setup is not yet available at this point.
+     *
      * @return array the raw TypoScript setup
      */
     protected function getTypoScriptSetup()
     {
-        // Note: $GLOBALS['TSFE']->tmpl->setup is not yet available at this point
+        // This is needed for the PageRepository
+        $files = ['EXT:core/Configuration/TCA/pages.php'];
+        foreach ($files as $file) {
+            $file = GeneralUtility::getFileAbsFileName($file);
+            $table = substr($file, strrpos($file, '/') + 1, -4); // strip ".php" at the end
+            $GLOBALS['TCA'][$table] = include($file);
+        }
 
         /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageRepository */
         $pageRepository = GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\Page\PageRepository::class);
