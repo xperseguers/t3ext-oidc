@@ -423,6 +423,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     protected function getMapping($table)
     {
+        $mapping = [];
+
         $defaultMapping = [
             'username'   => '<contact_number>',
             'name'       => '<name>',
