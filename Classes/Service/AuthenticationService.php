@@ -444,7 +444,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             }
         }
 
-        return $mapping;
+        return $mapping ?: $defaultMapping;
     }
 
     /**
@@ -473,7 +473,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $templateService->init();
         $templateService->tt_track = false;
 
-        $rootLine = $pageRepository->getRootLine((int)$GLOBALS['TSFE']->id);
+        $currentPage = $GLOBALS['TSFE']->id;
+        if ($currentPage === null) {
+            // root page is not yet populated
+            $localTSFE = clone $GLOBALS['TSFE'];
+            $localTSFE->determineId();
+            $currentPage = $localTSFE->id;
+        }
+        $rootLine = $pageRepository->getRootLine((int)$currentPage);
         $templateService->start($rootLine);
 
         $setup = $templateService->setup;
