@@ -168,7 +168,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $data = $this->applyMapping(
             $userTable,
             $info,
-            $row,
+            $row ?: [],
             [
                 'password' => $hashedPassword,
                 'deleted' => 0,
