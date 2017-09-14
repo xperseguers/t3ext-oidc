@@ -428,13 +428,13 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $defaultMapping = [
             'username'   => '<contact_number>',
             'name'       => '<name>',
-            'first_name' => '<given_name>',
-            'last_name'  => '<family_name>',
-            'address'    => '<street_address>',
-            'title'      => '<title>',
-            'zip'        => '<postal_code>',
-            'city'       => '<locality>',
-            'country'    => '<country>',
+            'first_name' => '<Vorname>',
+            'last_name'  => '<FamilienName>',
+            'address'    => '<Strasse>',
+            'title'      => '<Anredecode>',
+            'zip'        => '<PLZ>',
+            'city'       => '<Ort>',
+            'country'    => '<Land>',
         ];
 
         if ($table === 'fe_users') {
