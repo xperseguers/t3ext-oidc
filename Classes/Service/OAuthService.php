@@ -141,7 +141,7 @@ class OAuthService
                 'urlAuthorize' => $this->settings['oidcEndpointAuthorize'],
                 'urlAccessToken' => $this->settings['oidcEndpointToken'],
                 'urlResourceOwnerDetails' => $this->settings['oidcEndpointUserInfo'],
-                'scopes' => ['openid'],
+                'scopes' => $this->settings['oidcScopes'],
             ]);
         }
 
