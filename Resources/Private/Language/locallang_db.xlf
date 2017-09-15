@@ -12,13 +12,15 @@
 			<trans-unit id="settings.undeleteFrontendUsers">
 				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as "deleted" upon successful authentication</source>
 			</trans-unit>
-
 			<trans-unit id="settings.oidcClientKey">
 				<source>Client Key</source>
 			</trans-unit>
 			<trans-unit id="settings.oidcClientSecret">
 				<source>Client Secret:</source>
 			</trans-unit>
+			<trans-unit id="settings.oidcClientScopes">
+				<source>Client Scopes:</source>
+			</trans-unit>">
 			<trans-unit id="settings.oidcEndpointAuthorize">
 				<source>Endpoint URI for authorization</source>
 			</trans-unit>
@@ -37,7 +39,6 @@
 			<trans-unit id="settings.oidcDisableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 			</trans-unit>
-
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
 			</trans-unit>
