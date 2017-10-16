@@ -151,7 +151,7 @@ class OAuthService
                 'urlAuthorize' => $this->settings['oidcEndpointAuthorize'],
                 'urlAccessToken' => $this->settings['oidcEndpointToken'],
                 'urlResourceOwnerDetails' => $this->settings['oidcEndpointUserInfo'],
-                'scopes' => $this->settings['oidcScopes'],
+                'scopes' => GeneralUtility::trimExplode(',', $this->settings['oidcClientScopes'], true),
             ]);
         }
 

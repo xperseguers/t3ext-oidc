@@ -65,7 +65,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         $params = GeneralUtility::_GET('tx_oidc');
         if (!empty($params['code'])) {
-            $user = $this->authenticateWithAuhorizationCode();
+            $user = $this->authenticateWithAuhorizationCode($params['code']);
         } elseif (!(empty($this->login['uname']) || empty($this->login['uident_text']))) {
             $user = $this->authenticateWithResourceOwnerPasswordCredentials($this->login['uname'], $this->login['uident_text']);
         }
@@ -125,6 +125,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         try {
             static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
             $accessToken = $service->getAccessToken($username, $password);
+            static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             static::getLogger()->error('Authentication has been refused by the authentication server', [
                 'message' => $e->getMessage(),

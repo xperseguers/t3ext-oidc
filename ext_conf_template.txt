@@ -20,7 +20,7 @@ oidcClientKey =
 oidcClientSecret =
 
 # cat=basic//5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientScopes
-oidcClientScopes = oidc
+oidcClientScopes = openid
 
 # cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointAuthorize
 oidcEndpointAuthorize = https://ids02.sac-cas.ch/oauth2/authorize
