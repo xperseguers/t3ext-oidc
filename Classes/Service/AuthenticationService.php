@@ -16,6 +16,7 @@ namespace Causal\Oidc\Service;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
+use Causal\Oidc\Service\OAuthService;
 
 /**
  * OpenID Connect authentication service.
@@ -60,31 +61,90 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     public function getUser()
     {
+        $user = false;
+
         $params = GeneralUtility::_GET('tx_oidc');
-        if (empty($params['code'])) {
-            return false;
+        if (!empty($params['code'])) {
+            $user = $this->authenticateWithAuhorizationCode();
+        } elseif (!(empty($this->login['uname']) || empty($this->login['uident_text']))) {
+            $user = $this->authenticateWithResourceOwnerPasswordCredentials($this->login['uname'], $this->login['uident_text']);
         }
 
+        return $user;
+    }
+
+    /**
+     * Authenticates a user using authorization code grant.
+     *
+     * @param string $code
+     * @return array
+     * @throws \RuntimeException
+     */
+    protected function authenticateWithAuhorizationCode($code)
+    {
         static::getLogger()->debug('Initializing OpenID Connect service');
 
-        /** @var \Causal\Oidc\Service\OAuthService $service */
-        $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
+        /** @var OAuthService $service */
+        $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->config);
 
         // Try to get an access token using the authorization code grant
         try {
             static::getLogger()->debug('Retrieving an access token');
-            $accessToken = $service->getAccessToken($params['code']);
+            $accessToken = $service->getAccessToken($code);
             static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
             static::getLogger()->error('Code has been refused by the authentication server', [
-                'code' => $params['code'],
+                'code' => $code,
                 'message' => $e->getMessage(),
             ]);
             throw new \RuntimeException('The code has been refused by the authentication server. Maybe it was used twice.', 1489743507);
         }
 
+        $user = $this->getUserFromAccessToken($service, $accessToken);
+        return $user;
+    }
+
+    /**
+     * Authenticates a user using resource owner password credentials grant.
+     *
+     * @param string $username
+     * @param string $password
+     * @return array
+     */
+    protected function authenticateWithResourceOwnerPasswordCredentials($username, $password)
+    {
+        static::getLogger()->debug('Initializing OpenID Connect service');
+
+        /** @var OAuthService $service */
+        $service = GeneralUtility::makeInstance(OAuthService::class);
+        $service->setSettings($this->config);
+
+        // Try to get an access token using the resource owner password credentials grant
+        try {
+            static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
+            $accessToken = $service->getAccessToken($username, $password);
+        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+            static::getLogger()->error('Authentication has been refused by the authentication server', [
+                'message' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('The credentials have been refused by the authentication server.', 1508143610);
+        }
+
+        $user = $this->getUserFromAccessToken($service, $accessToken);
+        return $user;
+    }
+
+    /**
+     * Looks up a TYPO3 user from an access token.
+     *
+     * @param OAuthService $service
+     * @param string $accessToken
+     * @return array
+     */
+    protected function getUserFromAccessToken(OAuthService $service, $accessToken)
+    {
         // Using the access token, we may look up details about the resource owner
         $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
         static::getLogger()->debug('Resource owner retrieved', $resourceOwner);
@@ -98,7 +158,6 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             );
         }
         $user = $this->convertResourceOwner($resourceOwner);
-
         return $user;
     }
 
