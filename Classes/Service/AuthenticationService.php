@@ -77,8 +77,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Authenticates a user using authorization code grant.
      *
      * @param string $code
-     * @return array
-     * @throws \RuntimeException
+     * @return array|bool
      */
     protected function authenticateWithAuhorizationCode($code)
     {
@@ -95,11 +94,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
-            static::getLogger()->error('Code has been refused by the authentication server', [
+            static::getLogger()->error('Possibly replay: code has been refused by the authentication server', [
                 'code' => $code,
                 'message' => $e->getMessage(),
             ]);
-            throw new \RuntimeException('The code has been refused by the authentication server. Maybe it was used twice.', 1489743507);
+            return false;
         }
 
         $user = $this->getUserFromAccessToken($service, $accessToken);
@@ -111,7 +110,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      *
      * @param string $username
      * @param string $password
-     * @return array
+     * @return array|bool
      */
     protected function authenticateWithResourceOwnerPasswordCredentials($username, $password)
     {
@@ -128,9 +127,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             static::getLogger()->error('Authentication has been refused by the authentication server', [
+                'username' => $username,
                 'message' => $e->getMessage(),
             ]);
-            throw new \RuntimeException('The credentials have been refused by the authentication server.', 1508143610);
+            return false;
         }
 
         $user = $this->getUserFromAccessToken($service, $accessToken);
