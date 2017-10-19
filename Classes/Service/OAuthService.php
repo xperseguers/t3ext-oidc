@@ -89,6 +89,8 @@ class OAuthService
             $accessToken = $this->getProvider()->getAccessToken('password', [
                 'username' => $codeOrUsername,
                 'password' => $password,
+                // Oddly, the client does not send scope along automatically but WSO2 expects it anyway...
+                'scope' => implode(',', $this->getProvider()->getDefaultScopes()),
             ]);
         }
         return $accessToken;

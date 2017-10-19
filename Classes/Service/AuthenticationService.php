@@ -142,13 +142,21 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      *
      * @param OAuthService $service
      * @param string $accessToken
-     * @return array
+     * @return array|bool
      */
     protected function getUserFromAccessToken(OAuthService $service, $accessToken)
     {
         // Using the access token, we may look up details about the resource owner
-        $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
-        static::getLogger()->debug('Resource owner retrieved', $resourceOwner);
+        try {
+            static::getLogger()->debug('Retrieving resource owner');
+            $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
+            static::getLogger()->debug('Resource owner retrieved', $resourceOwner);
+        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+            static::getLogger()->error('Could not retrieve resource owner', [
+                'message' => $e->getMessage(),
+            ]);
+            return false;
+        }
         if (empty($resourceOwner['contact_number'])) {
             static::getLogger()->error('No "contact_number" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
