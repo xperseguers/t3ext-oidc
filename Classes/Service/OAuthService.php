@@ -72,16 +72,26 @@ class OAuthService
     }
 
     /**
-     * Returns an AccessToken.
+     * Returns an AccessToken using either authorization code grant or resource owner password
+     * credentials grant.
      *
-     * @param string $code
+     * @param string $codeOrUsername Either a code or the username (if password is provided)
+     * @param string $password Optional parameter if authenticating with authorization code grant
      * @return AccessToken
      */
-    public function getAccessToken($code)
+    public function getAccessToken($codeOrUsername, $password = null)
     {
-        return $this->getProvider()->getAccessToken('authorization_code', [
-            'code' => $code,
-        ]);
+        if ($password === null) {
+            $accessToken = $this->getProvider()->getAccessToken('authorization_code', [
+                'code' => $codeOrUsername,
+            ]);
+        } else {
+            $accessToken = $this->getProvider()->getAccessToken('password', [
+                'username' => $codeOrUsername,
+                'password' => $password,
+            ]);
+        }
+        return $accessToken;
     }
 
     /**
@@ -141,7 +151,7 @@ class OAuthService
                 'urlAuthorize' => $this->settings['oidcEndpointAuthorize'],
                 'urlAccessToken' => $this->settings['oidcEndpointToken'],
                 'urlResourceOwnerDetails' => $this->settings['oidcEndpointUserInfo'],
-                'scopes' => $this->settings['oidcScopes'],
+                'scopes' => GeneralUtility::trimExplode(',', $this->settings['oidcClientScopes'], true),
             ]);
         }
 
