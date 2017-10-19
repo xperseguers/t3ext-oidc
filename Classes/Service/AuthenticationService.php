@@ -64,10 +64,15 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $user = false;
 
         $params = GeneralUtility::_GET('tx_oidc');
-        if (!empty($params['code'])) {
-            $user = $this->authenticateWithAuhorizationCode($params['code']);
-        } elseif (!(empty($this->login['uname']) || empty($this->login['uident_text']))) {
-            $user = $this->authenticateWithResourceOwnerPasswordCredentials($this->login['uname'], $this->login['uident_text']);
+
+        $code = $params['code'] ?? null;
+        $username = $this->login['uname'] ?? null;
+        $password = $this->login['uident_text'] ?? $this->login['uident'] ?? null;
+
+        if ($code !== null) {
+            $user = $this->authenticateWithAuhorizationCode($code);
+        } elseif ($username !== null && $password !== null) {
+            $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
         }
 
         return $user;
