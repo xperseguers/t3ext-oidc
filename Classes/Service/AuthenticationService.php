@@ -65,9 +65,16 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         $params = GeneralUtility::_GET('tx_oidc');
 
-        $code = $params['code'] ?? null;
-        $username = $this->login['uname'] ?? null;
-        $password = $this->login['uident_text'] ?? $this->login['uident'] ?? null;
+        $code = isset($params['code']) ? $params['code'] : null;
+        $username = isset($this->login['uname']) ? $this->login['uname'] : null;
+
+        if (isset($this->login['uident_text'])) {
+                $password = $this->login['uident_text'];
+        } else if (isset($this->login['uident'])) {
+                $password = $this->login['uident'];
+        } else {
+                $password = null;
+        }
 
         if ($code !== null) {
             $user = $this->authenticateWithAuhorizationCode($code);
