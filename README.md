@@ -10,6 +10,36 @@ secret.
 
 ## Configuring
 
+### Mapping Frontend User Fields
+
+- Configuration is done through TypoScript within `plugin.tx_oidc.mapping.fe_users`
+- OIDC attributes will be recognized by the specific characters `<>`:
+
+  ```
+  email = <mail>
+  ```
+
+- You may combine multiple markers as well, e.g.,
+
+  ```
+  name = <family_name>, <given_name>
+  ```
+
+- Support for [stdWrap](https://docs.typo3.org/typo3cms/TyposcriptReference/Functions/Stdwrap/Index.html) in field
+  definition, e.g.,
+
+  ```
+  name = <name>
+  name.wrap = |-OIDC
+  ```
+
+- Support for [TypoScript "split"](https://docs.typo3.org/typo3cms/TyposcriptReference/Functions/Stdwrap/Index.html#data)
+  (`//`). This will check multiple field names and return the first one yielding some non-empty value. E.g.,
+
+  ```
+  username = <contact_number> // <emailaddress> // <benutzername>
+  ```
+
 ### Mapping Frontend User Groups
 
 - Create your groups within TYPO3
@@ -31,7 +61,7 @@ By default, with a vanilla TYPO3 installation, messages are written to the defau
 (`typo3temp/logs/typo3_*.log`).
 
 
-### Dedicated log file for OpenID Connect
+### Dedicated Log File for OpenID Connect
 
 If you want to redirect every logging information from this extension to `typo3temp/logs/oidc.log` and send log
 entries with level "WARNING" or above to the system log, you may add following configuration to

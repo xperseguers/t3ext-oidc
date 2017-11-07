@@ -470,6 +470,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * @throws \UnexpectedValueException
      * @see \Causal\IgLdapSsoAuth\Library\Authentication::mergeSimple()
      * @see \Causal\IgLdapSsoAuth\Library\Authentication::replaceLdapMarkers()
+     * @see \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::getFieldVal()
      */
     protected function mergeSimple(array $oidc, array $typo3, $field, $value)
     {
@@ -477,19 +478,34 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $mappedValue = $value;
 
         if (preg_match("`<([^$]*)>`", $value, $attribute)) {    // OIDC attribute
-            preg_match_all('/<(.+?)>/', $value, $matches);
+            $sections = !strstr($value, '//')
+                ? [$value]
+                : GeneralUtility::trimExplode('//', $value, true);
+            $mappedValue = '';
+            foreach ($sections as $sectionKey => $sectionValue) {
+                preg_match_all('/<(.+?)>/', $sectionValue, $matches);
 
-            foreach ($matches[0] as $index => $fullMatchedMarker) {
-                $oidcProperty = strtolower($matches[1][$index]);
+                foreach ($matches[0] as $index => $fullMatchedMarker) {
+                    $oidcProperty = strtolower($matches[1][$index]);
 
-                if (isset($oidc[$oidcProperty])) {
-                    $oidcValue = $oidc[$oidcProperty];
-                    if (is_array($oidcValue)) {
-                        $oidcValue = $oidcValue[0];
+                    if (isset($oidc[$oidcProperty])) {
+                        $oidcValue = $oidc[$oidcProperty];
+                        if (is_array($oidcValue)) {
+                            $oidcValue = $oidcValue[0];
+                        }
+                        $sectionValue = str_replace($fullMatchedMarker, $oidcValue, $sectionValue);
+                    } else {
+                        $sectionValue = str_replace($fullMatchedMarker, '', $sectionValue);
                     }
-                    $mappedValue = str_replace($fullMatchedMarker, $oidcValue, $mappedValue);
-                } else {
-                    $mappedValue = str_replace($fullMatchedMarker, '', $mappedValue);
+                }
+
+                $sections[$sectionKey] = $sectionValue;
+            }
+
+            foreach ($sections as $sectionValue) {
+                if ($sectionValue !== '') {
+                    $mappedValue = $sectionValue;
+                    break;
                 }
             }
         }
