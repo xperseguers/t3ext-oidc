@@ -97,6 +97,58 @@ class OAuthService
     }
 
     /**
+     * Returns an AccessToken using request path authentication.
+     *
+     * This non-standard behaviour is described on
+     * https://docs.wso2.com/display/IS530/Try+Password+Grant
+     *
+     * @param string $username
+     * @param string $password
+     * @return AccessToken
+     */
+    public function getAccessTokenWithRequestPathAuthentication($username, $password)
+    {
+        $redirectUri = GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST') . '/typo3conf/ext/oidc/callback.php';
+        $url = $this->settings['oidcEndpointAuthorize'] . '?'. http_build_query([
+            'response_type' => 'code',
+            'client_id' => $this->settings['oidcClientKey'],
+            'scope' => $this->settings['oidcClientScopes'],
+            'redirect_uri' => $redirectUri,
+        ]);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Basic ' . base64_encode($username . ':' . $password),
+        ]);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        $content = curL_exec($ch);
+
+        if ($content === false) {
+            throw new \RuntimeException('Curl ERROR: ' . curl_error($ch), 1510049345);
+        }
+        curl_close($ch);
+
+        $headers = explode(LF, $content);
+        foreach ($headers as $header) {
+            list($key, $value) = GeneralUtility::trimExplode(':', $header, false, 2);
+            if ($key === 'Location') {
+                $queryParams = explode('&', substr($value, strpos($value, '?') + 1));
+                foreach ($queryParams as $param) {
+                    list($key, $value) = explode('=', $param, 2);
+                    if ($key === 'code') {
+                        return $this->getAccessToken($value);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Returns the resource owner.
      *
      * @param AccessToken $token

@@ -36,6 +36,9 @@
 			<trans-unit id="settings.oidcEndpointRevoke">
 				<source>Endpoint URI for revoking the token</source>
 			</trans-unit>
+			<trans-unit id="settings.oidcUseRequestPathAuthentication">
+				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
+			</trans-unit>
 			<trans-unit id="settings.oidcDisableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 			</trans-unit>
