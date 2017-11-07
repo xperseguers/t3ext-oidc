@@ -78,7 +78,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         if ($code !== null) {
             $user = $this->authenticateWithAuhorizationCode($code);
-        } elseif ($username !== null && $password !== null) {
+        } elseif (!(empty($username) || empty($password))) {
             $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
         }
 
@@ -132,10 +132,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->config);
 
-        // Try to get an access token using the resource owner password credentials grant
         try {
-            static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
-            $accessToken = $service->getAccessToken($username, $password);
+            if ((bool)$this->config['oidcUseRequestPathAuthentication']) {
+                static::getLogger()->debug('Retrieving an access token using request path authentication');
+                $accessToken = $service->getAccessTokenWithRequestPathAuthentication($username, $password);
+            } else {
+                static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
+                $accessToken = $service->getAccessToken($username, $password);
+            }
             static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             static::getLogger()->error('Authentication has been refused by the authentication server', [
