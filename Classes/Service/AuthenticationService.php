@@ -124,6 +124,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     protected function authenticateWithResourceOwnerPasswordCredentials($username, $password)
     {
+        $user = false;
         static::getLogger()->debug('Initializing OpenID Connect service');
 
         /** @var OAuthService $service */
@@ -138,16 +139,17 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
                 $accessToken = $service->getAccessToken($username, $password);
             }
-            static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
+            if ($accessToken !== null) {
+                static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
+                $user = $this->getUserFromAccessToken($service, $accessToken);
+            }
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             static::getLogger()->error('Authentication has been refused by the authentication server', [
                 'username' => $username,
                 'message' => $e->getMessage(),
             ]);
-            return false;
         }
 
-        $user = $this->getUserFromAccessToken($service, $accessToken);
         return $user;
     }
 
