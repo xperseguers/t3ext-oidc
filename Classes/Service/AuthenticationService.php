@@ -62,18 +62,16 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     public function getUser()
     {
         $user = false;
-
         $params = GeneralUtility::_GET('tx_oidc');
-
         $code = isset($params['code']) ? $params['code'] : null;
         $username = isset($this->login['uname']) ? $this->login['uname'] : null;
 
         if (isset($this->login['uident_text'])) {
-                $password = $this->login['uident_text'];
-        } else if (isset($this->login['uident'])) {
-                $password = $this->login['uident'];
+            $password = $this->login['uident_text'];
+        } elseif (isset($this->login['uident'])) {
+            $password = $this->login['uident'];
         } else {
-                $password = null;
+            $password = null;
         }
 
         if ($code !== null) {
