@@ -173,11 +173,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             ]);
             return false;
         }
-        if (empty($resourceOwner['contact_number'])) {
-            static::getLogger()->error('No "contact_number" found in resource owner, revoking access token');
+        if (empty($resourceOwner['sub'])) {
+            static::getLogger()->error('No "sub" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
             throw new \RuntimeException(
-                'Resource owner does not have a contact number: ' . json_encode($resourceOwner)
+                'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
                     . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
@@ -225,7 +225,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $row = $database->exec_SELECTgetSingleRow(
             '*',
             $userTable,
-            'tx_oidc=' . (int)$info['contact_number']
+            'tx_oidc=' . $database->fullQuoteStr($info['sub'], $userTable)
         );
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
@@ -330,7 +330,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'pid' => $this->config['usersStoragePid'],
                 'usergroup' => implode(',', $newUsergroups),
                 'crdate' => $GLOBALS['EXEC_TIME'],
-                'tx_oidc' => (int)$info['contact_number'],
+                'tx_oidc' => $info['sub'],
             ]);
             $database->exec_INSERTquery(
                 $userTable,
@@ -526,7 +526,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $mapping = [];
 
         $defaultMapping = [
-            'username'   => '<contact_number>',
+            'username'   => '<sub>',
             'name'       => '<name>',
             'first_name' => '<Vorname>',
             'last_name'  => '<FamilienName>',

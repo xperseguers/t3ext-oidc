@@ -37,7 +37,7 @@ secret.
   (`//`). This will check multiple field names and return the first one yielding some non-empty value. E.g.,
 
   ```
-  username = <contact_number> // <emailaddress> // <benutzername>
+  username = <sub> // <contact_number> // <emailaddress> // <benutzername>
   ```
 
 ### Mapping Frontend User Groups
