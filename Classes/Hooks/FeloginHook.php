@@ -180,7 +180,7 @@ class FeloginHook
      * @param int $lifetime
      * @return mixed
      */
-    protected function getWellKnownConfig(string $wellKnownUrl, int $lifetime)
+    protected function getWellKnownConfig($wellKnownUrl, $lifetime = 86400)
     {
         $cache_path = PATH_site . 'typo3temp/';
         $filename = $cache_path . md5(ExtensionManagementUtility::extPath('oidc'));

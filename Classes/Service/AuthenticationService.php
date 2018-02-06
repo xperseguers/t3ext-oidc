@@ -18,6 +18,7 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use Causal\Oidc\Service\OAuthService;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 /**
  * OpenID Connect authentication service.
@@ -271,7 +272,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $newUsergroups = [];
         $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup'], true);
 
-        if ($row) {
+        if ($row && !$this->config['overrideNonOIDCRoles']) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
             if (!empty($currentUserGroups)) {
                 $oidcUserGroups = $database->exec_SELECTgetRows(
@@ -343,6 +344,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'usergroup' => implode(',', $newUsergroups),
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => $info['sub'],
+                'tx_extbase_type' => $this->config['usersExtbaseType']
             ]);
             $database->exec_INSERTquery(
                 $userTable,
@@ -650,7 +652,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * @param int $lifetime
      * @return mixed
      */
-    protected function getWellKnownConfig(string $wellKnownUrl, int $lifetime)
+    protected function getWellKnownConfig($wellKnownUrl, $lifetime)
     {
         $cache_path = PATH_site . 'typo3temp/';
         $filename = $cache_path . md5(ExtensionManagementUtility::extPath('oidc'));
