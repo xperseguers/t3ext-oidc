@@ -14,6 +14,7 @@
 
 namespace Causal\Oidc\Hooks;
 
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -25,6 +26,7 @@ class FeloginHook
     /**
      * @param array $params
      * @param \TYPO3\CMS\Felogin\Controller\FrontendLoginController $pObj
+     * @return string
      */
     public function postProcContent(array $params, \TYPO3\CMS\Felogin\Controller\FrontendLoginController $pObj)
     {
@@ -32,7 +34,10 @@ class FeloginHook
         static::getLogger()->debug('Post-processing markers for felogin form', ['request' => $requestId]);
         $markerArray['###OPENID_CONNECT###'] = '';
 
-        $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
+        $extConf = isset($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc'])
+            ? unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc'])
+            : [];
+        $settings = $this->getConfig($extConf);
 
         if (empty($settings['oidcClientKey'])
             || empty($settings['oidcClientSecret'])
@@ -133,6 +138,60 @@ class FeloginHook
         $uniqueId = sprintf('%08x', abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] . $_SERVER['REMOTE_PORT'])));
 
         return $uniqueId;
+    }
+
+    /**
+     * Returns the extension config and tries to override endpoints if /.well-known/configuration exists on
+     * the issuer's side.
+     *
+     * @param array $config
+     * @return array
+     */
+    protected function getConfig(array $config)
+    {
+        $extConfig = $config;
+
+        if(isset($extConfig['oidcConfigUrl'])) {
+            try {
+                $wellKnownConfig = $this->getWellKnownConfig(
+                    $extConfig['oidcConfigUrl'],
+                    (int)$extConfig['oidcWellKnownCacheLifetime']
+                );
+                $extConfig['oidcEndpointAuthorize'] = $wellKnownConfig['authorization_endpoint'];
+                $extConfig['oidcEndpointToken'] = $wellKnownConfig['token_endpoint'];
+                $extConfig['oidcEndpointUserInfo'] = $wellKnownConfig['userinfo_endpoint'];
+                $extConfig['oidcEndpointRevoke'] = $wellKnownConfig['revocation_endpoint'];
+                $extConfig['oidcEndpointLogout'] = $wellKnownConfig['end_session_endpoint'];
+            } catch (\Exception $e) {
+                static::getLogger()->error('Could not process Well-Known Config', [
+                    'message' => $e->getMessage(),
+                ]);
+                $extConfig = $config;
+            }
+        }
+
+        return $extConfig;
+    }
+
+    /**
+     * Get cached config from /.well-known/configuration URL, refreshes daily
+     *
+     * @param string $wellKnownUrl
+     * @param int $lifetime
+     * @return mixed
+     */
+    protected function getWellKnownConfig($wellKnownUrl, $lifetime = 86400)
+    {
+        $cache_path = PATH_site . 'typo3temp/';
+        $filename = $cache_path . md5(ExtensionManagementUtility::extPath('oidc'));
+
+        if(file_exists($filename) && (time() - $lifetime < filemtime($filename))) {
+            return json_decode(file_get_contents($filename), true);
+        } else {
+            $data = file_get_contents($wellKnownUrl);
+            file_put_contents($filename, $data);
+            return json_decode($data, true);
+        }
     }
 
     /**

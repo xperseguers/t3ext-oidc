@@ -12,6 +12,18 @@
 			<trans-unit id="settings.undeleteFrontendUsers">
 				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as "deleted" upon successful authentication</source>
 			</trans-unit>
+			<trans-unit id="settings.overrideNonOIDCRoles">
+				<source>Override all non OIDC Roles: If ticked, all manually added user groups will be overridden by the oidc roles mapping</source>
+			</trans-unit>
+			<trans-unit id="settings.defaultUserExtbaseType">
+				<source>Default User Extbase Type</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcConfigUrl">
+				<source>Config URL (usually /.well-known/configuration) - leave empty for manual configuration:</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcWellKnownCacheLifetime">
+				<source>Cache lifetime(in seconds) for /.well-known/configuration:</source>
+			</trans-unit>
 			<trans-unit id="settings.oidcClientKey">
 				<source>Client Key</source>
 			</trans-unit>
@@ -35,6 +47,9 @@
 			</trans-unit>
 			<trans-unit id="settings.oidcEndpointRevoke">
 				<source>Endpoint URI for revoking the token</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcRolesClaim">
+				<source>Custom roles claim - default is "Roles"</source>
 			</trans-unit>
 			<trans-unit id="settings.oidcUseRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>

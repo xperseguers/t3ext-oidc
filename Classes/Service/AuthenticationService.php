@@ -14,9 +14,11 @@
 
 namespace Causal\Oidc\Service;
 
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use Causal\Oidc\Service\OAuthService;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 /**
  * OpenID Connect authentication service.
@@ -45,12 +47,19 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
+     * @var array
+     */
+    private $config;
+
+    /**
      * AuthenticationService constructor.
      */
     public function __construct()
     {
-        $config = $GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc'];
-        $this->config = $config ? unserialize($config) : [];
+        $extConf = isset($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc'])
+            ? unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc'])
+            : [];
+        $this->config = $this->getConfig($extConf);
     }
 
     /**
@@ -178,7 +187,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $service->revokeToken($accessToken);
             throw new \RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
-                    . '. Your access token has been revoked. Please try again.',
+                . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
@@ -189,7 +198,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     /**
      * Authenticate a user
      *
-     * @oaram array $user
+     * @param array $user
      * @return int
      */
     public function authUser(array $user)
@@ -207,7 +216,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Converts a resource owner into a TYPO3 Frontend user.
      *
      * @param array $info
-     * @return array
+     * @return array|bool
      * @throws \InvalidArgumentException
      */
     protected function convertResourceOwner(array $info)
@@ -263,7 +272,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $newUsergroups = [];
         $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup'], true);
 
-        if ($row) {
+        if ($row && !$this->config['overrideNonOIDCRoles']) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
             if (!empty($currentUserGroups)) {
                 $oidcUserGroups = $database->exec_SELECTgetRows(
@@ -281,14 +290,18 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         // Map OIDC roles to TYPO3 user groups
-        if (!empty($info['Roles'])) {
+        if (!empty($info[$this->config['oidcRolesClaim']])) {
+            $roles = $info[$this->config['oidcRolesClaim']];
             $typo3Roles = $database->exec_SELECTgetRows(
                 'uid, tx_oidc_pattern',
                 $userGroupTable,
                 'tx_oidc_pattern<>\'\' AND hidden=0 AND deleted=0'
             );
-            $roles = GeneralUtility::trimExplode(',', $info['Roles'], true);
-            $roles = ',' . implode(',', $roles) . ',';
+
+            if(!is_array($roles)) {
+                $roles = GeneralUtility::trimExplode(',', $roles, true);
+            }
+            $roles = ',' . implode(',', $info[$this->config['oidcRolesClaim']]) . ',';
 
             foreach ($typo3Roles as $typo3Role) {
                 // Convert the pattern into a proper regular expression
@@ -331,6 +344,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'usergroup' => implode(',', $newUsergroups),
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => $info['sub'],
+                'tx_extbase_type' => $this->config['usersExtbaseType']
             ]);
             $database->exec_INSERTquery(
                 $userTable,
@@ -596,6 +610,60 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     protected function getDatabaseConnection()
     {
         return $GLOBALS['TYPO3_DB'];
+    }
+
+    /**
+     * Returns the extension config and tries to override endpoints if /.well-known/configuration exists on
+     * the issuer's side.
+     *
+     * @param array $config
+     * @return array
+     */
+    protected function getConfig(array $config)
+    {
+        $extConfig = $config;
+
+        if(isset($extConfig['oidcConfigUrl'])) {
+            try {
+                $wellKnownConfig = $this->getWellKnownConfig(
+                    $extConfig['oidcConfigUrl'],
+                    (int)$extConfig['oidcWellKnownCacheLifetime']
+                );
+                $extConfig['oidcEndpointAuthorize'] = $wellKnownConfig['authorization_endpoint'];
+                $extConfig['oidcEndpointToken'] = $wellKnownConfig['token_endpoint'];
+                $extConfig['oidcEndpointUserInfo'] = $wellKnownConfig['userinfo_endpoint'];
+                $extConfig['oidcEndpointRevoke'] = $wellKnownConfig['revocation_endpoint'];
+                $extConfig['oidcEndpointLogout'] = $wellKnownConfig['end_session_endpoint'];
+            } catch (\Exception $e) {
+                static::getLogger()->error('Could not process Well-Known Config', [
+                    'message' => $e->getMessage(),
+                ]);
+                $extConfig = $config;
+            }
+        }
+
+        return $extConfig;
+    }
+
+    /**
+     * Get cached config from /.well-known/configuration URL depending on lifetime
+     *
+     * @param string $wellKnownUrl
+     * @param int $lifetime
+     * @return mixed
+     */
+    protected function getWellKnownConfig($wellKnownUrl, $lifetime)
+    {
+        $cache_path = PATH_site . 'typo3temp/';
+        $filename = $cache_path . md5(ExtensionManagementUtility::extPath('oidc'));
+
+        if(file_exists($filename) && (time() - $lifetime < filemtime($filename))) {
+            return json_decode(file_get_contents($filename), true);
+        } else {
+            $data = file_get_contents($wellKnownUrl);
+            file_put_contents($filename, $data);
+            return json_decode($data, true);
+        }
     }
 
     /**
