@@ -36,3 +36,8 @@ plugin.tx_oidc.mapping {
         country    = <country>
     }
 }
+
+plugin.tx_oidc_login {
+    userFunc = Causal\Oidc\Controller\LoginController->login
+    defaultRedirectPid =
+}
