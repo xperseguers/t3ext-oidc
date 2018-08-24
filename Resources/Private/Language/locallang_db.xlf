@@ -21,6 +21,9 @@
 			<trans-unit id="settings.oidcClientScopes">
 				<source>Client Scopes:</source>
 			</trans-unit>">
+			<trans-unit id="settings.oidcAuthorizeLanguageParameter">
+				<source>Authorize request language parameter name</source>
+			</trans-unit>
 			<trans-unit id="settings.oidcEndpointAuthorize">
 				<source>Endpoint URI for authorization</source>
 			</trans-unit>
@@ -45,6 +48,7 @@
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
 			</trans-unit>
+
 		</body>
 	</file>
 </xliff>
