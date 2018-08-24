@@ -51,11 +51,21 @@ class OAuthService
     /**
      * Returns the authorization URL.
      *
+     * @param array $options
      * @return string
      */
-    public function getAuthorizationUrl()
+    public function getAuthorizationUrl(array $options = [])
     {
-        $authorizationUrl = $this->getProvider()->getAuthorizationUrl();
+        if (! empty($this->settings['oidcAuthorizeLanguageParameter'])) {
+            $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
+
+            if (isset($GLOBALS['TSFE']->lang)) {
+                $frontendLanguage = $GLOBALS['TSFE']->lang;
+                $options[$languageOption] = $frontendLanguage;
+            }
+        }
+
+        $authorizationUrl = $this->getProvider()->getAuthorizationUrl($options);
 
         return $authorizationUrl;
     }
