@@ -10,15 +10,15 @@ secret.
 
 ## Default FE Loginbox
 
-This extension integrations with the felogin systemextension and provides a new marker ###OPENID_CONNECT### to be used 
-in the felogin template. A sample template is included. Once the users clicks the new openid connect link, he/she will 
-redirected to the ids server. 
+This extension integrates with the system extension 'felogin' and provides a new marker ###OPENID_CONNECT### to be used 
+in the felogin template. A sample template is included. The marker will be replaced by a login link, pointing to the 
+authorization endpoint of the authorization server. 
 
 ## OIDC Login
 
-If openid_connect is your only means of fe login, you can use the included "OIDC Login" plugin. Add it to your login 
-page, where you would normally add the felogin box. After adding the OIDC Login plugin, requests to the login page will
-immediately be redirected to the authorization server.
+If openid_connect is your only means of frontend login, you can use the included "OIDC Login" plugin. Add it to your 
+login page, where you would normally add the felogin box. After adding the OIDC Login plugin, requests to the login 
+page will immediately be redirected to the authorization server.
 
 After the login process, the user will be redirected:
 * The OIDC Login supports the same redirect_url parameter as the felogin box

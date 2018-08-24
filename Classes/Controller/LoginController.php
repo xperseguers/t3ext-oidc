@@ -1,13 +1,22 @@
 <?php
-
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
 
 namespace Causal\Oidc\Controller;
-
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
-use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 class LoginController
 {
@@ -26,12 +35,9 @@ class LoginController
     protected $pluginConfiguration;
 
     /**
-     * @var ContentObjectRenderer
-     *
-     * Will be injected automatically, if this controller is called as a plugin
+     * @var ContentObjectRenderer will automatically be injected, if this controller is called as a plugin
      */
     public $cObj;
-
 
     public function __construct()
     {
@@ -39,25 +45,25 @@ class LoginController
     }
 
     /**
-     * @param string $_ ignored
-     * @param array|null $pluginConfiguration
-     *
      * Main entry point for the OIDC plugin.
      *
      * If the user is not logged in, redirect to the authorization server to start the oidc process
      *
      * If the user has just been logged in and just came back from the authorization server, redirect the user to the
      * final redirect URL.
+     *
+     * @param string $_ ignored
+     * @param array|null $pluginConfiguration
      */
-    public function login($_ = '', ?array $pluginConfiguration)
+    public function login($_ = '', $pluginConfiguration)
     {
-        if (!empty($pluginConfiguration)) {
+        if (is_array($pluginConfiguration)) {
             $this->pluginConfiguration = $pluginConfiguration;
         }
 
         if (GeneralUtility::_GP('logintype') == 'login') {
-            $this->performRedirectAfterLogin();
             // performRedirectAfterLogin stops flow by emitting a redirect
+            $this->performRedirectAfterLogin();
         }
 
         $this->performRedirectToLogin();
@@ -77,7 +83,7 @@ class LoginController
 
         $state = $service->getState();
         $_SESSION['oidc_state'] = $state;
-        $_SESSION['oidc_login_url'] = $_SERVER['REQUEST_URI'];
+        $_SESSION['oidc_login_url'] = GeneralUtility::getIndpEnv('REQUEST_URI');
         $_SESSION['oidc_authorization_url'] = $authorizationUrl;
         unset($_SESSION['oidc_redirect_url']); // The redirect will be handled by this plugin
 
