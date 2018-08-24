@@ -8,6 +8,25 @@ If you are a Swiss Alpine Club section, be sure to get in touch with Bern in ord
 secret.
 
 
+## Default FE Loginbox
+
+This extension integrates with the system extension 'felogin' and provides a new marker ###OPENID_CONNECT### to be used 
+in the felogin template. A sample template is included. The marker will be replaced by a login link, pointing to the 
+authorization endpoint of the authorization server. 
+
+## OIDC Login
+
+If openid_connect is your only means of frontend login, you can use the included "OIDC Login" plugin. Add it to your 
+login page, where you would normally add the felogin box. After adding the OIDC Login plugin, requests to the login 
+page will immediately be redirected to the authorization server.
+
+After the login process, the user will be redirected:
+* The OIDC Login supports the same redirect_url parameter as the felogin box
+* If no parameter is set, OIDC Login will redirect the user to the page configured at 
+`plugin.tx_oidc_login.defaultRedirectPid`. 
+* If that configuration is not set either, the user will be redirected to '/'.
+ 
+
 ## Configuring
 
 ### Mapping Frontend User Fields
@@ -47,6 +66,10 @@ secret.
 - Local TYPO3 groups (not related to some role) will be kept upon authenticating
 - Default TYPO3 group(s) as configured in Extension Manager will always be added
 
+### OIDC Login
+
+- `plugin.tx_oidc_login.defaultRedirectPid` UID of the page that users will be redirected to, if no `redirect_url` 
+parameter is set. 
 
 ## Logging
 

@@ -52,6 +52,9 @@ $boot = function ($_EXTKEY) {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['felogin']['postProcContent'][$_EXTKEY] = \Causal\Oidc\Hooks\FeloginHook::class . '->postProcContent';
     }
 
+    // Add typoscript for custom login plugin
+    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPItoST43('oidc', null, '_login');
+
     // Require 3rd-party libraries, in case TYPO3 does not run in composer mode
     $pharFileName = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath($_EXTKEY) . 'Libraries/league-oauth2-client.phar';
     if (is_file($pharFileName)) {
