@@ -183,6 +183,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             );
         }
         $user = $this->convertResourceOwner($resourceOwner);
+
+        if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
+            $service->revokeToken($accessToken);
+        }
+
         return $user;
     }
 

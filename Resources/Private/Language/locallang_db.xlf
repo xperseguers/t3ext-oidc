@@ -46,13 +46,15 @@
 			<trans-unit id="settings.oidcUseRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 			</trans-unit>
+			<trans-unit id="settings.revokeAccessTokenAfterLogin">
+				<source>Revoke TYPO3's access token at the end of the login process</source>
+			</trans-unit>
 			<trans-unit id="settings.oidcDisableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 			</trans-unit>
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
 			</trans-unit>
-
 		</body>
 	</file>
 </xliff>

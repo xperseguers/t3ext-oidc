@@ -43,5 +43,8 @@ oidcAuthorizeLanguageParameter = language
 # cat=advanced/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcUseRequestPathAuthentication
 oidcUseRequestPathAuthentication = 0
 
+# cat=advanced/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.revokeAccessTokenAfterLogin
+oidcRevokeAccessTokenAfterLogin = 0
+
 # cat=advanced/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcDisableCSRFProtection
 oidcDisableCSRFProtection = 0
