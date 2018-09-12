@@ -45,6 +45,13 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
+     * Global extension configuration
+     *
+     * @var array
+     */
+    protected $config;
+
+    /**
      * AuthenticationService constructor.
      */
     public function __construct()
