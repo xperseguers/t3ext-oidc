@@ -14,6 +14,7 @@
 
 namespace Causal\Oidc\Service;
 
+use League\OAuth2\Client\Token\AccessToken;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use Causal\Oidc\Service\OAuthService;
@@ -157,10 +158,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Looks up a TYPO3 user from an access token.
      *
      * @param OAuthService $service
-     * @param string $accessToken
+     * @param AccessToken $accessToken
      * @return array|bool
      */
-    protected function getUserFromAccessToken(OAuthService $service, $accessToken)
+    protected function getUserFromAccessToken(OAuthService $service, AccessToken $accessToken)
     {
         // Using the access token, we may look up details about the resource owner
         try {
