@@ -212,7 +212,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * @oaram array $user
      * @return int
      */
-    public function authUser(array $user)
+    public function authUser(array $user): int
     {
         $status = static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
 
