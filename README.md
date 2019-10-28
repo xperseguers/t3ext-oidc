@@ -1,7 +1,7 @@
 # OpenID Connect
 
 This extension lets you authenticate Frontend users against an OpenID Connect server. It is preconfigured to work with
-the [WSO2 Identity Server](http://wso2.com/identity-and-access-management) from the Swiss Alpine Club but may be used
+the [WSO2 Identity Server](https://wso2.com/identity-and-access-management/) from the Swiss Alpine Club but may be used
 with your own identity server as well.
 
 If you are a Swiss Alpine Club section, be sure to get in touch with Bern in order to get your dedicated private key and
@@ -10,9 +10,9 @@ secret.
 
 ## Default FE Loginbox
 
-This extension integrates with the system extension 'felogin' and provides a new marker ###OPENID_CONNECT### to be used 
-in the felogin template. A sample template is included. The marker will be replaced by a login link, pointing to the 
-authorization endpoint of the authorization server. 
+This extension integrates with the system extension 'felogin' and provides a new marker `###OPENID_CONNECT###` to be
+used in the felogin template. A sample template is included. The marker will be replaced by a login link, pointing to
+the  authorization endpoint of the authorization server.
 
 ## OIDC Login
 
@@ -21,10 +21,11 @@ login page, where you would normally add the felogin box. After adding the OIDC 
 page will immediately be redirected to the authorization server.
 
 After the login process, the user will be redirected:
-* The OIDC Login supports the same redirect_url parameter as the felogin box
-* If no parameter is set, OIDC Login will redirect the user to the page configured at 
-`plugin.tx_oidc_login.defaultRedirectPid`. 
-* If that configuration is not set either, the user will be redirected to '/'.
+
+- The OIDC Login supports the same redirect_url parameter as the felogin box
+- If no parameter is set, OIDC Login will redirect the user to the page configured at
+  `plugin.tx_oidc_login.defaultRedirectPid`.
+- If that configuration is not set either, the user will be redirected to '/'.
  
 
 ## Configuring
@@ -44,7 +45,7 @@ After the login process, the user will be redirected:
   name = <family_name>, <given_name>
   ```
 
-- Support for [stdWrap](https://docs.typo3.org/typo3cms/TyposcriptReference/Functions/Stdwrap/Index.html) in field
+- Support for [stdWrap](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html) in field
   definition, e.g.,
 
   ```
@@ -52,7 +53,7 @@ After the login process, the user will be redirected:
   name.wrap = |-OIDC
   ```
 
-- Support for [TypoScript "split"](https://docs.typo3.org/typo3cms/TyposcriptReference/Functions/Stdwrap/Index.html#data)
+- Support for [TypoScript "split"](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html#data)
   (`//`). This will check multiple field names and return the first one yielding some non-empty value. E.g.,
 
   ```
@@ -75,7 +76,7 @@ parameter is set.
 
 This extension makes use of the Logging system introduced in TYPO3 CMS 6.0. It is far more flexible than the old one
 writing to the "sys_log" table. Technical details may be found in the
-[TYPO3 Core API](https://docs.typo3.org/typo3cms/CoreApiReference/ApiOverview/Logging/Index.html#logging).
+[TYPO3 Core API](https://docs.typo3.org/m/typo3/reference-coreapi/master/en-us/ApiOverview/Logging/Index.html#logging).
 
 As an administrator, what you should know is that the TYPO3 Logger forwards log records to "Writers", which persist the
 log record.
@@ -107,5 +108,5 @@ $GLOBALS['TYPO3_CONF_VARS']['LOG']['Causal']['Oidc']['writerConfiguration'] = [
 ```
 
 **Hint:** Be sure to read
-[Configuration of the Logging system](https://docs.typo3.org/typo3cms/CoreApiReference/ApiOverview/Logging/Configuration/Index.html#logging-configuration)
+[Configuration of the Logging system](https://docs.typo3.org/m/typo3/reference-coreapi/master/en-us/ApiOverview/Logging/Configuration/Index.html#logging-configuration)
 to fine-tune your configuration on any production website.
