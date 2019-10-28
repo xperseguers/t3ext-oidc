@@ -15,6 +15,10 @@
 namespace Causal\Oidc\Service;
 
 use League\OAuth2\Client\Token\AccessToken;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
+use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
+use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use Causal\Oidc\Service\OAuthService;
@@ -220,7 +224,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Converts a resource owner into a TYPO3 Frontend user.
      *
      * @param array $info
-     * @return array
+     * @return array|bool
      * @throws \InvalidArgumentException
      */
     protected function convertResourceOwner(array $info)
@@ -233,24 +237,28 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $userGroupTable = 'be_groups';
         }
 
-        $user = [];
-        $database = $this->getDatabaseConnection();
-        $row = $database->exec_SELECTgetSingleRow(
-            '*',
-            $userTable,
-            'tx_oidc=' . $database->fullQuoteStr($info['sub'], $userTable)
-        );
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($userTable);
+        $queryBuilder->getRestrictions()->removeAll();
+        $row = $queryBuilder
+            ->select('*')
+            ->from($userTable)
+            ->where(
+                $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'], \PDO::PARAM_STR))
+            )
+            ->execute()
+            ->fetch();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
         $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
 
-        if ($row && (bool)$row['deleted'] && !$undeleteUser) {
+        if (!empty($row) && (bool)$row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
             static::getLogger()->info('User was manually deleted, denying access', ['user' => $row]);
 
             return false;
         }
-        if ($row && (bool)$row['disable'] && !$reEnableUser) {
+        if (!empty($row) && (bool)$row['disable'] && !$reEnableUser) {
             // User was manually disabled, it should not get automatically re-enabled
             static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
 
@@ -273,33 +281,52 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             ]
         );
 
-        $newUsergroups = [];
+        $newUserGroups = [];
         $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup'], true);
 
-        if ($row) {
+        if (!empty($row)) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
             if (!empty($currentUserGroups)) {
-                $oidcUserGroups = $database->exec_SELECTgetRows(
-                    'uid',
-                    $userGroupTable,
-                    'uid IN (' . implode(',', $currentUserGroups) . ') AND tx_oidc_pattern<>\'\'',
-                    '',
-                    '',
-                    '',
-                    'uid'
-                );
+                $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+                    ->getQueryBuilderForTable($userGroupTable);
+                $queryBuilder->getRestrictions()
+                    ->removeByType(HiddenRestriction::class)
+                    ->removeByType(StartTimeRestriction::class)
+                    ->removeByType(EndTimeRestriction::class);
+
+                $groups = $queryBuilder
+                    ->select('uid')
+                    ->from($userGroupTable)
+                    ->where(
+                        $queryBuilder->expr()->in('uid', $currentUserGroups),
+                        $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
+                    )
+                    ->execute()
+                    ->fetchAll();
+
+                $oidcUserGroups = [];
+                foreach ($groups as $group) {
+                    $oidcUserGroups[] = $group['uid'];
+                }
+
                 // Remove OIDC-related groups
-                $newUsergroups = array_diff($currentUserGroups, array_keys($oidcUserGroups));
+                $newUserGroups = array_diff($currentUserGroups, $oidcUserGroups);
             }
         }
 
         // Map OIDC roles to TYPO3 user groups
         if (!empty($info['Roles'])) {
-            $typo3Roles = $database->exec_SELECTgetRows(
-                'uid, tx_oidc_pattern',
-                $userGroupTable,
-                'tx_oidc_pattern<>\'\' AND hidden=0 AND deleted=0'
-            );
+            $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+                ->getQueryBuilderForTable($userGroupTable);
+            $typo3Roles = $queryBuilder
+                ->select('uid', 'tx_oidc_pattern')
+                ->from($userGroupTable)
+                ->where(
+                    $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
+                )
+                ->execute()
+                ->fetchAll();
+
             $roles = GeneralUtility::trimExplode(',', $info['Roles'], true);
             $roles = ',' . implode(',', $roles) . ',';
 
@@ -313,17 +340,20 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 }
                 $pattern = '/,(' . implode('|', $subpatterns) . '),/i';
                 if (preg_match($pattern, $roles)) {
-                    $newUsergroups[] = (int)$typo3Role['uid'];
+                    $newUserGroups[] = (int)$typo3Role['uid'];
                 }
             }
         }
 
         // Add default user groups
-        $newUsergroups = array_unique(array_merge($newUsergroups, $defaultUserGroups));
+        $newUserGroups = array_unique(array_merge($newUserGroups, $defaultUserGroups));
 
-        if ($row) { // fe_users record already exists => update it
+        $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getConnectionForTable($userTable);
+
+        if (!empty($row)) { // fe_users record already exists => update it
             static::getLogger()->info('Detected a returning user');
-            $data['usergroup'] = implode(',', $newUsergroups);
+            $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
             if ($user != $row) {
                 static::getLogger()->debug('Updating existing user', [
@@ -331,30 +361,37 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                     'new' => $user,
                 ]);
                 $user['tstamp'] = $GLOBALS['EXEC_TIME'];
-                $database->exec_UPDATEquery(
+                $tableConnection->update(
                     $userTable,
-                    'uid=' . $user['uid'],
-                    $user
+                    $user,
+                    [
+                        'uid' => $user['uid'],
+                    ]
                 );
             }
         } else {    // fe_users record does not already exist => create it
             static::getLogger()->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
                 'pid' => $this->config['usersStoragePid'],
-                'usergroup' => implode(',', $newUsergroups),
+                'usergroup' => implode(',', $newUserGroups),
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => $info['sub'],
             ]);
-            $database->exec_INSERTquery(
+            $tableConnection->insert(
                 $userTable,
                 $data
             );
+            $userUid = $tableConnection->lastInsertId();
             // Retrieve the created user from database to get all columns
-            $user = $database->exec_SELECTgetSingleRow(
-                '*',
-                $userTable,
-                'uid=' . $database->sql_insert_id()
-            );
+            $user = $tableConnection
+                ->select(
+                    ['*'],
+                    $userTable,
+                    [
+                        'uid' => $userUid,
+                    ]
+                )
+                ->fetch();
         }
 
         static::getLogger()->debug('Authentication user record processed', $user);
@@ -381,11 +418,15 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         if ($reloadUserRecord) {
-            $user = $database->exec_SELECTgetSingleRow(
-                '*',
-                $userTable,
-                'uid=' . (int)$user['uid']
-            );
+            $user = $tableConnection
+                ->select(
+                    ['*'],
+                    $userTable,
+                    [
+                        'uid' => (int)$user['uid'],
+                    ]
+                )
+                ->fetch();
             static::getLogger()->debug('User record reloaded', $user);
         }
 
@@ -598,17 +639,6 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         $setup = $templateService->setup;
         return $setup;
-    }
-
-    /**
-     * Returns the database connection
-     * This method only exists in TYPO3 v7 in parent class.
-     *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
-     */
-    protected function getDatabaseConnection()
-    {
-        return $GLOBALS['TYPO3_DB'];
     }
 
     /**
