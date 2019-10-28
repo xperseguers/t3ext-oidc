@@ -3,4 +3,3 @@ plugin.tx_felogin_pi1{
         wrap = <a href="|" class="btn btn-default"><span class="fa fa-openid"></span> OpenID Connect</a>
     }
 }
-#stdWrap.dataWrap = <span class="fa fa-facebook"></span>{LLL:EXT:social_auth/Resources/Private/Language/locallang.xlf:facebook.label}

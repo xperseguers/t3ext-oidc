@@ -2,8 +2,12 @@
 defined('TYPO3_MODE') || die();
 
 $boot = function ($_EXTKEY) {
-    // Configuration of authentication service.
-    $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$_EXTKEY]);
+    // Configuration of authentication service
+    if (version_compare(TYPO3_version, '9.0', '<')) {
+        $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$_EXTKEY]);
+    } else {
+        $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS'][$_EXTKEY] ?? [];
+    }
 
     // Service configuration
     $subTypesArr = [];
