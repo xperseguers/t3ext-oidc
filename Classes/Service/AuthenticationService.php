@@ -22,6 +22,8 @@ use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use Causal\Oidc\Service\OAuthService;
+use TYPO3\CMS\Core\Utility\RootlineUtility;
+use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 
 /**
  * OpenID Connect authentication service.
@@ -627,17 +629,26 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         /** @var \TYPO3\CMS\Core\TypoScript\TemplateService $templateService */
         $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\TemplateService::class);
-        $templateService->init();
+        if (version_compare(TYPO3_version, '9.0', '<')) {
+            $templateService->init();
+        }
         $templateService->tt_track = false;
 
         $currentPage = $GLOBALS['TSFE']->id;
         if ($currentPage === null) {
             // root page is not yet populated
             $localTSFE = clone $GLOBALS['TSFE'];
+            if (version_compare(TYPO3_version, '9.5', '>=')) {
+                $localTSFE->fe_user = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
+            }
             $localTSFE->determineId();
             $currentPage = $localTSFE->id;
         }
-        $rootLine = $pageRepository->getRootLine((int)$currentPage);
+        if (version_compare(TYPO3_version, '9.5', '>=')) {
+            $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
+        } else {
+            $rootLine = $pageRepository->getRootLine((int)$currentPage);
+        }
         $templateService->start($rootLine);
 
         $setup = $templateService->setup;
