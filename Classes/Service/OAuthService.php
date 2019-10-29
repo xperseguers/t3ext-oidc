@@ -134,7 +134,7 @@ class OAuthService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_VERBOSE, 1);
         curl_setopt($ch, CURLOPT_HEADER, 1);
-        $content = curL_exec($ch);
+        $content = curl_exec($ch);
 
         if ($content === false) {
             throw new \RuntimeException('Curl ERROR: ' . curl_error($ch), 1510049345);

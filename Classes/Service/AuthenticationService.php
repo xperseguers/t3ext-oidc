@@ -209,9 +209,9 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     }
 
     /**
-     * Authenticate a user
+     * Authenticates a user
      *
-     * @oaram array $user
+     * @param array $user
      * @return int
      */
     public function authUser(array $user): int
