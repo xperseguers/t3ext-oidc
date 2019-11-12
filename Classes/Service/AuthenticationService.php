@@ -256,6 +256,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
         $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
+        $frontendUserMustExistLocally = (bool)$this->config['frontendUserMustExistLocally'];
 
         if (!empty($row) && (bool)$row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
@@ -266,6 +267,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         if (!empty($row) && (bool)$row['disable'] && !$reEnableUser) {
             // User was manually disabled, it should not get automatically re-enabled
             static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
+
+            return false;
+        }
+        if (empty($row) && $frontendUserMustExistLocally) {
+            // User does not exist locally, it should not be created on-the-fly
+            static::getLogger()->info('User does not exist locally, denying access', ['info' => $info]);
 
             return false;
         }
