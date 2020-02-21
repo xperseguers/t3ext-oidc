@@ -1,6 +1,4 @@
 /.Build/*
 /composer.lock
-/typo3cms
-
 /Libraries/*
-
+/typo3cms
