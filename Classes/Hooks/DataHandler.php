@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -22,20 +23,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class DataHandler
 {
-
     /**
      * Hooks into \TYPO3\CMS\Core\DataHandling\DataHandler after records have been saved to the database.
      *
      * @param string $operation
      * @param string $table
-     * @param mixed $id
-     * @param array $fieldArray
-     * @param \TYPO3\CMS\Core\DataHandling\DataHandler $pObj
+     * @param mixed  $id
+     *
      * @return void
      */
     public function processDatamap_afterDatabaseOperations($operation, $table, $id, array $fieldArray, \TYPO3\CMS\Core\DataHandling\DataHandler $pObj)
     {
-        if (!($table === 'fe_groups' && $operation === 'update')) {
+        if (!('fe_groups' === $table && 'update' === $operation)) {
             return;
         }
 
@@ -48,7 +47,7 @@ class DataHandler
                 ->select('uid', 'usergroup')
                 ->from('fe_users')
                 ->where(
-                    $queryBuilder->expr()->inSet('usergroup', (string)$id)
+                    $queryBuilder->expr()->inSet('usergroup', (string) $id)
                 )
                 ->execute()
                 ->fetchAll();
@@ -74,5 +73,4 @@ class DataHandler
             }
         }
     }
-
 }

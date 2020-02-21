@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -19,17 +20,16 @@ namespace Causal\Oidc\Service;
  */
 interface ResourceOwnerHookInterface
 {
-
     /**
      * Post-process for the user record (which is already persisted to the database).
      * The full record will automatically get reloaded from database after the hook
      * have been invoked.
      *
      * @param string $context The TYPO3 context (either 'BE' or 'FE')
-     * @param array $user TYPO3 user record
-     * @param array $data OpenID Connect data
+     * @param array  $user    TYPO3 user record
+     * @param array  $data    OpenID Connect data
+     *
      * @return void
      */
     public function postProcessUser($context, array $user, array $data);
-
 }

@@ -73,5 +73,8 @@
       "cms-package-dir": "{$vendor-dir}/typo3/cms",
       "web-dir": ".Build/Web"
     }
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^2.16"
   }
 }

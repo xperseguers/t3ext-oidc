@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -14,17 +15,14 @@
 
 namespace Causal\Oidc\Service;
 
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Backend\Utility\BackendUtility;
 use League\OAuth2\Client\Token\AccessToken;
-use TYPO3\CMS\Core\Utility\HttpUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class OAuthService.
  */
 class OAuthService
 {
-
     /**
      * @var array
      */
@@ -38,7 +36,6 @@ class OAuthService
     /**
      * Sets the settings.
      *
-     * @param array $settings
      * @return $this
      */
     public function setSettings(array $settings)
@@ -51,12 +48,11 @@ class OAuthService
     /**
      * Returns the authorization URL.
      *
-     * @param array $options
      * @return string
      */
     public function getAuthorizationUrl(array $options = [])
     {
-        if (! empty($this->settings['oidcAuthorizeLanguageParameter'])) {
+        if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
 
             if (isset($GLOBALS['TSFE']->lang)) {
@@ -74,6 +70,7 @@ class OAuthService
      * Returns the state generated for us.
      *
      * @return string
+     *
      * @see getAuthorizationUrl()
      */
     public function getState()
@@ -86,12 +83,13 @@ class OAuthService
      * credentials grant.
      *
      * @param string $codeOrUsername Either a code or the username (if password is provided)
-     * @param string $password Optional parameter if authenticating with authorization code grant
+     * @param string $password       Optional parameter if authenticating with authorization code grant
+     *
      * @return AccessToken
      */
     public function getAccessToken($codeOrUsername, $password = null)
     {
-        if ($password === null) {
+        if (null === $password) {
             $accessToken = $this->getProvider()->getAccessToken('authorization_code', [
                 'code' => $codeOrUsername,
             ]);
@@ -103,6 +101,7 @@ class OAuthService
                 'scope' => implode(',', $this->getProvider()->getDefaultScopes()),
             ]);
         }
+
         return $accessToken;
     }
 
@@ -114,12 +113,13 @@ class OAuthService
      *
      * @param string $username
      * @param string $password
+     *
      * @return AccessToken
      */
     public function getAccessTokenWithRequestPathAuthentication($username, $password)
     {
-        $redirectUri = GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST') . '/typo3conf/ext/oidc/callback.php';
-        $url = $this->settings['oidcEndpointAuthorize'] . '?'. http_build_query([
+        $redirectUri = GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST').'/typo3conf/ext/oidc/callback.php';
+        $url = $this->settings['oidcEndpointAuthorize'].'?'.http_build_query([
             'response_type' => 'code',
             'client_id' => $this->settings['oidcClientKey'],
             'scope' => $this->settings['oidcClientScopes'],
@@ -128,7 +128,7 @@ class OAuthService
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Basic ' . base64_encode($username . ':' . $password),
+            'Authorization: Basic '.base64_encode($username.':'.$password),
         ]);
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -136,19 +136,19 @@ class OAuthService
         curl_setopt($ch, CURLOPT_HEADER, 1);
         $content = curl_exec($ch);
 
-        if ($content === false) {
-            throw new \RuntimeException('Curl ERROR: ' . curl_error($ch), 1510049345);
+        if (false === $content) {
+            throw new \RuntimeException('Curl ERROR: '.curl_error($ch), 1510049345);
         }
         curl_close($ch);
 
         $headers = explode(LF, $content);
         foreach ($headers as $header) {
             list($key, $value) = GeneralUtility::trimExplode(':', $header, false, 2);
-            if ($key === 'Location') {
+            if ('Location' === $key) {
                 $queryParams = explode('&', substr($value, strpos($value, '?') + 1));
                 foreach ($queryParams as $param) {
                     list($key, $value) = explode('=', $param, 2);
-                    if ($key === 'code') {
+                    if ('code' === $key) {
                         return $this->getAccessToken($value);
                     }
                 }
@@ -161,7 +161,6 @@ class OAuthService
     /**
      * Returns the resource owner.
      *
-     * @param AccessToken $token
      * @return \League\OAuth2\Client\Provider\ResourceOwnerInterface
      */
     public function getResourceOwner(AccessToken $token)
@@ -172,7 +171,6 @@ class OAuthService
     /**
      * Revokes the access token.
      *
-     * @param AccessToken $token
      * @return bool
      */
     public function revokeToken(AccessToken $token)
@@ -187,10 +185,10 @@ class OAuthService
             $this->settings['oidcEndpointRevoke'],
             [
                 'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode($this->settings['oidcClientKey'] . ':' . $this->settings['oidcClientSecret']),
+                    'Authorization' => 'Basic '.base64_encode($this->settings['oidcClientKey'].':'.$this->settings['oidcClientSecret']),
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
-                'body' => 'token=' . $token->getToken(),
+                'body' => 'token='.$token->getToken(),
             ]
         );
         $response = $provider->getParsedResponse($request);
@@ -205,8 +203,8 @@ class OAuthService
      */
     protected function getProvider()
     {
-        if ($this->provider === null) {
-            $redirectUri = GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST') . '/typo3conf/ext/oidc/callback.php';
+        if (null === $this->provider) {
+            $redirectUri = GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST').'/typo3conf/ext/oidc/callback.php';
 
             $this->provider = new \League\OAuth2\Client\Provider\GenericProvider([
                 'clientId' => $this->settings['oidcClientKey'],
@@ -247,5 +245,4 @@ class OAuthService
 
         return $accessToken;
     }
-
 }

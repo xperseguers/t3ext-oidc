@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -17,13 +18,10 @@ namespace Causal\Oidc\Controller;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Class AuthenticationController
- *
- * @package Causal\Oidc\Controller
+ * Class AuthenticationController.
  */
 class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
 {
-
     /**
      * @var array
      */
@@ -56,7 +54,7 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
             throw new \RuntimeException('No state or code detected', 1487001047);
         }
 
-        if (session_id() === '') {
+        if ('' === session_id()) {
             static::getLogger()->debug('No PHP session found');
             session_start();
         }
@@ -70,17 +68,17 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
                 'expected' => $_SESSION['oidc_state'],
                 'actual' => $_GET['state'],
             ]);
-            if (!(bool)$this->globalSettings['oidcDisableCSRFProtection']) {
+            if (!(bool) $this->globalSettings['oidcDisableCSRFProtection']) {
                 throw new \RuntimeException('Invalid state', 1489658206);
             }
             static::getLogger()->warning('Bypassing CSRF attack mitigation protection according to the extension configuration');
         }
 
         $loginUrl = $_SESSION['oidc_login_url'];
-        $loginUrl .= strpos($loginUrl, '?') !== false ? '&' : '?';
-        $loginUrl .= 'logintype=login&tx_oidc[code]=' . $_GET['code'];
-        if (!empty($_SESSION['oidc_redirect_url']) && strpos($loginUrl, 'redirect_url=') === false) {
-            $loginUrl .= '&redirect_url=' . urlencode($_SESSION['oidc_redirect_url']);
+        $loginUrl .= false !== strpos($loginUrl, '?') ? '&' : '?';
+        $loginUrl .= 'logintype=login&tx_oidc[code]='.$_GET['code'];
+        if (!empty($_SESSION['oidc_redirect_url']) && false === strpos($loginUrl, 'redirect_url=')) {
+            $loginUrl .= '&redirect_url='.urlencode($_SESSION['oidc_redirect_url']);
         }
 
         static::getLogger()->info('Redirecting to login URL', ['url' => $loginUrl]);
@@ -96,11 +94,10 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
     {
         /** @var \TYPO3\CMS\Core\Log\Logger $logger */
         static $logger = null;
-        if ($logger === null) {
+        if (null === $logger) {
             $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
         }
 
         return $logger;
     }
-
 }

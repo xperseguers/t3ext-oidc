@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -21,14 +22,14 @@ use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 class LoginController
 {
     /**
-     * Global oidc settings
+     * Global oidc settings.
      *
      * @var array
      */
     protected $settings;
 
     /**
-     * TypoScript configuratoin of this plugin
+     * TypoScript configuratoin of this plugin.
      *
      * @var array
      */
@@ -56,7 +57,7 @@ class LoginController
      * If the user has just been logged in and just came back from the authorization server, redirect the user to the
      * final redirect URL.
      *
-     * @param string $_ ignored
+     * @param string     $_                   ignored
      * @param array|null $pluginConfiguration
      */
     public function login($_ = '', $pluginConfiguration)
@@ -65,7 +66,7 @@ class LoginController
             $this->pluginConfiguration = $pluginConfiguration;
         }
 
-        if (GeneralUtility::_GP('logintype') == 'login') {
+        if ('login' == GeneralUtility::_GP('logintype')) {
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
         }
@@ -81,7 +82,7 @@ class LoginController
 
         $authorizationUrl = $service->getAuthorizationUrl();
 
-        if (session_id() === '') {
+        if ('' === session_id()) {
             session_start();
         }
 
@@ -102,7 +103,7 @@ class LoginController
 
     protected function determineRedirectUrl()
     {
-        if (! empty(GeneralUtility::_GP('redirect_url'))) {
+        if (!empty(GeneralUtility::_GP('redirect_url'))) {
             return GeneralUtility::_GP('redirect_url');
         }
 

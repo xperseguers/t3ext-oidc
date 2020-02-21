@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -20,8 +21,6 @@ use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\HttpUtility;
-use Causal\Oidc\Service\OAuthService;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 
@@ -30,29 +29,28 @@ use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
  */
 class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 {
-
     /**
-     * true - this service was able to authenticate the user
+     * true - this service was able to authenticate the user.
      */
     const STATUS_AUTHENTICATION_SUCCESS_CONTINUE = true;
 
     /**
-     * 200 - authenticated and no more checking needed
+     * 200 - authenticated and no more checking needed.
      */
     const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
 
     /**
-     * false - this service was the right one to authenticate the user but it failed
+     * false - this service was the right one to authenticate the user but it failed.
      */
     const STATUS_AUTHENTICATION_FAILURE_BREAK = false;
 
     /**
-     * 100 - just go on. User is not authenticated but there's still no reason to stop
+     * 100 - just go on. User is not authenticated but there's still no reason to stop.
      */
     const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
-     * Global extension configuration
+     * Global extension configuration.
      *
      * @var array
      */
@@ -74,6 +72,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Finds a user.
      *
      * @return array|bool
+     *
      * @throws \RuntimeException
      */
     public function getUser()
@@ -91,7 +90,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $password = null;
         }
 
-        if ($code !== null) {
+        if (null !== $code) {
             $user = $this->authenticateWithAuhorizationCode($code);
         } elseif (!(empty($username) || empty($password))) {
             $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
@@ -104,6 +103,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Authenticates a user using authorization code grant.
      *
      * @param string $code
+     *
      * @return array|bool
      */
     protected function authenticateWithAuhorizationCode($code)
@@ -125,10 +125,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'code' => $code,
                 'message' => $e->getMessage(),
             ]);
+
             return false;
         }
 
         $user = $this->getUserFromAccessToken($service, $accessToken);
+
         return $user;
     }
 
@@ -137,6 +139,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      *
      * @param string $username
      * @param string $password
+     *
      * @return array|bool
      */
     protected function authenticateWithResourceOwnerPasswordCredentials($username, $password)
@@ -149,14 +152,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $service->setSettings($this->config);
 
         try {
-            if ((bool)$this->config['oidcUseRequestPathAuthentication']) {
+            if ((bool) $this->config['oidcUseRequestPathAuthentication']) {
                 static::getLogger()->debug('Retrieving an access token using request path authentication');
                 $accessToken = $service->getAccessTokenWithRequestPathAuthentication($username, $password);
             } else {
                 static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
                 $accessToken = $service->getAccessToken($username, $password);
             }
-            if ($accessToken !== null) {
+            if (null !== $accessToken) {
                 static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
                 $user = $this->getUserFromAccessToken($service, $accessToken);
             }
@@ -173,8 +176,6 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     /**
      * Looks up a TYPO3 user from an access token.
      *
-     * @param OAuthService $service
-     * @param AccessToken $accessToken
      * @return array|bool
      */
     protected function getUserFromAccessToken(OAuthService $service, AccessToken $accessToken)
@@ -188,16 +189,13 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             static::getLogger()->error('Could not retrieve resource owner', [
                 'message' => $e->getMessage(),
             ]);
+
             return false;
         }
         if (empty($resourceOwner['sub'])) {
             static::getLogger()->error('No "sub" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
-            throw new \RuntimeException(
-                'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
-                    . '. Your access token has been revoked. Please try again.',
-                1490086626
-            );
+            throw new \RuntimeException('Resource owner does not have a sub part: '.json_encode($resourceOwner).'. Your access token has been revoked. Please try again.', 1490086626);
         }
         $user = $this->convertResourceOwner($resourceOwner);
 
@@ -209,10 +207,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     }
 
     /**
-     * Authenticates a user
-     *
-     * @param array $user
-     * @return int
+     * Authenticates a user.
      */
     public function authUser(array $user): int
     {
@@ -228,8 +223,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     /**
      * Converts a resource owner into a TYPO3 Frontend user.
      *
-     * @param array $info
      * @return array|bool
+     *
      * @throws \InvalidArgumentException
      */
     protected function convertResourceOwner(array $info)
@@ -254,17 +249,17 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             ->execute()
             ->fetch();
 
-        $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
-        $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
-        $frontendUserMustExistLocally = (bool)$this->config['frontendUserMustExistLocally'];
+        $reEnableUser = (bool) $this->config['reEnableFrontendUsers'];
+        $undeleteUser = (bool) $this->config['undeleteFrontendUsers'];
+        $frontendUserMustExistLocally = (bool) $this->config['frontendUserMustExistLocally'];
 
-        if (!empty($row) && (bool)$row['deleted'] && !$undeleteUser) {
+        if (!empty($row) && (bool) $row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
             static::getLogger()->info('User was manually deleted, denying access', ['user' => $row]);
 
             return false;
         }
-        if (!empty($row) && (bool)$row['disable'] && !$reEnableUser) {
+        if (!empty($row) && (bool) $row['disable'] && !$reEnableUser) {
             // User was manually disabled, it should not get automatically re-enabled
             static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
 
@@ -340,7 +335,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 ->fetchAll();
 
             $roles = GeneralUtility::trimExplode(',', $info['Roles'], true);
-            $roles = ',' . implode(',', $roles) . ',';
+            $roles = ','.implode(',', $roles).',';
 
             foreach ($typo3Roles as $typo3Role) {
                 // Convert the pattern into a proper regular expression
@@ -350,9 +345,9 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                     $pattern = str_replace('\\*', '[^,]*', $pattern);
                     $subpatterns[$k] = $pattern;
                 }
-                $pattern = '/,(' . implode('|', $subpatterns) . '),/i';
+                $pattern = '/,('.implode('|', $subpatterns).'),/i';
                 if (preg_match($pattern, $roles)) {
-                    $newUserGroups[] = (int)$typo3Role['uid'];
+                    $newUserGroups[] = (int) $typo3Role['uid'];
                 }
             }
         }
@@ -418,13 +413,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                     $postProcessor->postProcessUser(TYPO3_MODE, $user, $info);
                     $reloadUserRecord = true;
                 } else {
-                    throw new \InvalidArgumentException(
-                        sprintf(
-                            'Invalid post-processing class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
-                            $className
-                        ),
-                        1491229263
-                    );
+                    throw new \InvalidArgumentException(sprintf('Invalid post-processing class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface', $className), 1491229263);
                 }
             }
         }
@@ -435,7 +424,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                     ['*'],
                     $userTable,
                     [
-                        'uid' => (int)$user['uid'],
+                        'uid' => (int) $user['uid'],
                     ]
                 )
                 ->fetch();
@@ -452,11 +441,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Merges info from OIDC to TYPO3 using a mapping configuration.
      *
      * @param string $table
-     * @param array $oidc
-     * @param array $typo3
-     * @param array $baseData
-     * @param bool $reportErrors
+     * @param bool   $reportErrors
+     *
      * @return array
+     *
      * @see \Causal\IgLdapSsoAuth\Library\Authentication::merge()
      */
     protected function applyMapping($table, array $oidc, array $typo3, array $baseData = [], $reportErrors = false)
@@ -467,8 +455,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
         foreach ($mapping as $field => $value) {
-            if (substr($field, -1) !== '.') {
-                if ($field !== 'usergroup' && $field !== 'parentGroup') {
+            if ('.' !== substr($field, -1)) {
+                if ('usergroup' !== $field && 'parentGroup' !== $field) {
                     try {
                         $out = $this->mergeSimple($oidc, $out, $field, $value);
                     } catch (\UnexpectedValueException $uve) {
@@ -528,12 +516,13 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      *
      * If no matching value was found in the array the marker will be removed.
      *
-     * @param array $oidc
-     * @param array $typo3
      * @param string $field
      * @param string $value
+     *
      * @return array Modified $typo3 array
+     *
      * @throws \UnexpectedValueException
+     *
      * @see \Causal\IgLdapSsoAuth\Library\Authentication::mergeSimple()
      * @see \Causal\IgLdapSsoAuth\Library\Authentication::replaceLdapMarkers()
      * @see \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::getFieldVal()
@@ -543,7 +532,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         // Constant by default
         $mappedValue = $value;
 
-        if (preg_match("`<([^$]*)>`", $value, $attribute)) {    // OIDC attribute
+        if (preg_match('`<([^$]*)>`', $value, $attribute)) {    // OIDC attribute
             $sections = !strstr($value, '//')
                 ? [$value]
                 : GeneralUtility::trimExplode('//', $value, true);
@@ -569,7 +558,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             }
 
             foreach ($sections as $sectionValue) {
-                if ($sectionValue !== '') {
+                if ('' !== $sectionValue) {
                     $mappedValue = $sectionValue;
                     break;
                 }
@@ -585,6 +574,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * Returns the mapping configuration for OIDC fields.
      *
      * @param string $table
+     *
      * @return array
      */
     protected function getMapping($table)
@@ -592,21 +582,21 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $mapping = [];
 
         $defaultMapping = [
-            'username'   => '<sub>',
-            'name'       => '<name>',
+            'username' => '<sub>',
+            'name' => '<name>',
             'first_name' => '<Vorname>',
-            'last_name'  => '<FamilienName>',
-            'address'    => '<Strasse>',
-            'title'      => '<Anredecode>',
-            'zip'        => '<PLZ>',
-            'city'       => '<Ort>',
-            'country'    => '<Land>',
+            'last_name' => '<FamilienName>',
+            'address' => '<Strasse>',
+            'title' => '<Anredecode>',
+            'zip' => '<PLZ>',
+            'city' => '<Ort>',
+            'country' => '<Land>',
         ];
 
-        if ($table === 'fe_users') {
+        if ('fe_users' === $table) {
             $setup = $this->getTypoScriptSetup();
-            if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'])) {
-                $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'];
+            if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table.'.'])) {
+                $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table.'.'];
             }
         }
 
@@ -627,7 +617,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         foreach ($files as $file) {
             $file = GeneralUtility::getFileAbsFileName($file);
             $table = substr($file, strrpos($file, '/') + 1, -4); // strip ".php" at the end
-            $GLOBALS['TCA'][$table] = include($file);
+            $GLOBALS['TCA'][$table] = include $file;
         }
 
         /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageRepository */
@@ -642,7 +632,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $templateService->tt_track = false;
 
         $currentPage = $GLOBALS['TSFE']->id;
-        if ($currentPage === null) {
+        if (null === $currentPage) {
             // root page is not yet populated
             $localTSFE = clone $GLOBALS['TSFE'];
             if (version_compare(TYPO3_version, '9.5', '>=')) {
@@ -652,13 +642,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $currentPage = $localTSFE->id;
         }
         if (version_compare(TYPO3_version, '9.5', '>=')) {
-            $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
+            $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int) $currentPage)->get();
         } else {
-            $rootLine = $pageRepository->getRootLine((int)$currentPage);
+            $rootLine = $pageRepository->getRootLine((int) $currentPage);
         }
         $templateService->start($rootLine);
 
         $setup = $templateService->setup;
+
         return $setup;
     }
 
@@ -671,11 +662,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
     {
         /** @var \TYPO3\CMS\Core\Log\Logger $logger */
         static $logger = null;
-        if ($logger === null) {
+        if (null === $logger) {
             $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
         }
 
         return $logger;
     }
-
 }

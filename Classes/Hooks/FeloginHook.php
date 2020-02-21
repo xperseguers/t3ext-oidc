@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -21,11 +22,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class FeloginHook
 {
-
-    /**
-     * @param array $params
-     * @param \TYPO3\CMS\Felogin\Controller\FrontendLoginController $pObj
-     */
     public function postProcContent(array $params, \TYPO3\CMS\Felogin\Controller\FrontendLoginController $pObj)
     {
         $requestId = $this->getUniqueId();
@@ -45,7 +41,7 @@ class FeloginHook
         ) {
             $markerArray['###OPENID_CONNECT###'] = 'Invalid OpenID Connect configuration';
         } else {
-            if (session_id() === '') { // If no session exists, start a new one
+            if ('' === session_id()) { // If no session exists, start a new one
                 static::getLogger()->debug('No PHP session found');
                 session_start();
             }
@@ -84,7 +80,6 @@ class FeloginHook
      * Prepares the authorization URL and corresponding expected state (to mitigate CSRF attack)
      * and stores information into the session.
      *
-     * @param array $settings
      * @return void
      */
     protected function prepareAuthorizationUrl(array $settings)
@@ -106,14 +101,14 @@ class FeloginHook
         // Sanitize the URL
         $parts = parse_url($loginUrl);
         $queryParts = array_filter(explode('&', $parts['query']), function ($v) {
-            list ($k,) = explode('=', $v, 2);
+            list($k) = explode('=', $v, 2);
 
             return !in_array($k, ['logintype', 'tx_oidc[code]']);
         });
         $parts['query'] = implode('&', $queryParts);
-        $loginUrl = $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+        $loginUrl = $parts['scheme'].'://'.$parts['host'].$parts['path'];
         if (!empty($parts['query'])) {
-            $loginUrl .= '?' . $parts['query'];
+            $loginUrl .= '?'.$parts['query'];
         }
 
         $_SESSION['oidc_state'] = $state;
@@ -134,7 +129,7 @@ class FeloginHook
      */
     protected function getUniqueId()
     {
-        $uniqueId = sprintf('%08x', abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] . $_SERVER['REMOTE_PORT'])));
+        $uniqueId = sprintf('%08x', abs(crc32($_SERVER['REMOTE_ADDR'].$_SERVER['REQUEST_TIME'].$_SERVER['REMOTE_PORT'])));
 
         return $uniqueId;
     }
@@ -148,11 +143,10 @@ class FeloginHook
     {
         /** @var \TYPO3\CMS\Core\Log\Logger $logger */
         static $logger = null;
-        if ($logger === null) {
+        if (null === $logger) {
             $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
         }
 
         return $logger;
     }
-
 }
