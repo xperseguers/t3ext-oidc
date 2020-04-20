@@ -32,7 +32,10 @@ class FeloginHook
         static::getLogger()->debug('Post-processing markers for felogin form', ['request' => $requestId]);
         $markerArray['###OPENID_CONNECT###'] = '';
 
-        if (version_compare(TYPO3_version, '9.0', '<')) {
+        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
+            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
+            : TYPO3_branch;
+        if (version_compare($typo3Branch, '9.0', '<')) {
             $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
         } else {
             $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
@@ -69,13 +72,9 @@ class FeloginHook
             $markerArray['###OPENID_CONNECT###'] = $linkTag;
         }
 
-        if (version_compare(TYPO3_branch, '8', '>=')) {
-            /** @var \TYPO3\CMS\Core\Service\MarkerBasedTemplateService $templateService */
-            $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Service\MarkerBasedTemplateService::class);
-            $content = $templateService->substituteMarkerArrayCached($params['content'], $markerArray);
-        } else {
-            $content = $pObj->cObj->substituteMarkerArrayCached($params['content'], $markerArray);
-        }
+        /** @var \TYPO3\CMS\Core\Service\MarkerBasedTemplateService $templateService */
+        $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Service\MarkerBasedTemplateService::class);
+        $content = $templateService->substituteMarkerArrayCached($params['content'], $markerArray);
 
         return $content;
     }
