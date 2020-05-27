@@ -72,11 +72,10 @@ class LoginController
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
         }
-
-        $this->performRedirectToLogin();
+        $this->performRedirectToLogin($pluginConfiguration['authorizationUrlOptions.']);
     }
 
-    protected function performRedirectToLogin()
+    protected function performRedirectToLogin(array $authorizationUrlOptions = [])
     {
         /** @var \Causal\Oidc\Service\OAuthService $service */
         $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
@@ -88,7 +87,7 @@ class LoginController
         if ($this->settings['enableCodeVerifier']) {
             $codeVerifier = $this->generateCodeVerifier();
             $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
-            $options = $this->addCodeChallengeToOptions($codeChallenge);
+            $options = $this->addCodeChallengeToOptions($codeChallenge, $authorizationUrlOptions);
             $_SESSION['oidc_code_verifier'] = $codeVerifier;
         }
         $authorizationUrl = $service->getAuthorizationUrl($options?: []);
