@@ -66,17 +66,16 @@ class LoginController
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
         }
-
-        $this->performRedirectToLogin();
+        $this->performRedirectToLogin($pluginConfiguration['authorizationUrlOptions.']);
     }
 
-    protected function performRedirectToLogin()
+    protected function performRedirectToLogin(array $authorizationUrlOptions)
     {
         /** @var \Causal\Oidc\Service\OAuthService $service */
         $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
         $service->setSettings($this->settings);
 
-        $authorizationUrl = $service->getAuthorizationUrl();
+        $authorizationUrl = $service->getAuthorizationUrl($authorizationUrlOptions);
 
         if (session_id() === '') {
             session_start();
