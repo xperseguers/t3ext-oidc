@@ -13,6 +13,8 @@
  */
 
 namespace Causal\Oidc\Hooks;
+
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -39,37 +41,47 @@ class DataHandler
 
         if (isset($fieldArray['tx_oidc_pattern']) && empty($fieldArray['tx_oidc_pattern'])) {
             // Pattern has been cleared => disconnect group from users (see https://github.com/xperseguers/t3ext-oidc/issues/11)
-            $database = $this->getDatabaseConnection();
-            $usersInThisUserGroup = $database->exec_SELECTgetRows(
-                'uid, usergroup',
-                'fe_users',
-                $database->listQuery('usergroup', $id, 'fe_users')
-            );
+            $usersInThisUserGroup = $this->findUsersInUsergroup($id);
             foreach ($usersInThisUserGroup as $user) {
-                $userGroups = GeneralUtility::intExplode(',', $user['usergroup'], true);
-                // Remove this user group from the list
-                $index = array_search($id, $userGroups);
-                unset($userGroups[$index]);
-                $database->exec_UPDATEquery(
-                    'fe_users',
-                    'uid=' . (int)$user['uid'],
-                    [
-                        'usergroup' => implode(',', $userGroups),
-                        'tstamp' => $GLOBALS['EXEC_TIME'],
-                    ]
-                );
+                $this->removeUserFromUsergroup($id, $user);
             }
         }
     }
 
-    /**
-     * Returns the database connection.
-     *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
-     */
-    protected function getDatabaseConnection()
+    protected function getDatabaseConnectionPool(): ConnectionPool
     {
-        return $GLOBALS['TYPO3_DB'];
+        return GeneralUtility::makeInstance(ConnectionPool::class);
     }
 
+    protected function findUsersInUsergroup(int $feUsergroupUid): array
+    {
+        $selectQueryBuilder = $this->getDatabaseConnectionPool()->getQueryBuilderForTable('fe_users');
+        $selectQueryBuilder
+            ->select('uid', 'usergroup')
+            ->from('fe_users')
+            ->where($selectQueryBuilder->expr()->inSet('usergroup', $feUsergroupUid));
+        $usersInThisUserGroup = $selectQueryBuilder->execute()->fetchAll();
+
+        return $usersInThisUserGroup;
+    }
+
+    /**
+     * @param $id
+     * @param $user
+     */
+    protected function removeUserFromUsergroup($id, $user): void
+    {
+        $userGroups = GeneralUtility::intExplode(',', $user['usergroup'], true);
+        // Remove this user group from the list
+        $index = array_search($id, $userGroups);
+        unset($userGroups[$index]);
+
+        $updateQueryBuilder = $this->getDatabaseConnectionPool()->getQueryBuilderForTable('fe_users');
+        $updateQueryBuilder
+            ->update('fe_users')
+            ->set('usergroup', implode(',', $userGroups))
+            ->set('tstamp', $GLOBALS['EXEC_TIME'])
+            ->where($updateQueryBuilder->expr()->eq('uid', (int)$user['uid']))
+            ->execute();
+    }
 }

@@ -14,6 +14,7 @@
 
 namespace Causal\Oidc\Controller;
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -36,7 +37,7 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
      */
     public function initializeAction()
     {
-        $this->globalSettings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
+        $this->globalSettings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc');
     }
 
     /**

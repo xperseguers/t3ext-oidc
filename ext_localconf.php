@@ -3,7 +3,9 @@ defined('TYPO3_MODE') || die();
 
 $boot = function ($_EXTKEY) {
     // Configuration of authentication service.
-    $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$_EXTKEY]);
+    $settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+        \TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class
+    )->get('oidc');
 
     // Service configuration
     $subTypesArr = [];

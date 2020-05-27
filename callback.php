@@ -22,7 +22,7 @@ if (!(empty($_GET['state']) || empty($_GET['code']))) {
     $currentUrl .= $_SERVER['REQUEST_URI'];
 
     if (($pos = strpos($currentUrl, 'typo3conf/ext/oidc/callback.php')) !== false) {
-        $connectUrl = substr($currentUrl, 0, $pos) . '?type=1489657462&state=' . $_GET['state'] . '&code=' . $_GET['code'];
+        $connectUrl = substr($currentUrl, 0, $pos) . 'de/?type=1489657462&state=' . $_GET['state'] . '&code=' . $_GET['code'];
         header('Location: ' . $connectUrl);
         exit();
     }

@@ -14,6 +14,7 @@
 
 namespace Causal\Oidc\Controller;
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
@@ -41,7 +42,7 @@ class LoginController
 
     public function __construct()
     {
-        $this->settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
+        $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc');
     }
 
     /**

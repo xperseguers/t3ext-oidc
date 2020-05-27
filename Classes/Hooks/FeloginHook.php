@@ -14,6 +14,7 @@
 
 namespace Causal\Oidc\Hooks;
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -32,7 +33,7 @@ class FeloginHook
         static::getLogger()->debug('Post-processing markers for felogin form', ['request' => $requestId]);
         $markerArray['###OPENID_CONNECT###'] = '';
 
-        $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
+        $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc');
 
         if (empty($settings['oidcClientKey'])
             || empty($settings['oidcClientSecret'])
