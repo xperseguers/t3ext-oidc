@@ -281,7 +281,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
-        $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
+        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
+            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
+            : TYPO3_branch;
+        if (version_compare($typo3Branch, '9.0', '>=')) {
+            $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getDefaultHashInstance(TYPO3_MODE);
+        } else {
+            $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
+        }
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
         $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
 
