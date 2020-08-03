@@ -392,6 +392,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 );
             }
         } else {    // fe_users record does not already exist => create it
+            if (empty($newUserGroups)) {
+                // Somehow the user is not mapped to any local user group, we should not create the record
+                static::getLogger()->info('User has no associated local TYPO3 user group, denying access', ['user' => $row]);
+
+                return false;
+            }
             static::getLogger()->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
                 'pid' => $this->config['usersStoragePid'],
