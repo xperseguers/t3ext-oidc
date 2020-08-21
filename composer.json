@@ -22,7 +22,7 @@
   ],
   "license": "GPL-2.0-or-later",
   "require": {
-    "php": ">= 7.0.0, <= 7.3.99",
+    "php": ">= 7.0.0, <= 7.4.99",
     "typo3/cms-core": "^8.7 || ^9.5",
     "league/oauth2-client": "^2.0"
   },
@@ -66,7 +66,7 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-master": "0.5.x-dev"
+      "dev-master": "1.0.x-dev"
     },
     "typo3/cms": {
       "extension-key": "oidc",
