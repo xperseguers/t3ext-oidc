@@ -14,6 +14,7 @@
 
 namespace Causal\Oidc\Service;
 
+use Causal\Oidc\Service\OAuthService;
 use League\OAuth2\Client\Token\AccessToken;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
@@ -21,8 +22,9 @@ use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
-use Causal\Oidc\Service\OAuthService;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 
 /**
@@ -100,6 +102,15 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
         }
 
+        // dispatch a signal (containing the user with his access token if auth was successful)
+        // so other extensions can use them to make further requests to an API
+        // provided by the authentication server
+        $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
+        $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
+        if (is_array($user)) {
+            unset($user['accessToken']);
+        }
+
         return $user;
     }
 
@@ -132,6 +143,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         $user = $this->getUserFromAccessToken($service, $accessToken);
+        if (is_array($user)) {
+            $user['accessToken'] = $accessToken;
+        }
+
         return $user;
     }
 
@@ -168,6 +183,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 'username' => $username,
                 'message' => $e->getMessage(),
             ]);
+        }
+
+        if (is_array($user)) {
+            $user['accessToken'] = $accessToken;
         }
 
         return $user;
