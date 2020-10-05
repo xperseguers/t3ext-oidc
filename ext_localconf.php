@@ -2,6 +2,11 @@
 defined('TYPO3_MODE') || die();
 
 $boot = function ($_EXTKEY) {
+    if (class_exists(\TYPO3\CMS\Core\Authentication\AuthenticationService::class)
+        && !class_exists(\TYPO3\CMS\Sv\AuthenticationService::class)) {
+        class_alias(\TYPO3\CMS\Core\Authentication\AuthenticationService::class, \TYPO3\CMS\Sv\AuthenticationService::class);
+    }
+
     // Configuration of authentication service
     $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
         ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
