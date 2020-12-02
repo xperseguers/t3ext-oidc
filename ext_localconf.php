@@ -1,7 +1,7 @@
 <?php
 defined('TYPO3_MODE') || die();
 
-$boot = function ($_EXTKEY) {
+(static function (string $_EXTKEY) {
     if (class_exists(\TYPO3\CMS\Core\Authentication\AuthenticationService::class)
         && !class_exists(\TYPO3\CMS\Sv\AuthenticationService::class)) {
         class_alias(\TYPO3\CMS\Core\Authentication\AuthenticationService::class, \TYPO3\CMS\Sv\AuthenticationService::class);
@@ -72,7 +72,4 @@ $boot = function ($_EXTKEY) {
     if (is_file($pharFileName)) {
         @include 'phar://' . $pharFileName . '/vendor/autoload.php';
     }
-};
-
-$boot('oidc');
-unset($boot);
+})('oidc');
