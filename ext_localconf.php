@@ -1,7 +1,7 @@
 <?php
 defined('TYPO3_MODE') || die();
 
-$boot = function ($_EXTKEY) {
+(static function (string $_EXTKEY) {
     // Configuration of authentication service
     $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
         ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
@@ -67,7 +67,4 @@ $boot = function ($_EXTKEY) {
     if (is_file($pharFileName)) {
         @include 'phar://' . $pharFileName . '/vendor/autoload.php';
     }
-};
-
-$boot('oidc');
-unset($boot);
+})('oidc');
