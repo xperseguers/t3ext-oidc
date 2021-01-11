@@ -82,11 +82,16 @@ class LoginController
         $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
         $service->setSettings($this->settings);
 
-        $authorizationUrl = $service->getAuthorizationUrl();
-
         if (session_id() === '') {
             session_start();
         }
+        if ($this->settings['enableCodeVerifier']) {
+            $codeVerifier = $this->generateCodeVerifier();
+            $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
+            $options = $this->addCodeChallengeToOptions($codeChallenge);
+            $_SESSION['oidc_code_verifier'] = $codeVerifier;
+        }
+        $authorizationUrl = $service->getAuthorizationUrl($options?: []);
 
         $state = $service->getState();
         $_SESSION['oidc_state'] = $state;
@@ -118,4 +123,26 @@ class LoginController
 
         return '/';
     }
+
+    protected function generateCodeVerifier(): string
+    {
+        return bin2hex(random_bytes(64));
+    }
+
+    protected function convertVerifierToChallenge($codeVerifier)
+    {
+        return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
+    }
+
+    protected function addCodeChallengeToOptions($codeChallenge, array $options = []): array
+    {
+        return array_merge(
+            $options,
+            [
+                'code_challenge' => $codeChallenge,
+                'code_challenge_method' => 'S256',
+            ]
+        );
+    }
+
 }

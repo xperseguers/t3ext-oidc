@@ -86,15 +86,19 @@ class OAuthService
      * credentials grant.
      *
      * @param string $codeOrUsername Either a code or the username (if password is provided)
-     * @param string $password Optional parameter if authenticating with authorization code grant
+     * @param null $password Optional parameter if authenticating with authorization code grant
+     * @param null $codeVerifier Code verifier for PKCE
      * @return AccessToken
+     * @throws \League\OAuth2\Client\Provider\Exception\IdentityProviderException
      */
-    public function getAccessToken($codeOrUsername, $password = null)
+    public function getAccessToken($codeOrUsername, $password = null, $codeVerifier = null)
     {
         if ($password === null) {
-            $accessToken = $this->getProvider()->getAccessToken('authorization_code', [
-                'code' => $codeOrUsername,
-            ]);
+            $options = ['code' => $codeOrUsername];
+            if ($codeVerifier !== null) {
+                $options['code_verifier'] = $codeVerifier;
+            }
+            $accessToken = $this->getProvider()->getAccessToken('authorization_code', $options);
         } else {
             $accessToken = $this->getProvider()->getAccessToken('password', [
                 'username' => $codeOrUsername,

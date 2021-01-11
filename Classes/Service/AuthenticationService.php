@@ -75,6 +75,14 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
     }
 
+    protected function getCodeVerifierFromSession()
+    {
+        if (session_id() === '') {
+            session_start();
+        }
+        return @$_SESSION['oidc_code_verifier'];
+    }
+
     /**
      * Finds a user.
      *
@@ -97,7 +105,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         if ($code !== null) {
-            $user = $this->authenticateWithAuhorizationCode($code);
+            $codeVerifier = null;
+            if ($this->config['enableCodeVerifier']) {
+                $codeVerifier = $this->getCodeVerifierFromSession();
+            }
+            $user = $this->authenticateWithAuhorizationCode($code, $codeVerifier);
         } elseif (!(empty($username) || empty($password))) {
             $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
         }
@@ -120,7 +132,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * @param string $code
      * @return array|bool
      */
-    protected function authenticateWithAuhorizationCode($code)
+    protected function authenticateWithAuhorizationCode($code, $codeVerifier = null)
     {
         static::getLogger()->debug('Initializing OpenID Connect service');
 
@@ -131,7 +143,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         // Try to get an access token using the authorization code grant
         try {
             static::getLogger()->debug('Retrieving an access token');
-            $accessToken = $service->getAccessToken($code);
+            $accessToken = $service->getAccessToken($code, null, $codeVerifier);
             static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
