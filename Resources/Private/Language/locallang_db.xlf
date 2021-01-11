@@ -61,6 +61,9 @@
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
 			</trans-unit>
+			<trans-unit id="settings.oidcRedirectUri">
+				<source>Redirect URI: The authentication server callback will point to this URI.</source>
+			</trans-unit>
 			<trans-unit id="fe_users.tx_oidc">
 				<source>OpenID Connect Identifier</source>
 			</trans-unit>

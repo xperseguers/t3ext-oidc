@@ -19,6 +19,9 @@ usersStoragePid =
 # cat=basic//2; type=string; label=Default user group(s) (comma-separated list of UIDs)
 usersDefaultGroup =
 
+# cat=basic//2a; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcRedirectUri
+oidcRedirectUri =
+
 # cat=basic//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientKey
 oidcClientKey =
 
