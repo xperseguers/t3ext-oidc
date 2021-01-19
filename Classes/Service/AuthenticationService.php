@@ -368,7 +368,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 ->execute()
                 ->fetchAll();
 
-            $roles = GeneralUtility::trimExplode(',', $info['Roles'], true);
+            $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
             $roles = ',' . implode(',', $roles) . ',';
 
             foreach ($typo3Roles as $typo3Role) {
