@@ -15,17 +15,20 @@
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Service\OAuthService;
+use TYPO3\CMS\Core\Routing\SiteMatcher;
+use TYPO3\CMS\Core\Utility\HttpUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
-use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
-use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
+use TYPO3\CMS\Core\Http\ServerRequestFactory;
+use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
+use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
+use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 /**
  * OpenID Connect authentication service.
@@ -303,8 +306,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
             ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
             : TYPO3_branch;
-        if (version_compare($typo3Branch, '9.0', '>=')) {
-            $objInstanceSaltedPW = \TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::getDefaultHashInstance(TYPO3_MODE);
+        if (version_compare($typo3Branch, '9.5', '>=')) {
+            $objInstanceSaltedPW = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class)->getDefaultHashInstance(TYPO3_MODE);
         } else {
             $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
         }
@@ -665,15 +668,38 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $GLOBALS['TCA'][$table] = include($file);
         }
 
+        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
+            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
+            : TYPO3_branch;
+
+        if (version_compare($typo3Branch, '10.0', '>=')) {
+            /** @var ServerRequestInterface $request */
+            $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+            /** @var SiteMatcher $siteMatcher */
+            $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
+            $routeResult = $siteMatcher->matchRequest($request);
+            $site = $routeResult->getSite();
+            $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+            $currentPage = $pageArguments->getPageId();
+
+            $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
+            $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, null, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
+
+            /** @var \TYPO3\CMS\Core\TypoScript\TemplateService $templateService */
+            $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\TemplateService::class, null, null, $localTSFE);
+
+            $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
+            $templateService->start($rootLine);
+            $setup = $templateService->setup;
+            return $setup;
+        }
+
         /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageRepository */
         $pageRepository = GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\Page\PageRepository::class);
         $pageRepository->init(false);
 
         /** @var \TYPO3\CMS\Core\TypoScript\TemplateService $templateService */
         $templateService = GeneralUtility::makeInstance(\TYPO3\CMS\Core\TypoScript\TemplateService::class);
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
         if (version_compare($typo3Branch, '9.0', '<')) {
             $templateService->init();
         }
