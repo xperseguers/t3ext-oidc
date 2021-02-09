@@ -304,7 +304,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
             : TYPO3_branch;
         if (version_compare($typo3Branch, '9.0', '>=')) {
-            $objInstanceSaltedPW = \TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::getDefaultHashInstance(TYPO3_MODE);
+            $passwordHashFactory = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class);
+            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance(TYPO3_MODE);
         } else {
             $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
         }
