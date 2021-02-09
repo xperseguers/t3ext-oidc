@@ -16,8 +16,8 @@ the  authorization endpoint of the authorization server.
 
 ## OIDC Login
 
-If openid_connect is your only means of frontend login, you can use the included "OIDC Login" plugin. Add it to your 
-login page, where you would normally add the felogin box. After adding the OIDC Login plugin, requests to the login 
+If openid_connect is your only means of frontend login, you can use the included "OIDC Login" plugin. Add it to your
+login page, where you would normally add the felogin box. After adding the OIDC Login plugin, requests to the login
 page will immediately be redirected to the authorization server.
 
 After the login process, the user will be redirected:
@@ -26,7 +26,13 @@ After the login process, the user will be redirected:
 - If no parameter is set, OIDC Login will redirect the user to the page configured at
   `plugin.tx_oidc_login.defaultRedirectPid`.
 - If that configuration is not set either, the user will be redirected to '/'.
- 
+
+## PKCE (Proof of Key for Code Exchange)
+
+If your OIDC Login supports _Proof of Key for Code Exchange_ you can enable it by
+checking `enableCodeVerifier` in the extension configuration. A shared secret will
+be sent along preventing _Authorization Code Interception Attacks_. See
+https://tools.ietf.org/html/rfc7636 for details.
 
 ## Configuring
 
@@ -69,8 +75,8 @@ After the login process, the user will be redirected:
 
 ### OIDC Login
 
-- `plugin.tx_oidc_login.defaultRedirectPid` UID of the page that users will be redirected to, if no `redirect_url` 
-parameter is set. 
+- `plugin.tx_oidc_login.defaultRedirectPid` UID of the page that users will be redirected to, if no `redirect_url`
+parameter is set.
 
 ## Logging
 

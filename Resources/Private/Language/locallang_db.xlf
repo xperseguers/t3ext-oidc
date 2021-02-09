@@ -55,8 +55,14 @@
 			<trans-unit id="settings.oidcDisableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 			</trans-unit>
+			<trans-unit id="settings.enableCodeVerifier">
+				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
+			</trans-unit>
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcRedirectUri">
+				<source>Redirect URI: The authentication server callback will point to this URI.</source>
 			</trans-unit>
 			<trans-unit id="fe_users.tx_oidc">
 				<source>OpenID Connect Identifier</source>

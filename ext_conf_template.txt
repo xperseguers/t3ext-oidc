@@ -10,11 +10,17 @@ undeleteFrontendUsers = 0
 # cat=basic/enable/4; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.frontendUserMustExistLocally
 frontendUserMustExistLocally = 0
 
+# cat=basic/enable/5; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableCodeVerifier
+enableCodeVerifier = 0
+
 # cat=basic//1; type=int; label=Storage Pid: The Storage Pid of the Page, where the fe_users should be stored
 usersStoragePid =
 
 # cat=basic//2; type=string; label=Default user group(s) (comma-separated list of UIDs)
 usersDefaultGroup =
+
+# cat=basic//2a; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcRedirectUri
+oidcRedirectUri =
 
 # cat=basic//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientKey
 oidcClientKey =
