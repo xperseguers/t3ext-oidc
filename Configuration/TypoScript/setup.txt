@@ -42,6 +42,6 @@ plugin.tx_oidc_login {
     defaultRedirectPid =
     # Additional URL parameters for the authorization URL of the identity server
     authorizationUrlOptions {
-
+        # login_theme = dark
     }
 }
