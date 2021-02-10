@@ -286,6 +286,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             ->select('*')
             ->from($userTable)
             ->where(
+                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter((int)$this->config['usersStoragePid'], \PDO::PARAM_INT)),
                 $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'], \PDO::PARAM_STR))
             )
             ->execute()
