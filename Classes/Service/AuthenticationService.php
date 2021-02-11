@@ -465,7 +465,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'])) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
                 /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
-                $postProcessor = GeneralUtility::getUserObj($className);
+                $postProcessor = GeneralUtility::makeInstance($className);
                 if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
                     $postProcessor->postProcessUser(TYPO3_MODE, $user, $info);
                     $reloadUserRecord = true;
