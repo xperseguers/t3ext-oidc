@@ -15,9 +15,15 @@
 // see https://github.com/thephpleague/oauth2-client
 if (!(empty($_GET['state']) || empty($_GET['code']))) {
     $schema = (@$_SERVER['HTTPS'] === 'on') ? 'https://' : 'http://';
-    $currentUrl = $schema . $_SERVER['SERVER_NAME'];
-    if ($_SERVER['SERVER_PORT'] !== '80' && $_SERVER['SERVER_PORT'] !== '443') {
-        $currentUrl .= ':' . $_SERVER['SERVER_PORT'];
+    if ($_SERVER['SERVER_NAME'] !== '_') {
+        $currentUrl = $schema . $_SERVER['SERVER_NAME'];
+        if ($_SERVER['SERVER_PORT'] !== '80' && $_SERVER['SERVER_PORT'] !== '443') {
+            $currentUrl .= ':' . $_SERVER['SERVER_PORT'];
+        }
+    } else {
+        //nginx catchall server name.
+        // Rely on HTTP Host header, which contains non-standard ports as well
+        $currentUrl = $schema . $_SERVER['HTTP_HOST'];
     }
     $currentUrl .= $_SERVER['REQUEST_URI'];
 
