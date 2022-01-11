@@ -14,11 +14,24 @@
 
 namespace Causal\Oidc\Service;
 
+use League\OAuth2\Client\Token\AccessToken;
+
 /**
- * Interface for hooks related to thge resource owner.
+ * Interface for hooks related to the resource owner.
  */
 interface ResourceOwnerHookInterface
 {
+    /**
+     * Review the resource owner data before user conversion takes place.
+     * MUST return the reviewed $resourceOwner or null.
+     * Returning null denies access to the site.
+     *
+     * @param OAuthService $service
+     * @param AccessToken $accessToken
+     * @param array $resourceOwner
+     * @return array|null
+     */
+    public function reviewResourceOwner(OAuthService $service, AccessToken $accessToken, array $resourceOwner): ?array;
 
     /**
      * Post-process for the user record (which is already persisted to the database).

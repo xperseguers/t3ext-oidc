@@ -236,6 +236,29 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 1490086626
             );
         }
+        // Hook to review $resourceOwner
+        if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'])) {
+            foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
+                /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $hook */
+                $hook = GeneralUtility::makeInstance($className);
+                if ($hook instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
+                    $resourceOwner = $hook->reviewResourceOwner($service, $accessToken, $resourceOwner);
+                } else {
+                    throw new \InvalidArgumentException(
+                        sprintf(
+                            'Invalid review resource owner class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
+                            $className
+                        ),
+                        1641896335
+                    );
+                }
+            }
+            if ($resourceOwner === null) {
+                static::getLogger()->error('User access denied, revoking access token');
+                $service->revokeToken($accessToken);
+                return false;
+            }
+        }
         $user = $this->convertResourceOwner($resourceOwner);
 
         if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
