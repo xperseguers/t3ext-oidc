@@ -17,6 +17,7 @@ namespace Causal\Oidc\Service;
 use League\OAuth2\Client\Token\AccessToken;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
@@ -286,7 +287,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             ->select('*')
             ->from($userTable)
             ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter((int)$this->config['usersStoragePid'], \PDO::PARAM_INT)),
+                $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
+                    GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true),
+                    \TYPO3\CMS\Core\Database\Connection::PARAM_INT_ARRAY
+                )),
                 $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'], \PDO::PARAM_STR))
             )
             ->execute()
@@ -436,7 +440,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             }
             static::getLogger()->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
-                'pid' => $this->config['usersStoragePid'],
+                'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => $info['sub'],
@@ -447,15 +451,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             );
             $userUid = $tableConnection->lastInsertId();
             // Retrieve the created user from database to get all columns
-            $user = $tableConnection
-                ->select(
-                    ['*'],
-                    $userTable,
-                    [
-                        'uid' => $userUid,
-                    ]
-                )
-                ->fetch();
+            $user = $this->getUserByUidAndTable((int)$userUid, $userTable);
         }
 
         static::getLogger()->debug('Authentication user record processed', $user);
@@ -482,21 +478,38 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         if ($reloadUserRecord) {
-            $user = $tableConnection
-                ->select(
-                    ['*'],
-                    $userTable,
-                    [
-                        'uid' => (int)$user['uid'],
-                    ]
-                )
-                ->fetch();
+            $user = $this->getUserByUidAndTable((int)$user['uid'], $userTable);
             static::getLogger()->debug('User record reloaded', $user);
         }
 
         // We need that for the upcoming call to authUser()
         $user['tx_oidc'] = true;
 
+        return $user;
+    }
+
+    protected function getUserByUidAndTable(int $uid, string $table): array
+    {
+        $user = [];
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($table);
+        $queryBuilder->getRestrictions()->removeAll();
+        $queryResult = $queryBuilder
+            ->select('*')
+            ->from($table)
+            ->where($queryBuilder->expr()->eq(
+                'uid',
+                $queryBuilder->createNamedParameter($uid, \PDO::PARAM_INT))
+            )
+            ->execute();
+        if ($queryResult instanceof \Doctrine\DBAL\ForwardCompatibility\Result) {
+            $user = $queryResult->fetchAssociative();
+        }
+        if ($user === [] && $queryResult instanceof \Doctrine\DBAL\Driver\Statement) {
+            $user = $queryResult->fetch();
+        }
+        if (!is_array($user) || $user === []) {
+            throw new \LogicException('The user record could not be obtained', 1643452557);
+        }
         return $user;
     }
 
