@@ -22,7 +22,7 @@ page will immediately be redirected to the authorization server.
 
 After the login process, the user will be redirected:
 
-- The OIDC Login supports the same redirect_url parameter as the felogin box
+- The OIDC Login supports the same `redirect_url` parameter as the felogin box
 - If no parameter is set, OIDC Login will redirect the user to the page configured at
   `plugin.tx_oidc_login.defaultRedirectPid`.
 - If that configuration is not set either, the user will be redirected to '/'.
@@ -51,8 +51,8 @@ https://tools.ietf.org/html/rfc7636 for details.
   name = <family_name>, <given_name>
   ```
 
-- Support for [stdWrap](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html) in field
-  definition, e.g.,
+- Support for [stdWrap](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html) in
+  field definition, e.g.,
 
   ```
   name = <name>
