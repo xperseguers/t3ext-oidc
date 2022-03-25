@@ -88,12 +88,12 @@ As an administrator, what you should know is that the TYPO3 Logger forwards log 
 log record.
 
 By default, with a vanilla TYPO3 installation, messages are written to the default log file
-(`typo3temp/logs/typo3_*.log`).
+(`var/log/typo3_*.log`).
 
 
 ### Dedicated Log File for OpenID Connect
 
-If you want to redirect every logging information from this extension to `typo3temp/logs/oidc.log` and send log
+If you want to redirect every logging information from this extension to `var/log/oidc.log` and send log
 entries with level "WARNING" or above to the system log, you may add following configuration to
 `typo3conf/AdditionalConfiguration.php`:
 
