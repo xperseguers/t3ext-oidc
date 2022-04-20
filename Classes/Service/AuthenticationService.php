@@ -16,12 +16,17 @@ namespace Causal\Oidc\Service;
 
 use League\OAuth2\Client\Token\AccessToken;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\Request;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
+use TYPO3\CMS\Core\Site\Entity\NullSite;
+use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
@@ -62,6 +67,11 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      * @var array
      */
     protected $config;
+
+    /**
+     * @var ?TypoScriptFrontendController
+     */
+    protected $localTypoScriptFrontendController;
 
     /**
      * AuthenticationService constructor.
@@ -537,14 +547,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         if (count($typoScriptKeys) > 0) {
             $backupTSFE = $GLOBALS['TSFE'];
 
-            // Advanced stdWrap methods require a valid $GLOBALS['TSFE'] => create the most lightweight one
-            $GLOBALS['TSFE'] = GeneralUtility::makeInstance(
-                \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController::class,
-                $GLOBALS['TYPO3_CONF_VARS'],
-                0,
-                ''
-            );
-            $GLOBALS['TSFE']->initTemplate();
+            // Advanced stdWrap methods require a valid $GLOBALS['TSFE']
+            $GLOBALS['TSFE'] = $this->getLocalTypoScriptFrontendController();
             $GLOBALS['TSFE']->renderCharset = 'utf-8';
 
             /** @var $contentObj \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer */
@@ -687,17 +691,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             : TYPO3_branch;
 
         if (version_compare($typo3Branch, '10.0', '>=')) {
-            /** @var ServerRequestInterface $request */
-            $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
-            /** @var SiteMatcher $siteMatcher */
-            $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
-            $routeResult = $siteMatcher->matchRequest($request);
-            $site = $routeResult->getSite();
-            $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
-            $currentPage = $pageArguments->getPageId();
-
-            $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
-            $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, null, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
+            $localTSFE = $this->getLocalTypoScriptFrontendController();
+            $currentPage = $localTSFE->getPageArguments()->getPageId();
 
             /** @var TemplateService $templateService */
             $templateService = GeneralUtility::makeInstance(TemplateService::class, null, null, $localTSFE);
@@ -756,6 +751,35 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         return $logger;
+    }
+
+    protected function getLocalTypoScriptFrontendController(): TypoScriptFrontendController
+    {
+        if (isset($this->localTypoScriptFrontendController)) {
+            return $this->localTypoScriptFrontendController;
+        }
+
+        /** @var ServerRequestInterface $request */
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+        /** @var SiteMatcher $siteMatcher */
+        $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
+        $routeResult = $siteMatcher->matchRequest($request);
+        $site = $routeResult->getSite();
+        $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+
+        $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
+        $localTSFE = GeneralUtility::makeInstance(
+            TypoScriptFrontendController::class,
+            null,
+            $site,
+            $routeResult->getLanguage(),
+            $pageArguments,
+            $frontendUser
+        );
+
+        $this->localTypoScriptFrontendController = $localTSFE;
+
+        return $localTSFE;
     }
 
 }
