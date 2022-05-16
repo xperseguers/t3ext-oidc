@@ -14,7 +14,9 @@
 
 namespace Causal\Oidc\Service;
 
+use Causal\Oidc\Event\AuthenticationGetUserEvent;
 use League\OAuth2\Client\Token\AccessToken;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
@@ -123,6 +125,18 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         // provided by the authentication server
         $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
         $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
+
+        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
+            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
+            : TYPO3_branch;
+
+        if (version_compare($typo3Branch, '10.2', '>=')) {
+            $event = new AuthenticationGetUserEvent($user);
+            $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+            $eventDispatcher->dispatch($event);
+            $user = $event->getUser();
+        }
+
         if (is_array($user)) {
             unset($user['accessToken']);
         }
