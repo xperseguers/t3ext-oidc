@@ -102,6 +102,7 @@ class FeloginHook
         ]);
 
         $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
+
         // Sanitize the URL
         $parts = parse_url($loginUrl);
         $queryParts = array_filter(explode('&', $parts['query']), function ($v) {
@@ -110,7 +111,7 @@ class FeloginHook
             return !in_array($k, ['logintype', 'tx_oidc[code]']);
         });
         $parts['query'] = implode('&', $queryParts);
-        $loginUrl = $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+        $loginUrl = $parts['scheme'] . '://' . $parts['host'] .(!empty($parts["port"]) && $parts["port"] != 80 && $parts["port"] != 443 ? ":".$parts["port"] : ""). $parts['path'];
         if (!empty($parts['query'])) {
             $loginUrl .= '?' . $parts['query'];
         }
