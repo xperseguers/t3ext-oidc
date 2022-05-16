@@ -29,6 +29,7 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
+use TYPO3\CMS\Core\Context\Context;
 
 /**
  * OpenID Connect authentication service.
@@ -697,7 +698,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $currentPage = $pageArguments->getPageId();
 
             $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
-            $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, null, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
+            $context = GeneralUtility::makeInstance(Context::class);
+            $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, $context, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
 
             /** @var TemplateService $templateService */
             $templateService = GeneralUtility::makeInstance(TemplateService::class, null, null, $localTSFE);
