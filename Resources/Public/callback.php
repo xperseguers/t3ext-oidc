@@ -19,9 +19,6 @@ if (!(empty($_GET['state']) || empty($_GET['code']))) {
         $schema = (@$_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
     }
     $currentUrl = $schema . '://' . $_SERVER['SERVER_NAME'];
-    if ($_SERVER['SERVER_PORT'] !== '80' && $_SERVER['SERVER_PORT'] !== '443') {
-        $currentUrl .= ':' . $_SERVER['SERVER_PORT'];
-    }
     $currentUrl .= $_SERVER['REQUEST_URI'];
 
     if (($pos = strpos($currentUrl, 'typo3conf/ext/oidc/Resources/Public/callback.php')) !== false) {
