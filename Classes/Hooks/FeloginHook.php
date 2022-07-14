@@ -110,7 +110,11 @@ class FeloginHook
             return !in_array($k, ['logintype', 'tx_oidc[code]']);
         });
         $parts['query'] = implode('&', $queryParts);
-        $loginUrl = $parts['scheme'] . '://' . $parts['host'] . $parts['path'];
+        $loginUrl = $parts['scheme'] . '://' . $parts['host'];
+        if (!empty($parts['port']) && !in_array((int)$parts['port'], [80, 443], true)) {
+            $loginUrl .= ':' . $parts['port'];
+        }
+        $loginUrl .= $parts['path'];
         if (!empty($parts['query'])) {
             $loginUrl .= '?' . $parts['query'];
         }
