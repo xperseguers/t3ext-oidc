@@ -232,7 +232,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $service->revokeToken($accessToken);
             throw new \RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
-                    . '. Your access token has been revoked. Please try again.',
+                . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
