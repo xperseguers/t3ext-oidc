@@ -18,7 +18,13 @@ if (!(empty($_GET['state']) || empty($_GET['code']))) {
     if (empty($schema)) {
         $schema = (@$_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
     }
-    $currentUrl = $schema . '://' . $_SERVER['SERVER_NAME'];
+    if ($_SERVER['SERVER_NAME'] !== '_') {
+        $currentUrl = $schema . '://' . $_SERVER['SERVER_NAME'];
+    } else {
+        // Nginx catch all server name
+        // Rely on HTTP Host header, which contains non-standard ports as well
+        $currentUrl = $schema . $_SERVER['HTTP_HOST'];
+    }
     $currentUrl .= $_SERVER['REQUEST_URI'];
 
     if (($pos = strpos($currentUrl, 'typo3conf/ext/oidc/Resources/Public/callback.php')) !== false) {
