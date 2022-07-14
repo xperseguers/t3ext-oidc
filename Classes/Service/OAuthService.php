@@ -14,10 +14,10 @@
 
 namespace Causal\Oidc\Service;
 
+use Causal\Oidc\Factory\GenericOAuthProviderFactory;
+use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Backend\Utility\BackendUtility;
 use League\OAuth2\Client\Token\AccessToken;
-use TYPO3\CMS\Core\Utility\HttpUtility;
 
 /**
  * Class OAuthService.
@@ -31,7 +31,7 @@ class OAuthService
     protected $settings;
 
     /**
-     * @var \League\OAuth2\Client\Provider\GenericProvider
+     * @var \League\OAuth2\Client\Provider\AbstractProvider
      */
     protected $provider;
 
@@ -216,22 +216,23 @@ class OAuthService
     protected function getProvider()
     {
         if ($this->provider === null) {
-            $redirectUri = $this->settings['oidcRedirectUri'];
-            if (empty($redirectUri)) {
+            $factoryClass = $this->settings['oauthProviderFactory'] ?: GenericOAuthProviderFactory::class;
+            if (!is_a($factoryClass, OAuthProviderFactoryInterface::class, true)) {
+                throw new \RuntimeException('OAuth provider factory class must implement the OAuthProviderFactoryInterface', 1652689564769);
+            }
+
+            $settings = $this->settings;
+            $settings['oidcRedirectUri'] = $this->settings['oidcRedirectUri'];
+            if (empty($settings['oidcRedirectUri'])) {
                 $redirectUri = GeneralUtility::getIndpEnv('TYPO3_SSL') ? 'https://' : 'http://';
                 $redirectUri .= GeneralUtility::getIndpEnv('HTTP_HOST');
                 $redirectUri .= '/typo3conf/ext/oidc/Resources/Public/callback.php';
+                $settings['oidcRedirectUri'] = $redirectUri;
             }
 
-            $this->provider = new \League\OAuth2\Client\Provider\GenericProvider([
-                'clientId' => $this->settings['oidcClientKey'],
-                'clientSecret' => $this->settings['oidcClientSecret'],
-                'redirectUri' => $redirectUri,
-                'urlAuthorize' => $this->settings['oidcEndpointAuthorize'],
-                'urlAccessToken' => $this->settings['oidcEndpointToken'],
-                'urlResourceOwnerDetails' => $this->settings['oidcEndpointUserInfo'],
-                'scopes' => GeneralUtility::trimExplode(',', $this->settings['oidcClientScopes'], true),
-            ]);
+            /** @var OAuthProviderFactoryInterface $factory */
+            $factory = GeneralUtility::makeInstance($factoryClass);
+            $this->provider = $factory->create($settings);
         }
 
         return $this->provider;

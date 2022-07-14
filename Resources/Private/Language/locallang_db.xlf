@@ -67,6 +67,9 @@
 			<trans-unit id="fe_users.tx_oidc">
 				<source>OpenID Connect Identifier</source>
 			</trans-unit>
+			<trans-unit id="settings.oauthProviderFactory">
+				<source>OAuth Provider Factory: Fully qulified class name (empty for generic provider).</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

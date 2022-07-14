@@ -57,3 +57,6 @@ oidcRevokeAccessTokenAfterLogin = 0
 
 # cat=advanced/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcDisableCSRFProtection
 oidcDisableCSRFProtection = 0
+
+# cat=advanced//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oauthProviderFactory
+oauthProviderFactory =

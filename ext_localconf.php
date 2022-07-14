@@ -48,17 +48,31 @@ defined('TYPO3_MODE') || die();
         ]
     );
 
-    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-        'Causal.' . $_EXTKEY,
-        'Pi1',
-        [
-            'Authentication' => 'connect',
-        ],
-        // non-cacheable actions
-        [
-            'Authentication' => 'connect'
-        ]
-    );
+    if (version_compare($typo3Branch, '10.0', '<')) {
+        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+            'Causal.' . $_EXTKEY,
+            'Pi1',
+            [
+                'Authentication' => 'connect',
+            ],
+            // non-cacheable actions
+            [
+                'Authentication' => 'connect'
+            ]
+        );
+    } else {
+        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+            $_EXTKEY,
+            'Pi1',
+            [
+                \Causal\Oidc\Controller\AuthenticationController::class => 'connect',
+            ],
+            // non-cacheable actions
+            [
+                \Causal\Oidc\Controller\AuthenticationController::class => 'connect'
+            ]
+        );
+    }
 
     if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('felogin')) {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['felogin']['postProcContent'][$_EXTKEY] = \Causal\Oidc\Hooks\FeloginHook::class . '->postProcContent';

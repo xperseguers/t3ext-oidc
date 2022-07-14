@@ -14,6 +14,8 @@
 
 namespace Causal\Oidc\Controller;
 
+use TYPO3\CMS\Core\Http\PropagateResponseException;
+use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
@@ -49,6 +51,11 @@ class LoginController
         } else {
             $this->settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
         }
+    }
+
+    public function setContentObjectRenderer(ContentObjectRenderer $cObj)
+    {
+        $this->cObj = $cObj;
     }
 
     /**
@@ -98,13 +105,13 @@ class LoginController
         $_SESSION['oidc_authorization_url'] = $authorizationUrl;
         unset($_SESSION['oidc_redirect_url']); // The redirect will be handled by this plugin
 
-        HttpUtility::redirect($authorizationUrl);
+        $this->redirect($authorizationUrl);
     }
 
     protected function performRedirectAfterLogin()
     {
         $redirectUrl = $this->determineRedirectUrl();
-        HttpUtility::redirect($redirectUrl);
+        $this->redirect($redirectUrl);
     }
 
     protected function determineRedirectUrl()
@@ -121,6 +128,19 @@ class LoginController
         }
 
         return '/';
+    }
+
+    protected function redirect(string $redirectUrl): void
+    {
+        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
+            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
+            : TYPO3_branch;
+
+        if (version_compare($typo3Branch, '11.0', '<')) {
+            HttpUtility::redirect($redirectUrl);
+        }
+
+        throw new PropagateResponseException(new RedirectResponse($redirectUrl));
     }
 
     protected function generateCodeVerifier(): string
