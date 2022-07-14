@@ -59,7 +59,7 @@
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>
 			<trans-unit id="settings.usersStoragePid">
-				<source>Storage Pid: The Storage Pid of the Page, where the fe_users should be stored</source>
+				<source>Storage Pid: Comma-separated list of uid's from pages where fe_users are located. The first uid is used to store new users.</source>
 			</trans-unit>
 			<trans-unit id="settings.usersDefaultGroup">
 				<source>Default user group(s) (comma-separated list of UIDs)</source>
