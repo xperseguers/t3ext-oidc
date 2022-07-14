@@ -122,7 +122,12 @@ class OAuthService
      */
     public function getAccessTokenWithRequestPathAuthentication($username, $password)
     {
-        $redirectUri = $this->settings['oidcRedirectUri'] ?: GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST') . '/typo3conf/ext/oidc/Resources/Public/callback.php';
+        $redirectUri = $this->settings['oidcRedirectUri'];
+        if (empty($redirectUri)) {
+            $redirectUri = GeneralUtility::getIndpEnv('TYPO3_SSL') ? 'https://' : 'http://';
+            $redirectUri .= GeneralUtility::getIndpEnv('HTTP_HOST');
+            $redirectUri .= '/typo3conf/ext/oidc/Resources/Public/callback.php';
+        }
         $url = $this->settings['oidcEndpointAuthorize'] . '?'. http_build_query([
             'response_type' => 'code',
             'client_id' => $this->settings['oidcClientKey'],
@@ -210,7 +215,12 @@ class OAuthService
     protected function getProvider()
     {
         if ($this->provider === null) {
-            $redirectUri = $this->settings['oidcRedirectUri'] ?: GeneralUtility::getIndpEnv('TYPO3_REQUEST_HOST') . '/typo3conf/ext/oidc/Resources/Public/callback.php';
+            $redirectUri = $this->settings['oidcRedirectUri'];
+            if (empty($redirectUri)) {
+                $redirectUri = GeneralUtility::getIndpEnv('TYPO3_SSL') ? 'https://' : 'http://';
+                $redirectUri .= GeneralUtility::getIndpEnv('HTTP_HOST');
+                $redirectUri .= '/typo3conf/ext/oidc/Resources/Public/callback.php';
+            }
 
             $this->provider = new \League\OAuth2\Client\Provider\GenericProvider([
                 'clientId' => $this->settings['oidcClientKey'],
