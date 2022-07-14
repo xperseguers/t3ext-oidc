@@ -58,6 +58,12 @@
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>
+			<trans-unit id="settings.usersStoragePid">
+				<source>Storage Pid: The Storage Pid of the Page, where the fe_users should be stored</source>
+			</trans-unit>
+			<trans-unit id="settings.usersDefaultGroup">
+				<source>Default user group(s) (comma-separated list of UIDs)</source>
+			</trans-unit>
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
 			</trans-unit>
@@ -68,7 +74,7 @@
 				<source>OpenID Connect Identifier</source>
 			</trans-unit>
 			<trans-unit id="settings.oauthProviderFactory">
-				<source>OAuth Provider Factory: Fully qulified class name (empty for generic provider).</source>
+				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
 			</trans-unit>
 		</body>
 	</file>
