@@ -97,7 +97,7 @@ class LoginController
             $options = $this->addCodeChallengeToOptions($codeChallenge, $authorizationUrlOptions);
             $_SESSION['oidc_code_verifier'] = $codeVerifier;
         }
-        $authorizationUrl = $service->getAuthorizationUrl($options?: []);
+        $authorizationUrl = $service->getAuthorizationUrl($options ?: []);
 
         $state = $service->getState();
         $_SESSION['oidc_state'] = $state;
@@ -116,13 +116,13 @@ class LoginController
 
     protected function determineRedirectUrl()
     {
-        if (! empty(GeneralUtility::_GP('redirect_url'))) {
+        if (!empty(GeneralUtility::_GP('redirect_url'))) {
             return GeneralUtility::_GP('redirect_url');
         }
 
         if (isset($this->pluginConfiguration['defaultRedirectPid'])) {
             $defaultRedirectPid = $this->pluginConfiguration['defaultRedirectPid'];
-            if ((int) $defaultRedirectPid > 0) {
+            if ((int)$defaultRedirectPid > 0) {
                 return $this->cObj->typoLink_URL(['parameter' => $defaultRedirectPid]);
             }
         }
