@@ -474,7 +474,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         static::getLogger()->debug('Authentication user record processed', $user);
 
-        //  Hookfor post-processing the user record
+        //  Hook for post-processing the user record
         $reloadUserRecord = false;
         if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'])) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
@@ -485,7 +485,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 }
                 if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
                     trigger_error(
-                        'The ResourceOwnerHookInterface is deprecated since 1.1.0 and will be removed in 2.0.0, use the PostProcessResourceOwnerHookInterface instead.',
+                        'The ResourceOwnerHookInterface is deprecated since v1.2.0 and will be removed in v2.0.0, use the PostProcessResourceOwnerHookInterface instead.',
                         E_USER_DEPRECATED
                     );
                 }
