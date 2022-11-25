@@ -20,7 +20,7 @@ defined('TYPO3_MODE') || die();
     // Service configuration
     $subTypesArr = [];
     $subTypes = '';
-    if ((bool)$settings['enableFrontendAuthentication']) {
+    if ((bool)($settings['enableFrontendAuthentication'] ?? '')) {
         $subTypesArr[] = 'getUserFE';
         $subTypesArr[] = 'authUserFE';
         $subTypesArr[] = 'getGroupsFE';
