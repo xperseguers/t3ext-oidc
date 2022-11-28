@@ -30,7 +30,7 @@ class LoginController
     protected $settings;
 
     /**
-     * TypoScript configuratoin of this plugin
+     * TypoScript configuration of this plugin
      *
      * @var array
      */

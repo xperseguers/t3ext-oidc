@@ -18,6 +18,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Hooks into EXT:felogin to support custom markers.
+ * @deprecated
  */
 class FeloginHook
 {
