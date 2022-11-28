@@ -1,4 +1,4 @@
-plugin.tx_felogin_pi1{
+plugin.tx_felogin_pi1 {
     oidc {
         wrap = <a href="|" class="btn btn-default"><span class="fa fa-openid"></span> OpenID Connect</a>
     }
