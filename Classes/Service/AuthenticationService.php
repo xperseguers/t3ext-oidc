@@ -473,7 +473,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         // Hook for post-processing the user record
         $reloadUserRecord = false;
-        if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'])) {
+        if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] ?? null)) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
                 /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
                 $postProcessor = GeneralUtility::makeInstance($className);
