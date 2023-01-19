@@ -15,6 +15,7 @@
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Causal\Oidc\Event\AuthenticationGetUserGroupsEvent;
 use League\OAuth2\Client\Token\AccessToken;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -424,6 +425,21 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         // Add default user groups
         $newUserGroups = array_unique(array_merge($newUserGroups, $defaultUserGroups));
+
+        // emit a generic groups mapping event
+        // to customize the groups if the resource structure pattern "Roles" does not fit
+        if (version_compare($typo3Branch, '10.2', '>=')) {
+            $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info);
+            $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+            $eventDispatcher->dispatch($event);
+            if ($newUserGroups !== $event->getUserGroups()) {
+                self::getLogger()->debug('Got customized user groups by AuthenticationGetUserGroupsEvent', [
+                    'previous' => implode(',', $newUserGroups),
+                    'new' => implode(',', $event->getUserGroups()),
+                ]);
+                $newUserGroups = $event->getUserGroups();
+            }
+        }
 
         $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable($userTable);
