@@ -68,9 +68,9 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
             'data' => $_SESSION,
         ]);
 
-        if ($_GET['state'] !== $_SESSION['oidc_state']) {
+        if ($_GET['state'] !== ($_SESSION['oidc_state'] ?? null)) {
             static::getLogger()->error('Invalid returning state detected', [
-                'expected' => $_SESSION['oidc_state'],
+                'expected' => $_SESSION['oidc_state'] ?? null,
                 'actual' => $_GET['state'],
             ]);
             if (!(bool)$this->globalSettings['oidcDisableCSRFProtection']) {
