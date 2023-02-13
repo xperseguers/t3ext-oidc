@@ -14,22 +14,12 @@
 
 namespace Causal\Oidc\Service;
 
+use League\OAuth2\Client\Token\AccessToken;
+
 /**
- * Interface for hooks related to thge resource owner.
+ * Interface for hooks related to the resource owner.
+ * @deprecated since 1.1.0, will be removed in 2.0.0
  */
-interface ResourceOwnerHookInterface
+interface ResourceOwnerHookInterface extends PostProcessResourceOwnerHookInterface
 {
-
-    /**
-     * Post-process for the user record (which is already persisted to the database).
-     * The full record will automatically get reloaded from database after the hook
-     * have been invoked.
-     *
-     * @param string $context The TYPO3 context (either 'BE' or 'FE')
-     * @param array $user TYPO3 user record
-     * @param array $data OpenID Connect data
-     * @return void
-     */
-    public function postProcessUser($context, array $user, array $data);
-
 }

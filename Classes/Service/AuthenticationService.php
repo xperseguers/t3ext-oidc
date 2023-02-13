@@ -252,6 +252,20 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 1490086626
             );
         }
+        // Hook to review $resourceOwner
+        if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'])) {
+            foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
+                $hook = GeneralUtility::makeInstance($className);
+                if ($hook instanceof \Causal\Oidc\Service\ReviewResourceOwnerHookInterface) {
+                    $resourceOwner = $hook->reviewResourceOwner($service, $accessToken, $resourceOwner);
+                }
+            }
+            if ($resourceOwner === null) {
+                static::getLogger()->error('User access denied, revoking access token');
+                $service->revokeToken($accessToken);
+                return false;
+            }
+        }
         $user = $this->convertResourceOwner($resourceOwner);
 
         if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
@@ -471,22 +485,19 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
 
         static::getLogger()->debug('Authentication user record processed', $user);
 
-        // Hook for post-processing the user record
+        //  Hook for post-processing the user record
         $reloadUserRecord = false;
         if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] ?? null)) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
-                /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
                 $postProcessor = GeneralUtility::makeInstance($className);
-                if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
+                if ($postProcessor instanceof \Causal\Oidc\Service\PostProcessResourceOwnerHookInterface) {
                     $postProcessor->postProcessUser(TYPO3_MODE, $user, $info);
                     $reloadUserRecord = true;
-                } else {
-                    throw new \InvalidArgumentException(
-                        sprintf(
-                            'Invalid post-processing class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
-                            $className
-                        ),
-                        1491229263
+                }
+                if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
+                    trigger_error(
+                        'The ResourceOwnerHookInterface is deprecated since v1.2.0 and will be removed in v2.0.0, use the PostProcessResourceOwnerHookInterface instead.',
+                        E_USER_DEPRECATED
                     );
                 }
             }
