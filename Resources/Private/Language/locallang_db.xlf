@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff version="1.2" xmlns:t3="http://typo3.org/schemas/xliff" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-	<file source-language="en" original="messages" datatype="plaintext" product-name="oidc" date="2023-04-21T11:10:41+02:00">
+	<file source-language="en" original="messages" datatype="plaintext" product-name="oidc" date="2023-04-21T11:15:15+02:00">
 		<header></header>
 		<body>
 			<trans-unit id="fe_groups.tx_oidc_pattern" resname="fe_groups.tx_oidc_pattern">
@@ -70,7 +70,7 @@
 				<source>Default user group(s) (comma-separated list of UIDs)</source>
 			</trans-unit>
 			<trans-unit id="settings.usersStoragePid" resname="settings.usersStoragePid">
-				<source>Storage Pid: Comma-separated list of uid&#39;s from pages where fe_users are located. The first uid is used to store new users.</source>
+				<source>Storage Pid: Comma-separated list of page UIDs where fe_users are located. The first UID is used to store new users.</source>
 			</trans-unit>
 			<trans-unit id="tt_content.oidc_login" resname="tt_content.oidc_login">
 				<source>OIDC Login</source>
