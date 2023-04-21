@@ -3,68 +3,89 @@
 	<file source-language="en" datatype="plaintext" original="messages" date="2021-06-25T14:43:14Z" product-name="oidc">
 		<header/>
 		<body>
-			<trans-unit id="tt_content.oidc_login">
+			<trans-unit id="tt_content.oidc_login" resname="tt_content.oidc_login">
+				<source>OIDC Login</source>
 				<target>OIDC-Anmeldung</target>
 			</trans-unit>
 
-			<trans-unit id="settings.enableFrontendAuthentication">
+			<trans-unit id="settings.enableFrontendAuthentication" resname="settings.enableFrontendAuthentication">
+				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
 				<target>Frontend-Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend.</target>
 			</trans-unit>
-			<trans-unit id="settings.reEnableFrontendUsers">
+			<trans-unit id="settings.reEnableFrontendUsers" resname="settings.reEnableFrontendUsers">
+				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as "disabled" upon successful authentication.</source>
 				<target>Frontend-Benutzer wieder aktivieren: Wenn angekreuzt, werden als "deaktiviert" markierte Frontend-Benutzer nach erfolgreicher Authentifizierung automatisch wieder aktiviert.</target>
 			</trans-unit>
-			<trans-unit id="settings.undeleteFrontendUsers">
+			<trans-unit id="settings.undeleteFrontendUsers" resname="settings.undeleteFrontendUsers">
+				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as "deleted" upon successful authentication.</source>
 				<target>Frontend-Benutzer wiederherstellen: Wenn angekreuzt, werden als "gelöscht" markierte Frontend-Benutzer nach erfolgreicher Authentifizierung automatisch wiederhergestellt.</target>
 			</trans-unit>
-			<trans-unit id="settings.frontendUserMustExistLocally">
+			<trans-unit id="settings.frontendUserMustExistLocally" resname="settings.frontendUserMustExistLocally">
+				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
 				<target>Frontend-Benutzer muss vorhanden sein: Wenn dieses Häkchen gesetzt ist, können sich nur Frontend User, die lokal in TYPO3 vorhanden sind, mit OpenID Connect authentifizieren. Möglicherweise müssen Sie die Logs beobachten, um Benutzer zu finden, die sich nicht authentifizieren konnten.</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientKey">
+			<trans-unit id="settings.oidcClientKey" resname="settings.oidcClientKey">
+				<source>Client Key</source>
 				<target>Client ID</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientSecret">
+			<trans-unit id="settings.oidcClientSecret" resname="settings.oidcClientSecret">
+				<source>Client Secret:</source>
 				<target>Client-Secret:</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientScopes">
+			<trans-unit id="settings.oidcClientScopes" resname="settings.oidcClientScopes">
+				<source>Client Scopes:</source>
 				<target>Client Scopes:</target>
 			</trans-unit>">
-			<trans-unit id="settings.oidcAuthorizeLanguageParameter">
+			<trans-unit id="settings.oidcAuthorizeLanguageParameter" resname="settings.oidcAuthorizeLanguageParameter">
+				<source>Authorize request language parameter name</source>
 				<target>Name des Sprachparameters für die Autorisierungsanfrage</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointAuthorize">
+			<trans-unit id="settings.oidcEndpointAuthorize" resname="settings.oidcEndpointAuthorize">
+				<source>Endpoint URI for authorization</source>
 				<target>Endpunkt-URI für Autorisierung</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointToken">
+			<trans-unit id="settings.oidcEndpointToken" resname="settings.oidcEndpointToken">
+				<source>Endpoint URI for retrieving a token</source>
 				<target>Endpunkt-URI zum Abrufen eines Tokens</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointUserInfo">
+			<trans-unit id="settings.oidcEndpointUserInfo" resname="settings.oidcEndpointUserInfo">
+				<source>Endpoint URI for fetching user information</source>
 				<target>Endpunkt-URI für das Abrufen von Benutzerinformationen</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointLogout">
+			<trans-unit id="settings.oidcEndpointLogout" resname="settings.oidcEndpointLogout">
+				<source>Endpoint URI for logout</source>
 				<target>Endpunkt-URI für Logout</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointRevoke">
+			<trans-unit id="settings.oidcEndpointRevoke" resname="settings.oidcEndpointRevoke">
+				<source>Endpoint URI for revoking the token</source>
 				<target>Endpunkt-URI für das Widerrufen des Tokens</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcUseRequestPathAuthentication">
+			<trans-unit id="settings.oidcUseRequestPathAuthentication" resname="settings.oidcUseRequestPathAuthentication">
+				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 				<target>Anfragepfad-Authentifizierung verwenden: Wenn dieser Wert angekreuzt ist, wird die Request Path Authentication anstelle der standardmäßigen Password Grant verwendet.</target>
 			</trans-unit>
-			<trans-unit id="settings.revokeAccessTokenAfterLogin">
+			<trans-unit id="settings.revokeAccessTokenAfterLogin" resname="settings.revokeAccessTokenAfterLogin">
+				<source>Revoke TYPO3's access token at the end of the login process</source>
 				<target>Zugriffstoken von TYPO3 am Ende des Anmeldevorgangs widerrufen</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcDisableCSRFProtection">
+			<trans-unit id="settings.oidcDisableCSRFProtection" resname="settings.oidcDisableCSRFProtection">
+				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 				<target>Deaktivieren Sie die Abschwächung von CSRF-Angriffen: ACHTUNG! Dies ist ein Sicherheitsschutz, der den Rückgabewert mit dem erwarteten Wert abgleicht. Deaktivieren Sie diesen Schutz auf Ihr eigenes Risiko.</target>
 			</trans-unit>
-			<trans-unit id="settings.enableCodeVerifier">
+			<trans-unit id="settings.enableCodeVerifier" resname="settings.enableCodeVerifier">
+				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 				<target>PKCE aktivieren: Aktiviert den PKCE-Fluss. Code-Challenge und Code-Verifier werden mitgeschickt.</target>
 			</trans-unit>
-			<trans-unit id="fe_groups.tx_oidc_pattern">
+			<trans-unit id="fe_groups.tx_oidc_pattern" resname="fe_groups.tx_oidc_pattern">
+				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
 				<target>Groß-/Kleinschreibung-unempfindliches Muster zum Abgleichen von OpenID Connect-Rollennamen ("*" passt zu jedem Zeichen, "|" zu getrennten Ausdrücken)</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcRedirectUri">
+			<trans-unit id="settings.oidcRedirectUri" resname="settings.oidcRedirectUri">
+				<source>Redirect URI: The authentication server callback will point to this URI.</source>
 				<target>Redirect URI: Der Callback des Authentifizierungsservers wird auf diese URI verweisen.</target>
 			</trans-unit>
-			<trans-unit id="fe_users.tx_oidc">
+			<trans-unit id="fe_users.tx_oidc" resname="fe_users.tx_oidc">
+				<source>OpenID Connect Identifier</source>
 				<target>OpenID Connect Identifier</target>
 			</trans-unit>
 		</body>
