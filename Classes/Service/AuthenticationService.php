@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -15,25 +18,41 @@
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\ForwardCompatibility\Result;
+use InvalidArgumentException;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
+use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use RuntimeException;
+use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
+use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
+use TYPO3\CMS\Core\Log\Logger;
+use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Routing\PageArguments;
+use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
+use TYPO3\CMS\Core\Routing\SiteRouteResult;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
+use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 use TYPO3\CMS\Core\Context\Context;
+use UnexpectedValueException;
 
 /**
  * OpenID Connect authentication service.
@@ -52,7 +71,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
 
     /**
-     * false - this service was the right one to authenticate the user but it failed
+     * false - this service was the right one to authenticate the user, but it failed
      */
     const STATUS_AUTHENTICATION_FAILURE_BREAK = false;
 
@@ -89,14 +108,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * Finds a user.
      *
      * @return array|bool
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function getUser()
     {
         $user = false;
         $params = GeneralUtility::_GET('tx_oidc');
-        $code = isset($params['code']) ? $params['code'] : null;
-        $username = isset($this->login['uname']) ? $this->login['uname'] : null;
+        $code = $params['code'] ?? null;
+        $username = $this->login['uname'] ?? null;
 
         if (isset($this->login['uident_text'])) {
             $password = $this->login['uident_text'];
@@ -111,7 +130,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             if ($this->config['enableCodeVerifier']) {
                 $codeVerifier = $this->getCodeVerifierFromSession();
             }
-            $user = $this->authenticateWithAuhorizationCode($code, $codeVerifier);
+            $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } elseif (!(empty($username) || empty($password))) {
             $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
         }
@@ -119,6 +138,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // dispatch a signal (containing the user with his access token if auth was successful)
         // so other extensions can use them to make further requests to an API
         // provided by the authentication server
+        /** @var Dispatcher $dispatcher */
         $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
         $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
 
@@ -127,7 +147,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $eventDispatcher->dispatch($event);
         $user = $event->getUser();
 
-        if (is_array($user)) {
+        if (isset($user['accessToken'])) {
             unset($user['accessToken']);
         }
 
@@ -138,9 +158,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * Authenticates a user using authorization code grant.
      *
      * @param string $code
+     * @param string|null $codeVerifier
      * @return array|bool
      */
-    protected function authenticateWithAuhorizationCode($code, $codeVerifier = null)
+    protected function authenticateWithAuthorizationCode(string $code, string $codeVerifier = null)
     {
         static::getLogger()->debug('Initializing OpenID Connect service');
 
@@ -153,7 +174,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             static::getLogger()->debug('Retrieving an access token');
             $accessToken = $service->getAccessToken($code, null, $codeVerifier);
             static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
-        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+        } catch (IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
             static::getLogger()->error('Possibly replay: code has been refused by the authentication server', [
                 'code' => $code,
@@ -177,7 +198,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string $password
      * @return array|bool
      */
-    protected function authenticateWithResourceOwnerPasswordCredentials($username, $password)
+    protected function authenticateWithResourceOwnerPasswordCredentials(string $username, string $password)
     {
         $user = false;
         static::getLogger()->debug('Initializing OpenID Connect service');
@@ -186,8 +207,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->config);
 
+        $accessToken = '';
         try {
-            if ((bool)$this->config['oidcUseRequestPathAuthentication']) {
+            if ($this->config['oidcUseRequestPathAuthentication']) {
                 static::getLogger()->debug('Retrieving an access token using request path authentication');
                 $accessToken = $service->getAccessTokenWithRequestPathAuthentication($username, $password);
             } else {
@@ -198,7 +220,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
                 $user = $this->getUserFromAccessToken($service, $accessToken);
             }
-        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+        } catch (IdentityProviderException $e) {
             static::getLogger()->error('Authentication has been refused by the authentication server', [
                 'username' => $username,
                 'message' => $e->getMessage(),
@@ -226,7 +248,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             static::getLogger()->debug('Retrieving resource owner');
             $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
             static::getLogger()->debug('Resource owner retrieved', $resourceOwner);
-        } catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+        } catch (IdentityProviderException $e) {
             static::getLogger()->error('Could not retrieve resource owner', [
                 'message' => $e->getMessage(),
             ]);
@@ -235,7 +257,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if (empty($resourceOwner['sub'])) {
             static::getLogger()->error('No "sub" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
                 . '. Your access token has been revoked. Please try again.',
                 1490086626
@@ -258,13 +280,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     public function authUser(array $user): int
     {
-        $status = static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
-
         if (!empty($user['tx_oidc'])) {
-            $status = static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
+            return static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
         }
-
-        return $status;
+        return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
     }
 
     /**
@@ -272,7 +291,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      *
      * @param array $info
      * @return array|bool
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     protected function convertResourceOwner(array $info)
     {
@@ -295,24 +314,24 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->where(
                 $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
                     GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
-                    \TYPO3\CMS\Core\Database\Connection::PARAM_INT_ARRAY
+                    Connection::PARAM_INT_ARRAY
                 )),
-                $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'], \PDO::PARAM_STR))
+                $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub']))
             )
             ->execute()
-            ->fetch();
+            ->fetchAssociative();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
         $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
         $frontendUserMustExistLocally = (bool)$this->config['frontendUserMustExistLocally'];
 
-        if (!empty($row) && (bool)$row['deleted'] && !$undeleteUser) {
+        if (!empty($row) && $row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
             static::getLogger()->info('User was manually deleted, denying access', ['user' => $row]);
 
             return false;
         }
-        if (!empty($row) && (bool)$row['disable'] && !$reEnableUser) {
+        if (!empty($row) && $row['disable'] && !$reEnableUser) {
             // User was manually disabled, it should not get automatically re-enabled
             static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
 
@@ -325,18 +344,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             return false;
         }
 
-        $passwordHashFactory = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class);
-        /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
-        $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($mode);
-        $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
-        $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
-
         $data = $this->applyMapping(
             $userTable,
             $info,
             $row ?: [],
             [
-                'password' => $hashedPassword,
+                'password' => $this->generatePassword(),
                 'deleted' => 0,
                 'disable' => 0,
             ]
@@ -363,7 +376,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                         $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
                     )
                     ->execute()
-                    ->fetchAll();
+                    ->fetchAllAssociative();
 
                 $oidcUserGroups = [];
                 foreach ($groups as $group) {
@@ -386,7 +399,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
                 )
                 ->execute()
-                ->fetchAll();
+                ->fetchAllAssociative();
 
             $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
             $roles = ',' . implode(',', $roles) . ',';
@@ -459,13 +472,13 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $reloadUserRecord = false;
         if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] ?? null)) {
             foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
-                /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
+                /** @var ResourceOwnerHookInterface $postProcessor */
                 $postProcessor = GeneralUtility::makeInstance($className);
-                if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
+                if ($postProcessor instanceof ResourceOwnerHookInterface) {
                     $postProcessor->postProcessUser($mode, $user, $info);
                     $reloadUserRecord = true;
                 } else {
-                    throw new \InvalidArgumentException(
+                    throw new InvalidArgumentException(
                         sprintf(
                             'Invalid post-processing class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
                             $className
@@ -497,17 +510,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->from($table)
             ->where($queryBuilder->expr()->eq(
                 'uid',
-                $queryBuilder->createNamedParameter($uid, \PDO::PARAM_INT))
+                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
             )
             ->execute();
-        if ($queryResult instanceof \Doctrine\DBAL\ForwardCompatibility\Result) {
+        if ($queryResult instanceof Result) {
             $user = $queryResult->fetchAssociative();
         }
-        if ($user === [] && $queryResult instanceof \Doctrine\DBAL\Driver\Statement) {
-            $user = $queryResult->fetch();
+        if ($user === [] && $queryResult instanceof Statement) {
+            $user = $queryResult->fetchAssociative();
         }
         if (!is_array($user) || $user === []) {
-            throw new \LogicException('The user record could not be obtained', 1643452557);
+            throw new LogicException('The user record could not be obtained', 1643452557);
         }
         return $user;
     }
@@ -521,9 +534,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param array $baseData
      * @param bool $reportErrors
      * @return array
-     * @see \Causal\IgLdapSsoAuth\Library\Authentication::merge()
      */
-    protected function applyMapping($table, array $oidc, array $typo3, array $baseData = [], $reportErrors = false)
+    protected function applyMapping(string $table, array $oidc, array $typo3, array $baseData = [], bool $reportErrors = false): array
     {
         $out = array_merge($typo3, $baseData);
         $typoScriptKeys = [];
@@ -535,7 +547,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 if ($field !== 'usergroup' && $field !== 'parentGroup') {
                     try {
                         $out = $this->mergeSimple($oidc, $out, $field, $value);
-                    } catch (\UnexpectedValueException $uve) {
+                    } catch (UnexpectedValueException $uve) {
                         if ($reportErrors) {
                             $out['__errors'][] = $uve->getMessage();
                         }
@@ -547,40 +559,26 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         if (count($typoScriptKeys) > 0) {
-            $backupTSFE = $GLOBALS['TSFE'];
+            $backupTSFE = $GLOBALS['TSFE'] ?? null;
 
-            // Advanced stdWrap methods require a valid $GLOBALS['TSFE'] => create the most lightweight one
-            $GLOBALS['TSFE'] = GeneralUtility::makeInstance(
-                \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController::class,
-                $GLOBALS['TYPO3_CONF_VARS'],
-                0,
-                ''
-            );
-            $GLOBALS['TSFE']->initTemplate();
-            $GLOBALS['TSFE']->renderCharset = 'utf-8';
+            $GLOBALS['TSFE'] = $this->getLocalTSFE();
 
-            /** @var $contentObj \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer */
-            $contentObj = GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::class);
-            $contentObj->start($oidc, '');
+            /** @var $contentObj ContentObjectRenderer */
+            $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class);
+            $contentObj->start($oidc);
 
             // Process every TypoScript definition
             foreach ($typoScriptKeys as $typoScriptKey) {
                 // Remove the trailing period to get corresponding field name
                 $field = substr($typoScriptKey, 0, -1);
-                $value = isset($out[$field]) ? $out[$field] : '';
+                $value = $out[$field] ?? '';
                 $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
                 $out = $this->mergeSimple([$field => $value], $out, $field, $value);
             }
 
-            // Instantiation of TypoScriptFrontendController instantiates PageRenderer which
-            // sets backPath to TYPO3_mainDir which is very bad in the Backend. Therefore,
-            // we must set it back to null to not get frontend-prefixed asset URLs.
-            if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend()) {
-                $pageRenderer = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Page\PageRenderer::class);
-                $pageRenderer->setBackPath(null);
+            if ($backupTSFE) {
+                $GLOBALS['TSFE'] = $backupTSFE;
             }
-
-            $GLOBALS['TSFE'] = $backupTSFE;
         }
 
         return $out;
@@ -597,12 +595,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string $field
      * @param string $value
      * @return array Modified $typo3 array
-     * @throws \UnexpectedValueException
-     * @see \Causal\IgLdapSsoAuth\Library\Authentication::mergeSimple()
-     * @see \Causal\IgLdapSsoAuth\Library\Authentication::replaceLdapMarkers()
+     * @throws UnexpectedValueException
      * @see \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::getFieldVal()
      */
-    protected function mergeSimple(array $oidc, array $typo3, $field, $value)
+    protected function mergeSimple(array $oidc, array $typo3, string $field, string $value): array
     {
         // Constant by default
         $mappedValue = $value;
@@ -651,7 +647,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string $table
      * @return array
      */
-    protected function getMapping($table)
+    protected function getMapping(string $table): array
     {
         $mapping = [];
 
@@ -684,7 +680,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      *
      * @return array the raw TypoScript setup
      */
-    protected function getTypoScriptSetup()
+    protected function getTypoScriptSetup(): array
     {
         // This is needed for the PageRepository
         $files = ['EXT:core/Configuration/TCA/pages.php'];
@@ -694,42 +690,75 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $GLOBALS['TCA'][$table] = include($file);
         }
 
-        /** @var ServerRequestInterface $request */
-        $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
-        /** @var SiteMatcher $siteMatcher */
-        $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
-        $routeResult = $siteMatcher->matchRequest($request);
-        $site = $routeResult->getSite();
-        $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
-        $currentPage = $pageArguments->getPageId();
+        $localTSFE = $this->getLocalTSFE();
 
-        $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
-        $context = GeneralUtility::makeInstance(Context::class);
-        $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, $context, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
-
-        /** @var TemplateService $templateService */
         $templateService = GeneralUtility::makeInstance(TemplateService::class, null, null, $localTSFE);
 
-        $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
+        $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, $localTSFE->getPageArguments()->getPageId())->get();
         $templateService->start($rootLine);
-        $setup = $templateService->setup;
-        return $setup;
+        return $templateService->setup;
     }
 
     /**
      * Returns a logger.
      *
-     * @return \TYPO3\CMS\Core\Log\Logger
+     * @return Logger
      */
-    protected static function getLogger()
+    protected static function getLogger(): Logger
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         static $logger = null;
         if ($logger === null) {
-            $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
+            $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         }
 
         return $logger;
     }
 
+    protected function generatePassword(): string
+    {
+        $mode = ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isFrontend()
+            ? 'FE'
+            : 'BE';
+        $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
+
+        $passwordHashFactory = GeneralUtility::makeInstance(PasswordHashFactory::class);
+        try {
+            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($mode);
+        } catch (InvalidPasswordHashException $e) {
+            return '';
+        }
+        return $objInstanceSaltedPW->getHashedPassword($password);
+    }
+
+
+    protected function getLocalTSFE(): TypoScriptFrontendController
+    {
+        /** @var ServerRequestInterface $request */
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+        $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
+        $routeResult = $siteMatcher->matchRequest($request);
+        if ($routeResult instanceof SiteRouteResult) {
+            $site = $routeResult->getSite();
+            if ($site instanceof Site) {
+                try {
+                    $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+                    if ($pageArguments instanceof PageArguments) {
+                        $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
+                        $context = GeneralUtility::makeInstance(Context::class);
+                        return GeneralUtility::makeInstance(
+                            TypoScriptFrontendController::class,
+                            $context,
+                            $site,
+                            $routeResult->getLanguage(),
+                            $pageArguments,
+                            $frontendUser
+                        );
+                    }
+                } catch (RouteNotFoundException $e) {
+                }
+            }
+        }
+        throw new InvalidArgumentException('Failed to initialize TSFE');
+    }
 }
