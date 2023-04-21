@@ -2,9 +2,9 @@
 defined('TYPO3_MODE') || die();
 
 (static function (string $_EXTKEY) {
-    if (class_exists(\TYPO3\CMS\Core\Authentication\AuthenticationService::class)
-        && !class_exists(\TYPO3\CMS\Sv\AuthenticationService::class)) {
-        class_alias(\TYPO3\CMS\Core\Authentication\AuthenticationService::class, \TYPO3\CMS\Sv\AuthenticationService::class);
+    // todo remove once support for Core v8 is dropped
+    if (!class_exists(\TYPO3\CMS\Core\Authentication\AuthenticationService::class)) {
+        class_alias(\TYPO3\CMS\Sv\AuthenticationService::class, \TYPO3\CMS\Core\Authentication\AuthenticationService::class);
     }
 
     // Configuration of authentication service
