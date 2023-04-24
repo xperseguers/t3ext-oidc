@@ -23,6 +23,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
@@ -275,10 +276,12 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     protected function convertResourceOwner(array $info)
     {
-        if (TYPO3_MODE === 'FE') {
+        if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isFrontend()) {
+            $mode = 'FE';
             $userTable = 'fe_users';
             $userGroupTable = 'fe_groups';
         } else {
+            $mode = 'BE';
             $userTable = 'be_users';
             $userGroupTable = 'be_groups';
         }
@@ -322,9 +325,9 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             return false;
         }
 
-        /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
         $passwordHashFactory = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class);
-        $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance(TYPO3_MODE);
+        /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
+        $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($mode);
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
         $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
 
@@ -459,7 +462,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
                 /** @var \Causal\Oidc\Service\ResourceOwnerHookInterface $postProcessor */
                 $postProcessor = GeneralUtility::makeInstance($className);
                 if ($postProcessor instanceof \Causal\Oidc\Service\ResourceOwnerHookInterface) {
-                    $postProcessor->postProcessUser(TYPO3_MODE, $user, $info);
+                    $postProcessor->postProcessUser($mode, $user, $info);
                     $reloadUserRecord = true;
                 } else {
                     throw new \InvalidArgumentException(
@@ -572,7 +575,7 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             // Instantiation of TypoScriptFrontendController instantiates PageRenderer which
             // sets backPath to TYPO3_mainDir which is very bad in the Backend. Therefore,
             // we must set it back to null to not get frontend-prefixed asset URLs.
-            if (TYPO3_MODE === 'BE') {
+            if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend()) {
                 $pageRenderer = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Page\PageRenderer::class);
                 $pageRenderer->setBackPath(null);
             }

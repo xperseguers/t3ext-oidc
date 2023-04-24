@@ -1,5 +1,5 @@
 <?php
-defined('TYPO3_MODE') || die();
+defined('TYPO3') or die();
 
 (static function (string $_EXTKEY) {
     // Register hooks into \TYPO3\CMS\Core\DataHandling\DataHandler
