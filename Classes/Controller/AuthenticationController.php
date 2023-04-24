@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -14,20 +17,23 @@
 
 namespace Causal\Oidc\Controller;
 
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use RuntimeException;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 /**
  * Class AuthenticationController
  *
  * @package Causal\Oidc\Controller
  */
-class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController
+class AuthenticationController extends ActionController implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
 
-    /**
-     * @var array
-     */
-    protected $globalSettings;
+    protected array $globalSettings = [];
 
     /**
      * Initializes the controller before invoking an action method.
@@ -36,8 +42,7 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
      */
     public function initializeAction()
     {
-        // TODO: Use proper TYPO3 API
-        $this->globalSettings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
+        $this->globalSettings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
     /**
@@ -47,30 +52,30 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
      */
     public function connectAction()
     {
-        static::getLogger()->debug('Initiating the silent authentication');
+        $this->logger->debug('Initiating the silent authentication');
         if ((empty($_GET['state']) || empty($_GET['code']))) {
-            static::getLogger()->error('No state or code detected', ['GET' => $_GET]);
-            throw new \RuntimeException('No state or code detected', 1487001047);
+            $this->logger->error('No state or code detected', ['GET' => $_GET]);
+            throw new RuntimeException('No state or code detected', 1487001047);
         }
 
         if (session_id() === '') {
-            static::getLogger()->debug('No PHP session found');
+            $this->logger->debug('No PHP session found');
             session_start();
         }
-        static::getLogger()->debug('PHP session is available', [
+        $this->logger->debug('PHP session is available', [
             'id' => session_id(),
             'data' => $_SESSION,
         ]);
 
         if ($_GET['state'] !== ($_SESSION['oidc_state'] ?? null)) {
-            static::getLogger()->error('Invalid returning state detected', [
+            $this->logger->error('Invalid returning state detected', [
                 'expected' => $_SESSION['oidc_state'] ?? null,
                 'actual' => $_GET['state'],
             ]);
-            if (!(bool)$this->globalSettings['oidcDisableCSRFProtection']) {
-                throw new \RuntimeException('Invalid state', 1489658206);
+            if (!$this->globalSettings['oidcDisableCSRFProtection']) {
+                throw new RuntimeException('Invalid state', 1489658206);
             }
-            static::getLogger()->warning('Bypassing CSRF attack mitigation protection according to the extension configuration');
+            $this->logger->warning('Bypassing CSRF attack mitigation protection according to the extension configuration');
         }
 
         $loginUrl = $_SESSION['oidc_login_url'];
@@ -80,24 +85,7 @@ class AuthenticationController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionC
             $loginUrl .= '&redirect_url=' . urlencode($_SESSION['oidc_redirect_url']);
         }
 
-        static::getLogger()->info('Redirecting to login URL', ['url' => $loginUrl]);
+        $this->logger->info('Redirecting to login URL', ['url' => $loginUrl]);
         $this->redirectToUri($loginUrl);
     }
-
-    /**
-     * Returns a logger.
-     *
-     * @return \TYPO3\CMS\Core\Log\Logger
-     */
-    protected static function getLogger()
-    {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
-        static $logger = null;
-        if ($logger === null) {
-            $logger = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
-        }
-
-        return $logger;
-    }
-
 }
