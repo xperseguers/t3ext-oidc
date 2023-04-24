@@ -1,80 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xliff version="1.0">
-	<file source-language="en" datatype="plaintext" original="messages" date="2017-01-25T14:43:14Z" product-name="oidc">
-		<header/>
+<xliff version="1.2" xmlns:t3="http://typo3.org/schemas/xliff" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" original="messages" datatype="plaintext" product-name="oidc" date="2023-04-21T11:15:15+02:00">
+		<header></header>
 		<body>
-			<trans-unit id="tt_content.oidc_login">
-				<source>OIDC Login</source>
+			<trans-unit id="fe_groups.tx_oidc_pattern" resname="fe_groups.tx_oidc_pattern">
+				<source>Case-insensitive pattern to match OpenID Connect role names (&#34;*&#34; matches every character, &#34;|&#34; to separate expressions)</source>
 			</trans-unit>
-
-			<trans-unit id="settings.enableFrontendAuthentication">
-				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
-			</trans-unit>
-			<trans-unit id="settings.reEnableFrontendUsers">
-				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as "disabled" upon successful authentication.</source>
-			</trans-unit>
-			<trans-unit id="settings.undeleteFrontendUsers">
-				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as "deleted" upon successful authentication.</source>
-			</trans-unit>
-			<trans-unit id="settings.frontendUserMustExistLocally">
-				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcClientKey">
-				<source>Client Key</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcClientSecret">
-				<source>Client Secret:</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcClientScopes">
-				<source>Client Scopes:</source>
-			</trans-unit>">
-			<trans-unit id="settings.oidcAuthorizeLanguageParameter">
-				<source>Authorize request language parameter name</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcEndpointAuthorize">
-				<source>Endpoint URI for authorization</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcEndpointToken">
-				<source>Endpoint URI for retrieving a token</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcEndpointUserInfo">
-				<source>Endpoint URI for fetching user information</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcEndpointLogout">
-				<source>Endpoint URI for logout</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcEndpointRevoke">
-				<source>Endpoint URI for revoking the token</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcUseRequestPathAuthentication">
-				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
-			</trans-unit>
-			<trans-unit id="settings.revokeAccessTokenAfterLogin">
-				<source>Revoke TYPO3's access token at the end of the login process</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcDisableCSRFProtection">
-				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
-			</trans-unit>
-			<trans-unit id="settings.enableCodeVerifier">
-				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
-			</trans-unit>
-			<trans-unit id="settings.usersStoragePid">
-				<source>Storage Pid: Comma-separated list of uid's from pages where fe_users are located. The first uid is used to store new users.</source>
-			</trans-unit>
-			<trans-unit id="settings.usersDefaultGroup">
-				<source>Default user group(s) (comma-separated list of UIDs)</source>
-			</trans-unit>
-			<trans-unit id="fe_groups.tx_oidc_pattern">
-				<source>Case-insensitive pattern to match OpenID Connect role names ("*" matches every character, "|" to separate expressions)</source>
-			</trans-unit>
-			<trans-unit id="settings.oidcRedirectUri">
-				<source>Redirect URI: The authentication server callback will point to this URI.</source>
-			</trans-unit>
-			<trans-unit id="fe_users.tx_oidc">
+			<trans-unit id="fe_users.tx_oidc" resname="fe_users.tx_oidc">
 				<source>OpenID Connect Identifier</source>
 			</trans-unit>
-			<trans-unit id="settings.oauthProviderFactory">
+			<trans-unit id="settings.enableCodeVerifier" resname="settings.enableCodeVerifier">
+				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
+			</trans-unit>
+			<trans-unit id="settings.enableFrontendAuthentication" resname="settings.enableFrontendAuthentication">
+				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
+			</trans-unit>
+			<trans-unit id="settings.frontendUserMustExistLocally" resname="settings.frontendUserMustExistLocally">
+				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
+			</trans-unit>
+			<trans-unit id="settings.oauthProviderFactory" resname="settings.oauthProviderFactory">
 				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcAuthorizeLanguageParameter" resname="settings.oidcAuthorizeLanguageParameter">
+				<source>Authorize request language parameter name</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcClientKey" resname="settings.oidcClientKey">
+				<source>Client Key</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcClientScopes" resname="settings.oidcClientScopes">
+				<source>Client Scopes:</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcClientSecret" resname="settings.oidcClientSecret">
+				<source>Client Secret:</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcDisableCSRFProtection" resname="settings.oidcDisableCSRFProtection">
+				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcEndpointAuthorize" resname="settings.oidcEndpointAuthorize">
+				<source>Endpoint URI for authorization</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcEndpointLogout" resname="settings.oidcEndpointLogout">
+				<source>Endpoint URI for logout</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcEndpointRevoke" resname="settings.oidcEndpointRevoke">
+				<source>Endpoint URI for revoking the token</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcEndpointToken" resname="settings.oidcEndpointToken">
+				<source>Endpoint URI for retrieving a token</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcEndpointUserInfo" resname="settings.oidcEndpointUserInfo">
+				<source>Endpoint URI for fetching user information</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcRedirectUri" resname="settings.oidcRedirectUri">
+				<source>Redirect URI: The authentication server callback will point to this URI.</source>
+			</trans-unit>
+			<trans-unit id="settings.oidcUseRequestPathAuthentication" resname="settings.oidcUseRequestPathAuthentication">
+				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
+			</trans-unit>
+			<trans-unit id="settings.reEnableFrontendUsers" resname="settings.reEnableFrontendUsers">
+				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as &#34;disabled&#34; upon successful authentication.</source>
+			</trans-unit>
+			<trans-unit id="settings.revokeAccessTokenAfterLogin" resname="settings.revokeAccessTokenAfterLogin">
+				<source>Revoke TYPO3&#39;s access token at the end of the login process</source>
+			</trans-unit>
+			<trans-unit id="settings.undeleteFrontendUsers" resname="settings.undeleteFrontendUsers">
+				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as &#34;deleted&#34; upon successful authentication.</source>
+			</trans-unit>
+			<trans-unit id="settings.usersDefaultGroup" resname="settings.usersDefaultGroup">
+				<source>Default user group(s) (comma-separated list of UIDs)</source>
+			</trans-unit>
+			<trans-unit id="settings.usersStoragePid" resname="settings.usersStoragePid">
+				<source>Storage Pid: Comma-separated list of page UIDs where fe_users are located. The first UID is used to store new users.</source>
+			</trans-unit>
+			<trans-unit id="tt_content.oidc_login" resname="tt_content.oidc_login">
+				<source>OIDC Login</source>
 			</trans-unit>
 		</body>
 	</file>
