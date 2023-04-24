@@ -51,7 +51,7 @@ class FeloginHook
             if (empty($_SESSION['requestId']) || $_SESSION['requestId'] !== $requestId) {
                 $this->prepareAuthorizationUrl($settings);
                 $_SESSION['requestId'] = $requestId;
-                $_SESSION['oidc_redirect_url'] = GeneralUtility::_GP('redirect_url');
+                $_SESSION['oidc_redirect_url'] = GeneralUtility::_GP('redirect_url') ?? GeneralUtility::getIndpEnv('HTTP_REFERER') ?? '';
 
                 static::getLogger()->debug('PHP session is available', [
                     'id' => session_id(),
