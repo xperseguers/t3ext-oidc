@@ -18,8 +18,6 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
-use Doctrine\DBAL\Driver\Statement;
-use Doctrine\DBAL\ForwardCompatibility\Result;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -36,8 +34,6 @@ use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
-use TYPO3\CMS\Core\Log\Logger;
-use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
@@ -163,7 +159,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function authenticateWithAuthorizationCode(string $code, string $codeVerifier = null)
     {
-        static::getLogger()->debug('Initializing OpenID Connect service');
+        $this->logger->debug('Initializing OpenID Connect service');
 
         /** @var OAuthService $service */
         $service = GeneralUtility::makeInstance(OAuthService::class);
@@ -171,12 +167,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         // Try to get an access token using the authorization code grant
         try {
-            static::getLogger()->debug('Retrieving an access token');
+            $this->logger->debug('Retrieving an access token');
             $accessToken = $service->getAccessToken($code, null, $codeVerifier);
-            static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
+            $this->logger->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
-            static::getLogger()->error('Possibly replay: code has been refused by the authentication server', [
+            $this->logger->error('Possibly replay: code has been refused by the authentication server', [
                 'code' => $code,
                 'message' => $e->getMessage(),
             ]);
@@ -201,7 +197,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     protected function authenticateWithResourceOwnerPasswordCredentials(string $username, string $password)
     {
         $user = false;
-        static::getLogger()->debug('Initializing OpenID Connect service');
+        $this->logger->debug('Initializing OpenID Connect service');
 
         /** @var OAuthService $service */
         $service = GeneralUtility::makeInstance(OAuthService::class);
@@ -210,18 +206,18 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $accessToken = '';
         try {
             if ($this->config['oidcUseRequestPathAuthentication']) {
-                static::getLogger()->debug('Retrieving an access token using request path authentication');
+                $this->logger->debug('Retrieving an access token using request path authentication');
                 $accessToken = $service->getAccessTokenWithRequestPathAuthentication($username, $password);
             } else {
-                static::getLogger()->debug('Retrieving an access token using resource owner password credentials');
+                $this->logger->debug('Retrieving an access token using resource owner password credentials');
                 $accessToken = $service->getAccessToken($username, $password);
             }
             if ($accessToken !== null) {
-                static::getLogger()->debug('Access token retrieved', $accessToken->jsonSerialize());
+                $this->logger->debug('Access token retrieved', $accessToken->jsonSerialize());
                 $user = $this->getUserFromAccessToken($service, $accessToken);
             }
         } catch (IdentityProviderException $e) {
-            static::getLogger()->error('Authentication has been refused by the authentication server', [
+            $this->logger->error('Authentication has been refused by the authentication server', [
                 'username' => $username,
                 'message' => $e->getMessage(),
             ]);
@@ -245,17 +241,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     {
         // Using the access token, we may look up details about the resource owner
         try {
-            static::getLogger()->debug('Retrieving resource owner');
+            $this->logger->debug('Retrieving resource owner');
             $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
-            static::getLogger()->debug('Resource owner retrieved', $resourceOwner);
+            $this->logger->debug('Resource owner retrieved', $resourceOwner);
         } catch (IdentityProviderException $e) {
-            static::getLogger()->error('Could not retrieve resource owner', [
+            $this->logger->error('Could not retrieve resource owner', [
                 'message' => $e->getMessage(),
             ]);
             return false;
         }
         if (empty($resourceOwner['sub'])) {
-            static::getLogger()->error('No "sub" found in resource owner, revoking access token');
+            $this->logger->error('No "sub" found in resource owner, revoking access token');
             $service->revokeToken($accessToken);
             throw new RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
@@ -327,19 +323,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         if (!empty($row) && $row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
-            static::getLogger()->info('User was manually deleted, denying access', ['user' => $row]);
+            $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
 
             return false;
         }
         if (!empty($row) && $row['disable'] && !$reEnableUser) {
             // User was manually disabled, it should not get automatically re-enabled
-            static::getLogger()->info('User was manually disabled, denying access', ['user' => $row]);
+            $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
 
             return false;
         }
         if (empty($row) && $frontendUserMustExistLocally) {
             // User does not exist locally, it should not be created on-the-fly
-            static::getLogger()->info('User does not exist locally, denying access', ['info' => $info]);
+            $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
 
             return false;
         }
@@ -426,11 +422,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->getConnectionForTable($userTable);
 
         if (!empty($row)) { // fe_users record already exists => update it
-            static::getLogger()->info('Detected a returning user');
+            $this->logger->info('Detected a returning user');
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
             if ($user != $row) {
-                static::getLogger()->debug('Updating existing user', [
+                $this->logger->debug('Updating existing user', [
                     'old' => $row,
                     'new' => $user,
                 ]);
@@ -446,11 +442,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         } else {    // fe_users record does not already exist => create it
             if (empty($newUserGroups)) {
                 // Somehow the user is not mapped to any local user group, we should not create the record
-                static::getLogger()->info('User has no associated local TYPO3 user group, denying access', ['user' => $row]);
+                $this->logger->info('User has no associated local TYPO3 user group, denying access', ['user' => $row]);
 
                 return false;
             }
-            static::getLogger()->info('New user detected, creating a TYPO3 user');
+            $this->logger->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
@@ -466,7 +462,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $user = $this->getUserByUidAndTable((int)$userUid, $userTable);
         }
 
-        static::getLogger()->debug('Authentication user record processed', $user);
+        $this->logger->debug('Authentication user record processed', $user);
 
         // Hook for post-processing the user record
         $reloadUserRecord = false;
@@ -491,7 +487,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         if ($reloadUserRecord) {
             $user = $this->getUserByUidAndTable((int)$user['uid'], $userTable);
-            static::getLogger()->debug('User record reloaded', $user);
+            $this->logger->debug('User record reloaded', $user);
         }
 
         // We need that for the upcoming call to authUser()
@@ -502,7 +498,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getUserByUidAndTable(int $uid, string $table): array
     {
-        $user = [];
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($table);
         $queryBuilder->getRestrictions()->removeAll();
         $queryResult = $queryBuilder
@@ -513,12 +508,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
             )
             ->execute();
-        if ($queryResult instanceof Result) {
-            $user = $queryResult->fetchAssociative();
-        }
-        if ($user === [] && $queryResult instanceof Statement) {
-            $user = $queryResult->fetchAssociative();
-        }
+
+        $user = $queryResult->fetchAssociative();
         if (!is_array($user) || $user === []) {
             throw new LogicException('The user record could not be obtained', 1643452557);
         }
@@ -699,22 +690,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         return $templateService->setup;
     }
 
-    /**
-     * Returns a logger.
-     *
-     * @return Logger
-     */
-    protected static function getLogger(): Logger
-    {
-        /** @var Logger $logger */
-        static $logger = null;
-        if ($logger === null) {
-            $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
-        }
-
-        return $logger;
-    }
-
     protected function generatePassword(): string
     {
         $mode = ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isFrontend()
@@ -730,7 +705,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
         return $objInstanceSaltedPW->getHashedPassword($password);
     }
-
 
     protected function getLocalTSFE(): TypoScriptFrontendController
     {
