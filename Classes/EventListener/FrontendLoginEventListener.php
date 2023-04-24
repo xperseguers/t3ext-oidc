@@ -18,14 +18,16 @@ declare(strict_types=1);
 namespace Causal\Oidc\EventListener;
 
 use Causal\Oidc\Service\OAuthService;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Log\Logger;
-use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\FrontendLogin\Event\ModifyLoginFormViewEvent;
 
-class FrontendLoginEventListener
+class FrontendLoginEventListener implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     public function modifyLoginFormView(ModifyLoginFormViewEvent $event): void
     {
         $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
@@ -39,10 +41,10 @@ class FrontendLoginEventListener
         }
 
         $requestId = $this->getUniqueId();
-        static::getLogger()->debug('Post-processing felogin form', ['request' => $requestId]);
+        $this->logger->debug('Post-processing felogin form', ['request' => $requestId]);
 
         if (session_id() === '') { // If no session exists, start a new one
-            static::getLogger()->debug('No PHP session found');
+            $this->logger->debug('No PHP session found');
             session_start();
         }
 
@@ -51,12 +53,12 @@ class FrontendLoginEventListener
             $_SESSION['requestId'] = $requestId;
             $_SESSION['oidc_redirect_url'] = GeneralUtility::_GP('redirect_url');
 
-            static::getLogger()->debug('PHP session is available', [
+            $this->logger->debug('PHP session is available', [
                 'id' => session_id(),
                 'data' => $_SESSION,
             ]);
         } else {
-            static::getLogger()->debug('Reusing same authorization URL and state');
+            $this->logger->debug('Reusing same authorization URL and state');
         }
 
         $event->getView()->assign('openidConnectUri', $_SESSION['oidc_authorization_url']);
@@ -78,7 +80,7 @@ class FrontendLoginEventListener
         // Store the state
         $state = $service->getState();
 
-        static::getLogger()->debug('Generating authorization URL', [
+        $this->logger->debug('Generating authorization URL', [
             'url' => $authorizationUrl,
             'state' => $state,
         ]);
@@ -119,24 +121,6 @@ class FrontendLoginEventListener
      */
     protected function getUniqueId(): string
     {
-        $uniqueId = sprintf('%08x', abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] . $_SERVER['REMOTE_PORT'])));
-
-        return $uniqueId;
-    }
-
-    /**
-     * Returns a logger.
-     *
-     * @return Logger
-     */
-    protected static function getLogger(): Logger
-    {
-        /** @var Logger $logger */
-        static $logger = null;
-        if ($logger === null) {
-            $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
-        }
-
-        return $logger;
+        return sprintf('%08x', abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] . $_SERVER['REMOTE_PORT'])));
     }
 }
