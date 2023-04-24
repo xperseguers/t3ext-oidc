@@ -38,7 +38,7 @@ use TYPO3\CMS\Core\Context\Context;
 /**
  * OpenID Connect authentication service.
  */
-class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
+class AuthenticationService extends \TYPO3\CMS\Core\Authentication\AuthenticationService
 {
 
     /**
