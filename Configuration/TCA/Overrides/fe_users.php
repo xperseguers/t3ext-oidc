@@ -1,17 +1,16 @@
 <?php
 defined('TYPO3') or die();
 
-// TODO: Use proper TYPO3 API
-$settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
+$settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('oidc') ?? [];
 
 $tempColumns = [
     'tx_oidc' => [
-        'exclude' => 1,
+        'exclude' => true,
         'label' => 'LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:fe_users.tx_oidc',
         'config' => [
             'type' => 'input',
             'size' => 30,
-            'readOnly' => (bool)($settings['frontendUserMustExistLocally'] ?? '') ? 0 : 1,
+            'readOnly' => !($settings['frontendUserMustExistLocally'] ?? ''),
         ]
     ],
 ];

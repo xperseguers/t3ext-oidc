@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -15,6 +18,7 @@
 namespace Causal\Oidc\Factory;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\GenericProvider;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
@@ -22,7 +26,7 @@ final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
 
     public function create(array $settings): AbstractProvider
     {
-        return new \League\OAuth2\Client\Provider\GenericProvider([
+        return new GenericProvider([
                 'clientId' => $settings['oidcClientKey'],
                 'clientSecret' => $settings['oidcClientSecret'],
                 'redirectUri' => $settings['oidcRedirectUri'],

@@ -3,7 +3,7 @@ defined('TYPO3') or die();
 
 $tempColumns = [
     'tx_oidc_pattern' => [
-        'exclude' => 1,
+        'exclude' => true,
         'label' => 'LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:fe_groups.tx_oidc_pattern',
         'config' => [
             'type' => 'input',

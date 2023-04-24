@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -51,7 +54,7 @@ class DataHandler
                     $queryBuilder->expr()->inSet('usergroup', (string)$id)
                 )
                 ->execute()
-                ->fetchAll();
+                ->fetchAllAssociative();
 
             $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getConnectionForTable('fe_users');

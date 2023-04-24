@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -14,6 +17,7 @@
 
 namespace Causal\Oidc\Controller;
 
+use Causal\Oidc\Service\OAuthService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
@@ -27,19 +31,19 @@ class LoginController
      *
      * @var array
      */
-    protected $settings;
+    protected array $settings;
 
     /**
      * TypoScript configuration of this plugin
      *
      * @var array
      */
-    protected $pluginConfiguration;
+    protected array $pluginConfiguration = [];
 
     /**
-     * @var ContentObjectRenderer will automatically be injected, if this controller is called as a plugin
+     * @var ContentObjectRenderer|null will automatically be injected, if this controller is called as a plugin
      */
-    public $cObj;
+    public ?ContentObjectRenderer $cObj = null;
 
     public function __construct()
     {
@@ -62,7 +66,7 @@ class LoginController
      * @param string $_ ignored
      * @param array|null $pluginConfiguration
      */
-    public function login($_ = '', $pluginConfiguration)
+    public function login(string $_ = '', ?array $pluginConfiguration)
     {
         if (is_array($pluginConfiguration)) {
             $this->pluginConfiguration = $pluginConfiguration;
@@ -77,8 +81,8 @@ class LoginController
 
     protected function performRedirectToLogin(array $authorizationUrlOptions = [])
     {
-        /** @var \Causal\Oidc\Service\OAuthService $service */
-        $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
+        /** @var OAuthService $service */
+        $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->settings);
 
         if (session_id() === '') {
@@ -134,7 +138,7 @@ class LoginController
         return bin2hex(random_bytes(64));
     }
 
-    protected function convertVerifierToChallenge($codeVerifier)
+    protected function convertVerifierToChallenge($codeVerifier): string
     {
         return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
     }
@@ -149,5 +153,4 @@ class LoginController
             ]
         );
     }
-
 }
