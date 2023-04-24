@@ -43,14 +43,8 @@ class LoginController
 
     public function __construct()
     {
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
-        if (version_compare($typo3Branch, '9.0', '<')) {
-            $this->settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
-        } else {
-            $this->settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
-        }
+        // TODO: Use proper TYPO3 API
+        $this->settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
     }
 
     public function setContentObjectRenderer(ContentObjectRenderer $cObj)
@@ -133,14 +127,6 @@ class LoginController
 
     protected function redirect(string $redirectUrl): void
     {
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
-
-        if (version_compare($typo3Branch, '11.0', '<')) {
-            HttpUtility::redirect($redirectUrl);
-        }
-
         throw new PropagateResponseException(new RedirectResponse($redirectUrl));
     }
 

@@ -8,14 +8,8 @@ defined('TYPO3_MODE') || die();
     }
 
     // Configuration of authentication service
-    $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-        ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-        : TYPO3_branch;
-    if (version_compare($typo3Branch, '9.0', '<')) {
-        $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$_EXTKEY]);
-    } else {
-        $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS'][$_EXTKEY] ?? [];
-    }
+    // TODO: Use proper TYPO3 API
+    $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS'][$_EXTKEY] ?? [];
 
     // Service configuration
     $subTypesArr = [];
@@ -48,31 +42,17 @@ defined('TYPO3_MODE') || die();
         ]
     );
 
-    if (version_compare($typo3Branch, '10.0', '<')) {
-        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-            'Causal.' . $_EXTKEY,
-            'Pi1',
-            [
-                'Authentication' => 'connect',
-            ],
-            // non-cacheable actions
-            [
-                'Authentication' => 'connect'
-            ]
-        );
-    } else {
-        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-            $_EXTKEY,
-            'Pi1',
-            [
-                \Causal\Oidc\Controller\AuthenticationController::class => 'connect',
-            ],
-            // non-cacheable actions
-            [
-                \Causal\Oidc\Controller\AuthenticationController::class => 'connect'
-            ]
-        );
-    }
+    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+        $_EXTKEY,
+        'Pi1',
+        [
+            \Causal\Oidc\Controller\AuthenticationController::class => 'connect',
+        ],
+        // non-cacheable actions
+        [
+            \Causal\Oidc\Controller\AuthenticationController::class => 'connect'
+        ]
+    );
 
     if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('felogin')) {
         $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['felogin']['postProcContent'][$_EXTKEY] = \Causal\Oidc\Hooks\FeloginHook::class . '->postProcContent';

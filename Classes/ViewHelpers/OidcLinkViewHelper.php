@@ -40,14 +40,8 @@ class OidcLinkViewHelper extends AbstractViewHelper
         static::getLogger()->debug('Post-processing markers for felogin form', ['request' => $requestId]);
         $link = '';
 
-        $typo3Branch = class_exists(Typo3Version::class)
-            ? (new Typo3Version())->getBranch()
-            : TYPO3_branch;
-        if (version_compare($typo3Branch, '9.0', '<')) {
-            $settings = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
-        } else {
-            $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
-        }
+        // TODO: Use proper TYPO3 API
+        $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
 
         if (empty($settings['oidcClientKey'])
             || empty($settings['oidcClientSecret'])

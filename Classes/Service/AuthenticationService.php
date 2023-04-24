@@ -72,14 +72,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
      */
     public function __construct()
     {
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
-        if (version_compare($typo3Branch, '9.0', '<')) {
-            $this->config = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['oidc']);
-        } else {
-            $this->config = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
-        }
+        // TODO: Use proper TYPO3 API
+        $this->config = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
     }
 
     protected function getCodeVerifierFromSession()
@@ -127,16 +121,10 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
         $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
 
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
-
-        if (version_compare($typo3Branch, '10.2', '>=')) {
-            $event = new AuthenticationGetUserEvent($user);
-            $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
-            $eventDispatcher->dispatch($event);
-            $user = $event->getUser();
-        }
+        $event = new AuthenticationGetUserEvent($user);
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch($event);
+        $user = $event->getUser();
 
         if (is_array($user)) {
             unset($user['accessToken']);
@@ -335,15 +323,8 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
         }
 
         /** @var $objInstanceSaltedPW \TYPO3\CMS\Saltedpasswords\Salt\SaltInterface */
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
-        if (version_compare($typo3Branch, '9.5', '>=')) {
-            $passwordHashFactory = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class);
-            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance(TYPO3_MODE);
-        } else {
-            $objInstanceSaltedPW = \TYPO3\CMS\Saltedpasswords\Salt\SaltFactory::getSaltingInstance(null, TYPO3_MODE);
-        }
+        $passwordHashFactory = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory::class);
+        $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance(TYPO3_MODE);
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
         $hashedPassword = $objInstanceSaltedPW->getHashedPassword($password);
 
@@ -710,63 +691,24 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService
             $GLOBALS['TCA'][$table] = include($file);
         }
 
-        $typo3Branch = class_exists(\TYPO3\CMS\Core\Information\Typo3Version::class)
-            ? (new \TYPO3\CMS\Core\Information\Typo3Version())->getBranch()
-            : TYPO3_branch;
+        /** @var ServerRequestInterface $request */
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+        /** @var SiteMatcher $siteMatcher */
+        $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
+        $routeResult = $siteMatcher->matchRequest($request);
+        $site = $routeResult->getSite();
+        $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+        $currentPage = $pageArguments->getPageId();
 
-        if (version_compare($typo3Branch, '10.0', '>=')) {
-            /** @var ServerRequestInterface $request */
-            $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
-            /** @var SiteMatcher $siteMatcher */
-            $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
-            $routeResult = $siteMatcher->matchRequest($request);
-            $site = $routeResult->getSite();
-            $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
-            $currentPage = $pageArguments->getPageId();
-
-            $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
-            $context = GeneralUtility::makeInstance(Context::class);
-            $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, $context, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
-
-            /** @var TemplateService $templateService */
-            $templateService = GeneralUtility::makeInstance(TemplateService::class, null, null, $localTSFE);
-
-            $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
-            $templateService->start($rootLine);
-            $setup = $templateService->setup;
-            return $setup;
-        }
-
-        /** @var \TYPO3\CMS\Frontend\Page\PageRepository $pageRepository */
-        $pageRepository = GeneralUtility::makeInstance(\TYPO3\CMS\Frontend\Page\PageRepository::class);
-        if (version_compare($typo3Branch, '9.0', '<')) {
-            $pageRepository->init(false);
-        }
+        $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
+        $context = GeneralUtility::makeInstance(Context::class);
+        $localTSFE = GeneralUtility::makeInstance(TypoScriptFrontendController::class, $context, $site, $routeResult->getLanguage(), $pageArguments, $frontendUser);
 
         /** @var TemplateService $templateService */
-        $templateService = GeneralUtility::makeInstance(TemplateService::class);
-        if (version_compare($typo3Branch, '9.0', '<')) {
-            $templateService->init();
-        }
-        $templateService->tt_track = false;
+        $templateService = GeneralUtility::makeInstance(TemplateService::class, null, null, $localTSFE);
 
-        $currentPage = $GLOBALS['TSFE']->id;
-        if ($currentPage === null) {
-            // root page is not yet populated
-            $localTSFE = clone $GLOBALS['TSFE'];
-            if (version_compare($typo3Branch, '9.5', '>=')) {
-                $localTSFE->fe_user = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
-            }
-            $localTSFE->determineId();
-            $currentPage = $localTSFE->id;
-        }
-        if (version_compare($typo3Branch, '9.5', '>=')) {
-            $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
-        } else {
-            $rootLine = $pageRepository->getRootLine((int)$currentPage);
-        }
+        $rootLine = GeneralUtility::makeInstance(RootlineUtility::class, (int)$currentPage)->get();
         $templateService->start($rootLine);
-
         $setup = $templateService->setup;
         return $setup;
     }
