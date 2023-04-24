@@ -14,7 +14,7 @@
 
 namespace Causal\Oidc\ViewHelpers;
 
-use TYPO3\CMS\Core\Information\Typo3Version;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -40,8 +40,7 @@ class OidcLinkViewHelper extends AbstractViewHelper
         static::getLogger()->debug('Post-processing markers for felogin form', ['request' => $requestId]);
         $link = '';
 
-        // TODO: Use proper TYPO3 API
-        $settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
+        $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
 
         if (empty($settings['oidcClientKey'])
             || empty($settings['oidcClientSecret'])

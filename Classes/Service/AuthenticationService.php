@@ -25,6 +25,7 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
@@ -81,15 +82,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      *
      * @var array
      */
-    protected $config;
+    protected array $config;
 
     /**
      * AuthenticationService constructor.
      */
     public function __construct()
     {
-        // TODO: Use proper TYPO3 API
-        $this->config = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
+        $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
     protected function getCodeVerifierFromSession()

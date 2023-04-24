@@ -14,10 +14,10 @@
 
 namespace Causal\Oidc\Controller;
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\HttpUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 class LoginController
@@ -43,8 +43,7 @@ class LoginController
 
     public function __construct()
     {
-        // TODO: Use proper TYPO3 API
-        $this->settings = $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [];
+        $this->settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
     public function setContentObjectRenderer(ContentObjectRenderer $cObj)
