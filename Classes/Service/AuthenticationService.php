@@ -312,7 +312,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
                     Connection::PARAM_INT_ARRAY
                 )),
-                $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub']))
+                $queryBuilder->expr()->orX(
+                    $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
+                    $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
+                )
             )
             ->execute()
             ->fetchAssociative();
@@ -345,11 +348,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $info,
             $row ?: [],
             [
+                'tx_oidc' => $info['sub'],
                 'password' => $this->generatePassword(),
                 'deleted' => 0,
                 'disable' => 0,
             ]
         );
+
+        // preserve username and password for existing users
+        if ($row) {
+            unset($data['username']);
+            unset($data['email']);
+            unset($data['password']);
+        }
 
         $newUserGroups = [];
         $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup']);
