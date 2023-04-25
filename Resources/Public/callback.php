@@ -16,7 +16,7 @@
 if (!(empty($_GET['state']) || empty($_GET['code']))) {
     $schema = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
     if (empty($schema)) {
-        $schema = (@$_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $schema = (($_SERVER['HTTPS'] ?? '') === 'on') ? 'https' : 'http';
     }
     if ($_SERVER['SERVER_NAME'] !== '_') {
         $currentUrl = $schema . '://' . $_SERVER['SERVER_NAME'];
@@ -26,8 +26,8 @@ if (!(empty($_GET['state']) || empty($_GET['code']))) {
         $currentUrl = $schema . $_SERVER['HTTP_HOST'];
     }
     $currentUrl .= $_SERVER['REQUEST_URI'];
-
-    if (($pos = strpos($currentUrl, 'typo3conf/ext/oidc/Resources/Public/callback.php')) !== false) {
+    $pos = strpos($currentUrl, 'typo3conf/ext/oidc/Resources/Public/callback.php');
+    if ($pos !== false) {
         $connectUrl = substr($currentUrl, 0, $pos) . '?type=1489657462&state=' . $_GET['state'] . '&code=' . $_GET['code'];
         header('Location: ' . $connectUrl);
         exit();

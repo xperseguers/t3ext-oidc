@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -38,7 +41,6 @@ class OidcLinkViewHelper extends AbstractViewHelper
 
         $requestId = self::getUniqueId();
         static::getLogger()->debug('Post-processing markers for felogin form', ['request' => $requestId]);
-        $link = '';
 
         $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
 

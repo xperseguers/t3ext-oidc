@@ -23,6 +23,7 @@
 	"license": "GPL-2.0-or-later",
 	"require": {
 		"php": ">= 7.4.0, <= 8.2.99",
+		"ext-curl": "*",
 		"ext-json": "*",
 		"typo3/cms-core": "^11",
 		"league/oauth2-client": "^2.0"
