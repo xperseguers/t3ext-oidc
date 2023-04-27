@@ -26,8 +26,10 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Http\RequestFactory;
+use TYPO3\CMS\Core\Localization\Locale;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
+use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 /**
  * Class OAuthService.
@@ -47,7 +49,7 @@ class OAuthService
      * @param array $settings
      * @return $this
      */
-    public function setSettings(array $settings)
+    public function setSettings(array $settings): self
     {
         $this->settings = $settings;
 
@@ -65,9 +67,14 @@ class OAuthService
         if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
 
-            if (isset($GLOBALS['TSFE']->lang)) {
-                $frontendLanguage = $GLOBALS['TSFE']->lang;
-                $options[$languageOption] = $frontendLanguage;
+            $language = $this->getTSFE()->getLanguage()->getLocale();
+            if (is_string($language)) {
+                // v11 case
+                $options[$languageOption] = $language;
+            } else {
+                // v12 case
+                /** @var Locale $language */
+                $options[$languageOption] = $language->getName();
             }
         }
 
@@ -115,6 +122,9 @@ class OAuthService
         return $accessToken;
     }
 
+    /**
+     * @throws IdentityProviderException
+     */
     public function getAccessTokenForClient(): AccessTokenInterface
     {
         return $this->getProvider()->getAccessToken('client_credentials', [
@@ -130,7 +140,8 @@ class OAuthService
      *
      * @param string $username
      * @param string $password
-     * @return AccessToken
+     * @return AccessToken|null
+     * @throws IdentityProviderException
      */
     public function getAccessTokenWithRequestPathAuthentication(string $username, string $password): ?AccessToken
     {
@@ -150,7 +161,7 @@ class OAuthService
             ]
         );
 
-        if ($result->getStatusCode() < 300 && $result->getStatusCode() >= 400) {
+        if ($result->getStatusCode() < 300 || $result->getStatusCode() >= 400) {
             throw new RuntimeException('Request failed', 1510049345);
         }
 
@@ -182,6 +193,7 @@ class OAuthService
      *
      * @param AccessToken $token
      * @return bool
+     * @throws IdentityProviderException
      */
     public function revokeToken(AccessToken $token): bool
     {
@@ -256,5 +268,10 @@ class OAuthService
     protected function getRedirectUrl(): string
     {
         return $this->settings['oidcRedirectUri'] ?? GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
+    }
+
+    protected function getTSFE(): TypoScriptFrontendController
+    {
+        return $GLOBALS['TSFE'];
     }
 }
