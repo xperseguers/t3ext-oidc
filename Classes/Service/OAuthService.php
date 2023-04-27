@@ -21,11 +21,12 @@ use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Localization\Locale;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
+use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 /**
  * Class OAuthService.
@@ -45,7 +46,7 @@ class OAuthService
      * @param array $settings
      * @return $this
      */
-    public function setSettings(array $settings)
+    public function setSettings(array $settings): static
     {
         $this->settings = $settings;
 
@@ -63,9 +64,14 @@ class OAuthService
         if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
 
-            if (isset($GLOBALS['TSFE']->lang)) {
-                $frontendLanguage = $GLOBALS['TSFE']->lang;
-                $options[$languageOption] = $frontendLanguage;
+            $language = $this->getTSFE()->getLanguage()->getLocale();
+            if (is_string($language)) {
+                // v11 case
+                $options[$languageOption] = $language;
+            } else {
+                // v12 case
+                /** @var Locale $language */
+                $options[$languageOption] = $language->getName();
             }
         }
 
@@ -121,7 +127,8 @@ class OAuthService
      *
      * @param string $username
      * @param string $password
-     * @return AccessToken
+     * @return AccessToken|null
+     * @throws IdentityProviderException
      */
     public function getAccessTokenWithRequestPathAuthentication(string $username, string $password): ?AccessToken
     {
@@ -186,6 +193,7 @@ class OAuthService
      *
      * @param AccessToken $token
      * @return bool
+     * @throws IdentityProviderException
      */
     public function revokeToken(AccessToken $token): bool
     {
@@ -261,5 +269,10 @@ class OAuthService
         }
 
         return $accessToken;
+    }
+
+    protected function getTSFE(): TypoScriptFrontendController
+    {
+        return $GLOBALS['TSFE'];
     }
 }
