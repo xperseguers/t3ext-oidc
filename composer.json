@@ -22,19 +22,18 @@
 	],
 	"license": "GPL-2.0-or-later",
 	"require": {
-		"php": ">= 7.4.0, <= 8.2.99",
+		"php": ">= 8.0.0, <= 8.2.99",
 		"ext-curl": "*",
 		"ext-json": "*",
-		"typo3/cms-core": "^11",
+		"typo3/cms-extbase": "^11 || ^12",
+		"typo3/cms-frontend": "^11 || ^12",
+		"typo3/cms-felogin": "^11 || ^12",
 		"league/oauth2-client": "^2.0"
 	},
 	"autoload": {
 		"psr-4": {
 			"Causal\\Oidc\\": "Classes/"
 		}
-	},
-	"replace": {
-		"typo3-ter/oidc": "self.version"
 	},
 	"scripts": {
 		"extension-create-libs": [
@@ -60,10 +59,19 @@
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-master": "1.3.x-dev"
+			"dev-master": "2.0.x-dev"
 		},
 		"typo3/cms": {
+			"app-dir": ".Build",
+			"web-dir": ".Build/web",
 			"extension-key": "oidc"
+		}
+	},
+	"config": {
+		"vendor-dir": ".Build/vendor",
+		"allow-plugins": {
+			"typo3/cms-composer-installers": true,
+			"typo3/class-alias-loader": true
 		}
 	}
 }
