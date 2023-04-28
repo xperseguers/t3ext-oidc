@@ -31,14 +31,13 @@ class DataHandler
      *
      * @param string $operation
      * @param string $table
-     * @param mixed $id
+     * @param int|string $id
      * @param array $fieldArray
-     * @param \TYPO3\CMS\Core\DataHandling\DataHandler $pObj
      * @return void
      */
-    public function processDatamap_afterDatabaseOperations($operation, $table, $id, array $fieldArray, \TYPO3\CMS\Core\DataHandling\DataHandler $pObj)
+    public function processDatamap_afterDatabaseOperations(string $operation, string $table, $id, array $fieldArray)
     {
-        if (!($table === 'fe_groups' && $operation === 'update')) {
+        if ($table !== 'fe_groups' || $operation !== 'update') {
             return;
         }
 
@@ -53,12 +52,11 @@ class DataHandler
                 ->where(
                     $queryBuilder->expr()->inSet('usergroup', (string)$id)
                 )
-                ->execute()
-                ->fetchAllAssociative();
+                ->execute();
 
             $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getConnectionForTable('fe_users');
-            foreach ($usersInThisUserGroup as $user) {
+            while ($user = $usersInThisUserGroup->fetchAssociative()) {
                 $userGroups = GeneralUtility::intExplode(',', $user['usergroup'], true);
                 // Remove this user group from the list
                 $index = array_search($id, $userGroups);
