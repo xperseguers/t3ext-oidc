@@ -60,3 +60,9 @@ oidcDisableCSRFProtection = 0
 
 # cat=advanced//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oauthProviderFactory
 oauthProviderFactory =
+
+# cat=advanced//4; type=int+; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.authenticationServicePriority
+authenticationServicePriority = 82
+
+# cat=advanced//5; type=int+; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.authenticationServiceQuality
+authenticationServiceQuality = 80
