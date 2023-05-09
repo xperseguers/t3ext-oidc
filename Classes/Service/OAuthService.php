@@ -21,8 +21,8 @@ use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use League\OAuth2\Client\Token\AccessTokenInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
@@ -111,6 +111,13 @@ class OAuthService
         }
 
         return $accessToken;
+    }
+
+    public function getAccessTokenForClient(): AccessTokenInterface
+    {
+        return $this->getProvider()->getAccessToken('client_credentials', [
+            'scope' => implode(',', $this->getProvider()->getDefaultScopes()),
+        ]);
     }
 
     /**
