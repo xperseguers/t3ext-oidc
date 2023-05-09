@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Causal\Oidc\Event\ModifyUserEvent;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -436,6 +437,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $this->logger->info('Detected a returning user');
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
+
+            $event = new ModifyUserEvent($user);
+            $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+            $eventDispatcher->dispatch($event);
+            $user = $event->getUser();
+
             if ($user != $row) {
                 $this->logger->debug('Updating existing user', [
                     'old' => $row,
@@ -464,6 +471,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'crdate' => $GLOBALS['EXEC_TIME'],
                 'tx_oidc' => $info['sub'],
             ]);
+
+            $event = new ModifyUserEvent($data);
+            $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+            $eventDispatcher->dispatch($event);
+            $data = $event->getUser();
+
             $tableConnection->insert(
                 $userTable,
                 $data
