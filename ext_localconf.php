@@ -34,8 +34,8 @@ ExtensionManagementUtility::addService(
         'description' => 'Authentication service for OpenID Connect.',
         'subtype' => $subTypes,
         'available' => true,
-        'priority' => 82, /* will be called before default TYPO3 authentication service */
-        'quality' => 80,
+        'priority' => (int)($settings['authenticationServicePriority'] ?? 82),
+        'quality' => (int)($settings['authenticationServiceQuality'] ?? 80),
         'os' => '',
         'exec' => '',
         'className' => $authenticationClassName,
