@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -15,7 +18,7 @@
 namespace Causal\Oidc\Service;
 
 /**
- * Interface for hooks related to thge resource owner.
+ * Interface for hooks related to the resource owner.
  */
 interface ResourceOwnerHookInterface
 {
@@ -30,6 +33,6 @@ interface ResourceOwnerHookInterface
      * @param array $data OpenID Connect data
      * @return void
      */
-    public function postProcessUser($context, array $user, array $data);
+    public function postProcessUser(string $context, array $user, array $data): void;
 
 }
