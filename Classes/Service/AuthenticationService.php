@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
@@ -260,7 +261,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 1490086626
             );
         }
-        $user = $this->convertResourceOwner($resourceOwner);
+
+        $event = new ModifyResourceOwnerEvent($resourceOwner);
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch($event);
+
+        $user = $this->convertResourceOwner($event->getResourceOwner());
 
         if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
             $service->revokeToken($accessToken);
