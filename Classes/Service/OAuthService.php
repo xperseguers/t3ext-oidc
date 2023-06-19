@@ -132,17 +132,11 @@ class OAuthService
      */
     public function getAccessTokenWithRequestPathAuthentication(string $username, string $password): ?AccessToken
     {
-        $redirectUri = $this->settings['oidcRedirectUri'];
-        if (empty($redirectUri)) {
-            $redirectUri = GeneralUtility::getIndpEnv('TYPO3_SSL') ? 'https://' : 'http://';
-            $redirectUri .= GeneralUtility::getIndpEnv('HTTP_HOST');
-            $redirectUri .= '/typo3conf/ext/oidc/Resources/Public/callback.php';
-        }
         $url = $this->settings['oidcEndpointAuthorize'] . '?' . http_build_query([
                 'response_type' => 'code',
                 'client_id' => $this->settings['oidcClientKey'],
                 'scope' => $this->settings['oidcClientScopes'],
-                'redirect_uri' => $redirectUri,
+                'redirect_uri' => $this->getRedirectUrl(),
             ]);
 
         $ch = curl_init();
@@ -228,13 +222,7 @@ class OAuthService
             }
 
             $settings = $this->settings;
-            $settings['oidcRedirectUri'] = $this->settings['oidcRedirectUri'];
-            if (empty($settings['oidcRedirectUri'])) {
-                $redirectUri = GeneralUtility::getIndpEnv('TYPO3_SSL') ? 'https://' : 'http://';
-                $redirectUri .= GeneralUtility::getIndpEnv('HTTP_HOST');
-                $redirectUri .= '/typo3conf/ext/oidc/Resources/Public/callback.php';
-                $settings['oidcRedirectUri'] = $redirectUri;
-            }
+            $settings['oidcRedirectUri'] = $this->getRedirectUrl();
 
             /** @var OAuthProviderFactoryInterface $factory */
             $factory = GeneralUtility::makeInstance($factoryClass);
@@ -268,5 +256,10 @@ class OAuthService
         }
 
         return $accessToken;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->settings['oidcRedirectUri'] ?? GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
     }
 }
