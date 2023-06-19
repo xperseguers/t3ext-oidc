@@ -19,11 +19,13 @@ namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
+use GuzzleHttp\RequestOptions;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
 
@@ -145,32 +147,25 @@ class OAuthService
                 'redirect_uri' => $redirectUri,
             ]);
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Basic ' . base64_encode($username . ':' . $password),
-        ]);
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        $content = curl_exec($ch);
+        $result = GeneralUtility::makeInstance(RequestFactory::class)->request(
+            'GET',
+            $url,
+            [
+                RequestOptions::AUTH => [$username, $password],
+                RequestOptions::ALLOW_REDIRECTS => false
+            ]
+        );
 
-        if ($content === false) {
-            throw new RuntimeException('Curl ERROR: ' . curl_error($ch), 1510049345);
+        if ($result->getStatusCode() < 300 && $result->getStatusCode() >= 400) {
+            throw new RuntimeException('Request failed', 1510049345);
         }
-        curl_close($ch);
 
-        $headers = explode(LF, $content);
-        foreach ($headers as $header) {
-            list($key, $value) = GeneralUtility::trimExplode(':', $header, false, 2);
-            if ($key === 'Location') {
-                $queryParams = explode('&', substr($value, strpos($value, '?') + 1));
-                foreach ($queryParams as $param) {
-                    list($key, $value) = explode('=', $param, 2);
-                    if ($key === 'code') {
-                        return $this->getAccessToken($value);
-                    }
-                }
+        if ($result->getHeader('Location')) {
+            $targetUrl = $result->getHeader('Location')[0];
+            $query = parse_url($targetUrl, PHP_URL_QUERY);
+            parse_str($query, $queryParams);
+            if (isset($queryParams['code'])) {
+                return $this->getAccessToken($queryParams['code']);
             }
         }
 
