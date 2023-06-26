@@ -10,9 +10,22 @@ secret.
 
 ## Default FE Loginbox
 
-This extension integrates with the system extension 'felogin' and provides a new marker `###OPENID_CONNECT###` to be
-used in the felogin template. A sample template is included. The marker will be replaced by a login link, pointing to
-the  authorization endpoint of the authorization server.
+This extension integrates with the system extension 'felogin'.
+
+This FLUID markup can be used to include a link to the authorization endpoint of the authorization server.
+
+```html
+<f:if condition="{openidConnectUri}">
+    <f:then>
+        <a href="{openidConnectUri}" class="btn btn-default"><span class="fa fa-openid"></span> OpenID Connect</a>
+    </f:then>
+    <f:else>
+        Invalid OpenID Connect configuration
+    </f:else>
+</f:if>
+```
+
+See also `Resources/Private/Templates/Login/Login.html` as reference.
 
 ## OIDC Login
 
