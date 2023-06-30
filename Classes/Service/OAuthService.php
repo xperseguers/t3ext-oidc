@@ -267,7 +267,7 @@ class OAuthService
 
     protected function getRedirectUrl(): string
     {
-        return $this->settings['oidcRedirectUri'] ?? GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
+        return $this->settings['oidcRedirectUri'] ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
     }
 
     protected function getTSFE(): TypoScriptFrontendController
