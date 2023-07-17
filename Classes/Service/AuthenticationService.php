@@ -20,12 +20,13 @@ namespace Causal\Oidc\Service;
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Exception;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
 use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
@@ -35,7 +36,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
-use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
@@ -176,7 +176,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // Probably a "server_error", meaning the code is not valid anymore
             $this->logger->error('Possibly replay: code has been refused by the authentication server', [
                 'code' => $code,
-                'message' => $e->getMessage(),
+                'exception' => $e,
             ]);
             return false;
         }
@@ -221,7 +221,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         } catch (IdentityProviderException $e) {
             $this->logger->error('Authentication has been refused by the authentication server', [
                 'username' => $username,
-                'message' => $e->getMessage(),
+                'exception' => $e,
             ]);
         }
 
@@ -247,14 +247,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
             $this->logger->debug('Resource owner retrieved', $resourceOwner);
         } catch (IdentityProviderException $e) {
-            $this->logger->error('Could not retrieve resource owner', [
-                'message' => $e->getMessage(),
-            ]);
+            $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
             return false;
         }
         if (empty($resourceOwner['sub'])) {
             $this->logger->error('No "sub" found in resource owner, revoking access token');
-            $service->revokeToken($accessToken);
+            try {
+                $service->revokeToken($accessToken);
+            } catch (IdentityProviderException $e) {
+                $this->logger->error('Could not revoke token', ['exception' => $e]);
+                return false;
+            }
             throw new RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
                 . '. Your access token has been revoked. Please try again.',
@@ -269,7 +272,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $user = $this->convertResourceOwner($event->getResourceOwner());
 
         if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
-            $service->revokeToken($accessToken);
+            try {
+                $service->revokeToken($accessToken);
+            } catch (IdentityProviderException $e) {
+                $this->logger->error('Could not revoke token', ['exception' => $e]);
+            }
         }
 
         return $user;
@@ -294,7 +301,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      *
      * @param array $info
      * @return array|bool
-     * @throws InvalidArgumentException
      */
     protected function convertResourceOwner(array $info)
     {
@@ -611,14 +617,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string $value
      * @return array Modified $typo3 array
      * @throws UnexpectedValueException
-     * @see \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer::getFieldVal()
+     * @see ContentObjectRenderer::getFieldVal
      */
     protected function mergeSimple(array $oidc, array $typo3, string $field, string $value): array
     {
         // Constant by default
         $mappedValue = $value;
 
-        if (preg_match("`<([^$]*)>`", $value, $attribute)) {    // OIDC attribute
+        if (preg_match("`<([^$]*)>`", $value)) {    // OIDC attribute
             $sections = !strstr($value, '//')
                 ? [$value]
                 : GeneralUtility::trimExplode('//', $value, true);
