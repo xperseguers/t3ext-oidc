@@ -298,15 +298,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function convertResourceOwner(array $info)
     {
-        if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isFrontend()) {
-            $mode = 'FE';
-            $userTable = 'fe_users';
-            $userGroupTable = 'fe_groups';
-        } else {
-            $mode = 'BE';
-            $userTable = 'be_users';
-            $userGroupTable = 'be_groups';
-        }
+        $mode = $this->authInfo['loginType'];
+        $userTable = $this->db_user['table'];
+        $userGroupTable = $mode === 'FE' ? 'fe_groups' : 'be_groups';
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($userTable);
@@ -722,14 +716,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function generatePassword(): string
     {
-        $mode = ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isFrontend()
-            ? 'FE'
-            : 'BE';
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
 
         $passwordHashFactory = GeneralUtility::makeInstance(PasswordHashFactory::class);
         try {
-            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($mode);
+            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($this->authInfo['loginType']);
         } catch (InvalidPasswordHashException $e) {
             return '';
         }
@@ -738,8 +729,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getLocalTSFE(): TypoScriptFrontendController
     {
-        /** @var ServerRequestInterface $request */
-        $request = $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+        $request = ServerRequestFactory::fromGlobals();
         $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
         $routeResult = $siteMatcher->matchRequest($request);
         if ($routeResult instanceof SiteRouteResult) {
