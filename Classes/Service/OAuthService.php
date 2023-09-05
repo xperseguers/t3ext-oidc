@@ -26,7 +26,6 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Http\RequestFactory;
-use TYPO3\CMS\Core\Localization\Locale;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
@@ -66,15 +65,9 @@ class OAuthService
     {
         if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
-
-            $language = $this->getTSFE()->getLanguage()->getLocale();
-            if (is_string($language)) {
-                // v11 case
+            if (!empty($languageOption)) {
+                $language = $this->getTSFE()->getLanguage()->getTwoLetterIsoCode();
                 $options[$languageOption] = $language;
-            } else {
-                // v12 case
-                /** @var Locale $language */
-                $options[$languageOption] = $language->getName();
             }
         }
 
