@@ -242,14 +242,26 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     protected function getUserFromAccessToken(OAuthService $service, AccessToken $accessToken)
     {
         // Using the access token, we may look up details about the resource owner
-        try {
-            $this->logger->debug('Retrieving resource owner');
-            $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
-            $this->logger->debug('Resource owner retrieved', $resourceOwner);
-        } catch (IdentityProviderException $e) {
-            $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
-            return false;
+        if ($this->config['oidcEndpointUserInfo'] !== '') {
+            try {
+                $this->logger->debug('Retrieving resource owner');
+                $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
+                $this->logger->debug('Resource owner retrieved', $resourceOwner);
+            } catch (IdentityProviderException $e) {
+                $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
+                return false;
+            }
+        } else {
+            $this->logger->debug('UserInfo Endpoint is not set, retrie resource owner form JSON Web Token');
+            $jwt = $accessToken->getToken();
+            $jwtDecoded = base64_decode(str_replace('_', '/', str_replace('-','+',explode('.', $jwt)[1])));
+            $resourceOwner = json_decode($jwtDecoded, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->error('Could not retrieve resource owner from JSON Web Token', ['Failed to parse JSON response: %s' => json_last_error_msg()]);
+                return false;
+            }
         }
+
         if (empty($resourceOwner['sub'])) {
             $this->logger->error('No "sub" found in resource owner, revoking access token');
             try {
