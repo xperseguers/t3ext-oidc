@@ -252,9 +252,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 return false;
             }
         } else {
-            $this->logger->debug('UserInfo Endpoint is not set, retrie resource owner form JSON Web Token');
+            $this->logger->debug('UserInfo Endpoint is not set, retrieve resource owner from JSON Web Token');
             $jwt = $accessToken->getToken();
-            $jwtDecoded = base64_decode(str_replace('_', '/', str_replace('-','+',explode('.', $jwt)[1])));
+            $jwtDecoded = base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $jwt)[1])));
             $resourceOwner = json_decode($jwtDecoded, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $this->logger->error('Could not retrieve resource owner from JSON Web Token', ['Failed to parse JSON response: %s' => json_last_error_msg()]);
