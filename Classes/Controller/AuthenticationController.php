@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Controller;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use RuntimeException;
@@ -50,7 +51,7 @@ class AuthenticationController extends ActionController implements LoggerAwareIn
      *
      * @return void
      */
-    public function connectAction()
+    public function connectAction(): ResponseInterface
     {
         $this->logger->debug('Initiating the silent authentication');
         if ((empty($_GET['state']) || empty($_GET['code']))) {
@@ -86,6 +87,6 @@ class AuthenticationController extends ActionController implements LoggerAwareIn
         }
 
         $this->logger->info('Redirecting to login URL', ['url' => $loginUrl]);
-        $this->redirectToUri($loginUrl);
+        return $this->redirectToUri($loginUrl);
     }
 }
