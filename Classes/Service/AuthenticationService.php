@@ -250,7 +250,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
             throw new RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
-                . '. Your access token has been revoked. Please try again.',
+                    . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
@@ -317,12 +317,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
                     Connection::PARAM_INT_ARRAY
                 )),
-                $queryBuilder->expr()->orX(
+                $queryBuilder->expr()->or(
                     $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
                     $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
                 )
             )
-            ->execute()
+            ->executeQuery()
             ->fetchAssociative();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
@@ -387,7 +387,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                         $queryBuilder->expr()->in('uid', $currentUserGroups),
                         $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
                     )
-                    ->execute()
+                    ->executeQuery()
                     ->fetchAllAssociative();
 
                 $oidcUserGroups = [];
@@ -410,7 +410,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->where(
                     $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
                 )
-                ->execute()
+                ->executeQuery()
                 ->fetchAllAssociative();
 
             $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
@@ -465,7 +465,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     'old' => $row,
                     'new' => $user,
                 ]);
-                $user['tstamp'] = $GLOBALS['EXEC_TIME'];
+                $user['tstamp'] = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
                 $tableConnection->update(
                     $userTable,
                     $user,
@@ -485,7 +485,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data = array_merge($data, [
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
-                'crdate' => $GLOBALS['EXEC_TIME'],
+                'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
             ]);
 
@@ -541,11 +541,13 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryResult = $queryBuilder
             ->select('*')
             ->from($table)
-            ->where($queryBuilder->expr()->eq(
-                'uid',
-                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)
+                )
             )
-            ->execute();
+            ->executeQuery();
 
         $user = $queryResult->fetchAssociative();
         if (!is_array($user) || $user === []) {
