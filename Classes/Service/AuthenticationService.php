@@ -313,18 +313,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryBuilder->getRestrictions()->removeAll();
         $row = $queryBuilder
             ->select('*')
-            ->from($userTable)
-            ->where(
-                $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
-                    GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
-                    Connection::PARAM_INT_ARRAY
-                )),
-                $queryBuilder->expr()->orX(
-                    $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
-                    $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
-                )
-            )
-            ->execute()
+            ->from($userTable)->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
+            GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
+            Connection::PARAM_INT_ARRAY
+        )), $queryBuilder->expr()->or($queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])), $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))))->executeQuery()
             ->fetchAssociative();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
@@ -384,12 +376,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
                 $groups = $queryBuilder
                     ->select('uid')
-                    ->from($userGroupTable)
-                    ->where(
-                        $queryBuilder->expr()->in('uid', $currentUserGroups),
-                        $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
-                    )
-                    ->execute()
+                    ->from($userGroupTable)->where($queryBuilder->expr()->in('uid', $currentUserGroups), $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote('')))->executeQuery()
                     ->fetchAllAssociative();
 
                 $oidcUserGroups = [];
@@ -408,11 +395,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->getQueryBuilderForTable($userGroupTable);
             $typo3Roles = $queryBuilder
                 ->select('uid', 'tx_oidc_pattern')
-                ->from($userGroupTable)
-                ->where(
-                    $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
-                )
-                ->execute()
+                ->from($userGroupTable)->where($queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote('')))->executeQuery()
                 ->fetchAllAssociative();
 
             $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
@@ -454,7 +437,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     'old' => $row,
                     'new' => $user,
                 ]);
-                $user['tstamp'] = $GLOBALS['EXEC_TIME'];
+                $user['tstamp'] = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
                 $tableConnection->update(
                     $userTable,
                     $user,
@@ -474,7 +457,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data = array_merge($data, [
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
-                'crdate' => $GLOBALS['EXEC_TIME'],
+                'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
             ]);
 
@@ -532,12 +515,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryBuilder->getRestrictions()->removeAll();
         $queryResult = $queryBuilder
             ->select('*')
-            ->from($table)
-            ->where($queryBuilder->expr()->eq(
-                'uid',
-                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
-            )
-            ->execute();
+            ->from($table)->where($queryBuilder->expr()->eq(
+            'uid',
+            $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)))->executeQuery();
 
         $user = $queryResult->fetchAssociative();
         if (!is_array($user) || $user === []) {

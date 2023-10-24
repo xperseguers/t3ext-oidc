@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\ViewHelpers;
 
+use Causal\Oidc\Service\OAuthService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Log\LogManager;
@@ -84,8 +85,8 @@ class OidcLinkViewHelper extends AbstractViewHelper
      */
     protected static function prepareAuthorizationUrl(array $settings)
     {
-        /** @var \Causal\Oidc\Service\OAuthService $service */
-        $service = GeneralUtility::makeInstance(\Causal\Oidc\Service\OAuthService::class);
+        /** @var OAuthService $service */
+        $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($settings);
         $authorizationUrl = $service->getAuthorizationUrl();
 
