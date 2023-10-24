@@ -76,7 +76,9 @@ class LoginController
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
         }
-        $this->performRedirectToLogin($pluginConfiguration['authorizationUrlOptions.']);
+        $this->performRedirectToLogin(
+            isset($pluginConfiguration['authorizationUrlOptions.'])  ? $pluginConfiguration['authorizationUrlOptions.']: []
+        );
     }
 
     protected function performRedirectToLogin(array $authorizationUrlOptions = [])
