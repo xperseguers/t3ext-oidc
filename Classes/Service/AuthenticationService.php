@@ -136,9 +136,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // dispatch a signal (containing the user with his access token if auth was successful)
         // so other extensions can use them to make further requests to an API
         // provided by the authentication server
-        /** @var Dispatcher $dispatcher */
-        $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-        $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
 
         $event = new AuthenticationGetUserEvent($user);
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
