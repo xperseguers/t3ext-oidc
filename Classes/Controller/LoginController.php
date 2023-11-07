@@ -91,7 +91,7 @@ class LoginController
             session_start();
         }
         $options = [];
-        if ($this->settings['enableCodeVerifier']) {
+        if ($this->settings['enableCodeVerifier'] ?? false) {
             $codeVerifier = $this->generateCodeVerifier();
             $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
             $options = $this->addCodeChallengeToOptions($codeChallenge, $authorizationUrlOptions);
