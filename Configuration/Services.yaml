@@ -13,3 +13,8 @@ services:
         identifier: 'causal/oidc'
         method: 'modifyLoginFormView'
         event: TYPO3\CMS\FrontendLogin\Event\ModifyLoginFormViewEvent
+
+  Causal\Oidc\EventListener\ProcessRequestTokenListener:
+    tags:
+      - name: event.listener
+        identifier: 'causal/oidc-request-token'
