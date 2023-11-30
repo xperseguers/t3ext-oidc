@@ -36,7 +36,9 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
+use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
@@ -742,7 +744,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $site = $routeResult->getSite();
             if ($site instanceof Site) {
                 try {
-                    $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+                    try {
+                        $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+                    } catch (RouteNotFoundException $e) {
+                        // in 404 case try again without query url
+                        $request = new ServerRequest(new Uri($request->getUri()->withQuery('')->withPath('')->__toString()), 'GET', null, [], $_SERVER);
+                        $routeResult = $siteMatcher->matchRequest($request);
+                        $pageArguments = $site->getRouter()->matchRequest($request, $routeResult);
+                    }
+
                     if ($pageArguments instanceof PageArguments) {
                         $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
                         $context = GeneralUtility::makeInstance(Context::class);
