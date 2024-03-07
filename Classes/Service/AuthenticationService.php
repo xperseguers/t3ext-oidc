@@ -109,7 +109,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     public function getUser()
     {
         $user = false;
-        $params = GeneralUtility::_GET('tx_oidc');
+        $request = ServerRequestFactory::fromGlobals();
+        $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
         $username = $this->login['uname'] ?? null;
 
