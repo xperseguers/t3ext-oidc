@@ -18,10 +18,9 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Driver\Exception;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -110,27 +109,37 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     public function getUser()
     {
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+
         $user = false;
-        $params = GeneralUtility::_GET('tx_oidc');
+        $request = ServerRequestFactory::fromGlobals();
+        $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
-        $username = $this->login['uname'] ?? null;
-
-        if (isset($this->login['uident_text'])) {
-            $password = $this->login['uident_text'];
-        } elseif (isset($this->login['uident'])) {
-            $password = $this->login['uident'];
-        } else {
-            $password = null;
-        }
-
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config['enableCodeVerifier']) {
                 $codeVerifier = $this->getCodeVerifierFromSession();
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
-        } elseif (!(empty($username) || empty($password))) {
-            $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
+        } else {
+            $event = new AuthenticationPreUserEvent($this->login);
+            $eventDispatcher->dispatch($event);
+            if (!$event->shouldProcess) {
+                return false;
+            }
+            $this->login = $event->loginData;
+
+            $username = $this->login['uname'] ?? null;
+            if (isset($this->login['uident_text'])) {
+                $password = $this->login['uident_text'];
+            } elseif (isset($this->login['uident'])) {
+                $password = $this->login['uident'];
+            } else {
+                $password = null;
+            }
+            if (!empty($username) && !empty($password)) {
+                $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
+            }
         }
 
         // dispatch a signal (containing the user with his access token if auth was successful)
@@ -141,7 +150,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
 
         $event = new AuthenticationGetUserEvent($user);
-        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
         $eventDispatcher->dispatch($event);
         $user = $event->getUser();
 
