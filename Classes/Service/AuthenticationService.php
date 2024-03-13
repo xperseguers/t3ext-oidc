@@ -147,7 +147,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // provided by the authentication server
         /** @var Dispatcher $dispatcher */
         $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-        $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
+        $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
 
         $event = new AuthenticationGetUserEvent($user);
         $eventDispatcher->dispatch($event);
