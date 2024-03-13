@@ -21,6 +21,7 @@ use Causal\Oidc\Service\OAuthService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
+use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
@@ -72,7 +73,9 @@ class LoginController
             $this->pluginConfiguration = $pluginConfiguration;
         }
 
-        if (GeneralUtility::_GP('logintype') == 'login') {
+        $request = ServerRequestFactory::fromGlobals();
+        $loginType = $request->getParsedBody()['logintype'] ?? $request->getQueryParams()['logintype'] ?? '';
+        if ($loginType === 'login') {
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
         }
@@ -114,8 +117,10 @@ class LoginController
 
     protected function determineRedirectUrl()
     {
-        if (!empty(GeneralUtility::_GP('redirect_url'))) {
-            return GeneralUtility::_GP('redirect_url');
+        $request = $GLOBALS['TYPO3_REQUEST'];
+        $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+        if (!empty($redirectUrl)) {
+            return $redirectUrl;
         }
 
         if (isset($this->pluginConfiguration['defaultRedirectPid'])) {
