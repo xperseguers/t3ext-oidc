@@ -57,26 +57,15 @@ use UnexpectedValueException;
  */
 class AuthenticationService extends \TYPO3\CMS\Core\Authentication\AuthenticationService
 {
-
-    /**
-     * true - this service was able to authenticate the user
-     */
-    const STATUS_AUTHENTICATION_SUCCESS_CONTINUE = true;
-
     /**
      * 200 - authenticated and no more checking needed
      */
-    const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
-
-    /**
-     * false - this service was the right one to authenticate the user, but it failed
-     */
-    const STATUS_AUTHENTICATION_FAILURE_BREAK = false;
+    private const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
 
     /**
      * 100 - just go on. User is not authenticated but there's still no reason to stop
      */
-    const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
+    private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
      * Global extension configuration
@@ -142,19 +131,21 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        // dispatch a signal (containing the user with his access token if auth was successful)
-        // so other extensions can use them to make further requests to an API
-        // provided by the authentication server
-        /** @var Dispatcher $dispatcher */
-        $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-        $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
+        if ($user) {
+            // dispatch a signal (containing the user with his access token if auth was successful)
+            // so other extensions can use them to make further requests to an API
+            // provided by the authentication server
+            /** @var Dispatcher $dispatcher */
+            $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
+            $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
 
-        $event = new AuthenticationGetUserEvent($user);
-        $eventDispatcher->dispatch($event);
-        $user = $event->getUser();
+            $event = new AuthenticationGetUserEvent($user);
+            $eventDispatcher->dispatch($event);
+            $user = $event->getUser();
 
-        if (isset($user['accessToken'])) {
-            unset($user['accessToken']);
+            if (isset($user['accessToken'])) {
+                unset($user['accessToken']);
+            }
         }
 
         return $user;
@@ -171,7 +162,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
-        /** @var OAuthService $service */
         $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->config);
 
@@ -527,9 +517,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $user = $this->getUserByUidAndTable((int)$user['uid'], $userTable);
             $this->logger->debug('User record reloaded', $user);
         }
-
-        // We need that for the upcoming call to authUser()
-        $user['tx_oidc'] = true;
 
         return $user;
     }
