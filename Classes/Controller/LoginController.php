@@ -67,7 +67,7 @@ class LoginController
      * @param string $_ ignored
      * @param array|null $pluginConfiguration
      */
-    public function login(string $_ = '', ?array $pluginConfiguration)
+    public function login(string $_, ?array $pluginConfiguration)
     {
         if (is_array($pluginConfiguration)) {
             $this->pluginConfiguration = $pluginConfiguration;
