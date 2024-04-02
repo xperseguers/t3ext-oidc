@@ -142,10 +142,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $event = new AuthenticationGetUserEvent($user);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
-
-            if (isset($user['accessToken'])) {
-                unset($user['accessToken']);
-            }
         }
 
         return $user;
@@ -288,10 +284,18 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     public function authUser(array $user): int
     {
-        if (!empty($user['tx_oidc'])) {
-            return static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
+        // missing access token means the actual OIDC authentication step in the `getUser` method failed
+        // or has neven been executed, if the user was discovered by some other authentication service
+        if (!isset($user['accessToken'])) {
+            return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
         }
-        return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+
+        // this is not a valid user authenticated via OIDC
+        if (empty($user['tx_oidc'])) {
+            return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+        }
+
+        return static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
     }
 
     /**
