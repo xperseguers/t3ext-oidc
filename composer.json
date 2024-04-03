@@ -22,7 +22,7 @@
 	],
 	"license": "GPL-2.0-or-later",
 	"require": {
-		"php": ">= 7.4.0, <= 8.2.99",
+		"php": ">= 7.4.0, <= 8.3.99",
 		"ext-json": "*",
 		"typo3/cms-core": "^11.5 | ^12.4",
 		"typo3/cms-frontend": "^11.5 | ^12.4",
@@ -61,7 +61,7 @@
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-master": "2.0.x-dev"
+			"dev-master": "2.1.x-dev"
 		},
 		"typo3/cms": {
 			"app-dir": ".Build",

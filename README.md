@@ -1,18 +1,20 @@
 # OpenID Connect
 
-This extension lets you authenticate Frontend users against an OpenID Connect server. It is preconfigured to work with
-the [WSO2 Identity Server](https://wso2.com/identity-and-access-management/) from the Swiss Alpine Club but may be used
-with your own identity server as well.
+This extension lets you authenticate Frontend users against an OpenID Connect
+server. It is preconfigured to work with the
+[WSO2 Identity Server](https://wso2.com/identity-and-access-management/) from
+the Swiss Alpine Club but may be used with your own identity server as well.
 
-If you are a Swiss Alpine Club section, be sure to get in touch with Bern in order to get your dedicated private key and
-secret.
+If you are a Swiss Alpine Club section, be sure to get in touch with Bern in
+order to get your dedicated private key and secret.
 
 
 ## Default FE Loginbox
 
 This extension integrates with the system extension 'felogin'.
 
-This FLUID markup can be used to include a link to the authorization endpoint of the authorization server.
+This Fluid markup can be used to include a link to the authorization endpoint of
+the authorization server.
 
 ```html
 <f:if condition="{openidConnectUri}">
@@ -29,29 +31,31 @@ See also `Resources/Private/Templates/Login/Login.html` as reference.
 
 ## OIDC Login
 
-If openid_connect is your only means of frontend login, you can use the included "OIDC Login" plugin. Add it to your
-login page, where you would normally add the felogin box. After adding the OIDC Login plugin, requests to the login
-page will immediately be redirected to the authorization server.
+If openid_connect is your only means of frontend login, you can use the included
+"OIDC Login" plugin. Add it to your login page, where you would normally add the
+felogin box. After adding the OIDC Login plugin, requests to the login page will
+immediately be redirected to the authorization server.
 
 After the login process, the user will be redirected:
 
 - The OIDC Login supports the same `redirect_url` parameter as the felogin box
-- If no parameter is set, OIDC Login will redirect the user to the page configured at
-  `plugin.tx_oidc_login.defaultRedirectPid`.
+- If no parameter is set, OIDC Login will redirect the user to the page
+  configured at `plugin.tx_oidc_login.defaultRedirectPid`.
 - If that configuration is not set either, the user will be redirected to '/'.
 
 ## PKCE (Proof of Key for Code Exchange)
 
-If your OIDC Login supports _Proof of Key for Code Exchange_ you can enable it by
-checking `enableCodeVerifier` in the extension configuration. A shared secret will
-be sent along preventing _Authorization Code Interception Attacks_. See
+If your OIDC Login supports _Proof of Key for Code Exchange_ you can enable it
+by checking `enableCodeVerifier` in the extension configuration. A shared secret
+will be sent along preventing _Authorization Code Interception Attacks_. See
 https://tools.ietf.org/html/rfc7636 for details.
 
 ## Configuring
 
 ### Mapping Frontend User Fields
 
-- Configuration is done through TypoScript within `plugin.tx_oidc.mapping.fe_users`
+- Configuration is done through TypoScript within
+  `plugin.tx_oidc.mapping.fe_users`
 - OIDC attributes will be recognized by the specific characters `<>`:
 
   ```
@@ -73,7 +77,8 @@ https://tools.ietf.org/html/rfc7636 for details.
   ```
 
 - Support for [TypoScript "split"](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html#data)
-  (`//`). This will check multiple field names and return the first one yielding some non-empty value. E.g.,
+  (`//`). This will check multiple field names and return the first one yielding
+  some non-empty value. E.g.,
 
   ```
   username = <sub> // <contact_number> // <emailaddress> // <benutzername>
@@ -88,26 +93,27 @@ https://tools.ietf.org/html/rfc7636 for details.
 
 ### OIDC Login
 
-- `plugin.tx_oidc_login.defaultRedirectPid` UID of the page that users will be redirected to, if no `redirect_url`
-parameter is set.
+- `plugin.tx_oidc_login.defaultRedirectPid` UID of the page that users will be
+  redirected to, if no `redirect_url` parameter is set.
 
 ## Logging
 
-This extension makes use of the Logging system introduced in TYPO3 CMS 6.0. It is far more flexible than the old one
-writing to the "sys_log" table. Technical details may be found in the
-[TYPO3 Core API](https://docs.typo3.org/m/typo3/reference-coreapi/master/en-us/ApiOverview/Logging/Index.html#logging).
+This extension makes use of the Logging system introduced in TYPO3 CMS 6.0. It
+is far more flexible than the old one writing to the "sys_log" table. Technical
+details may be found in the [TYPO3 Core API](https://docs.typo3.org/m/typo3/reference-coreapi/master/en-us/ApiOverview/Logging/Index.html#logging).
 
-As an administrator, what you should know is that the TYPO3 Logger forwards log records to "Writers", which persist the
-log record.
+As an administrator, what you should know is that the TYPO3 Logger forwards log
+records to "Writers", which persist the log record.
 
-By default, with a vanilla TYPO3 installation, messages are written to the default log file
-(`var/log/typo3_*.log`).
+By default, with a vanilla TYPO3 installation, messages are written to the
+default log file (`var/log/typo3_*.log`).
 
 
 ### Dedicated Log File for OpenID Connect
 
-If you want to redirect every logging information from this extension to `var/log/oidc.log` and send log
-entries with level "WARNING" or above to the system log, you may add following configuration to
+If you want to redirect every logging information from this extension to
+`var/log/oidc.log` and send log entries with level "WARNING" or above to the
+system log, you may add following configuration to
 `typo3conf/AdditionalConfiguration.php`:
 
 ```
