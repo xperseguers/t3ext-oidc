@@ -35,7 +35,9 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\Dispatcher;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
@@ -133,6 +135,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // dispatch a signal (containing the user with his access token if auth was successful)
             // so other extensions can use them to make further requests to an API
             // provided by the authentication server
+            $versionInformation = GeneralUtility::makeInstance(Typo3Version::class);
+            if ($versionInformation->getMajorVersion() < 12) {
+                //can not use import statement, Dispatcher is no longer available in typo3 12
+                /** @var Dispatcher $dispatcher */
+                $dispatcher = GeneralUtility::makeInstance(TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+                $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
+            }
+
             /** @var EventDispatcherInterface $dispatcher */
             $event = new AuthenticationGetUserEvent($user);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
