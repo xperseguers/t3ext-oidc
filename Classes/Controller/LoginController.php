@@ -80,7 +80,7 @@ class LoginController
             $this->performRedirectAfterLogin();
         }
         $this->performRedirectToLogin(
-            isset($pluginConfiguration['authorizationUrlOptions.'])  ? $pluginConfiguration['authorizationUrlOptions.']: []
+            $pluginConfiguration['authorizationUrlOptions.'] ?? []
         );
     }
 
