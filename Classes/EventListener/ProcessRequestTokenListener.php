@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 namespace Causal\Oidc\EventListener;
 
 use TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent;
