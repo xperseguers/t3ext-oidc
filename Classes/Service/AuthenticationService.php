@@ -46,7 +46,6 @@ use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
@@ -134,10 +133,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // provided by the authentication server
             $versionInformation = GeneralUtility::makeInstance(Typo3Version::class);
             if ($versionInformation->getMajorVersion() < 12) {
-                //can not use import statement, Dispatcher is no longer available in TYPO3 12
-                /** @var Dispatcher $dispatcher */
-                $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-                $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
+                //can not use import statement, Dispatcher is no longer available in typo3 12
+                /** @var TYPO3\CMS\Extbase\SignalSlot\Dispatcher $dispatcher */
+                $dispatcher = GeneralUtility::makeInstance(TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+                $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
             }
 
             $event = new AuthenticationGetUserEvent($user, $this);
