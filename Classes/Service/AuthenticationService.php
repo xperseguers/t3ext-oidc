@@ -35,7 +35,9 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\Dispatcher;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
+use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
@@ -44,8 +46,6 @@ use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
@@ -135,11 +135,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // dispatch a signal (containing the user with his access token if auth was successful)
             // so other extensions can use them to make further requests to an API
             // provided by the authentication server
-            /** @var Dispatcher $dispatcher */
-            $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-            $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
+            $versionInformation = GeneralUtility::makeInstance(Typo3Version::class);
+            if ($versionInformation->getMajorVersion() < 12) {
+                //can not use import statement, Dispatcher is no longer available in typo3 12
+                /** @var Dispatcher $dispatcher */
+                $dispatcher = GeneralUtility::makeInstance(TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+                $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
+            }
 
+            /** @var EventDispatcherInterface $dispatcher */
             $event = new AuthenticationGetUserEvent($user);
+            $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
         }
@@ -158,6 +164,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
+        /** @var OAuthService $service */
         $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->config);
 
@@ -315,18 +322,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryBuilder->getRestrictions()->removeAll();
         $row = $queryBuilder
             ->select('*')
-            ->from($userTable)
-            ->where(
-                $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
-                    GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
-                    Connection::PARAM_INT_ARRAY
-                )),
-                $queryBuilder->expr()->orX(
-                    $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
-                    $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
-                )
-            )
-            ->execute()
+            ->from($userTable)->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
+            GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
+            Connection::PARAM_INT_ARRAY
+        )), $queryBuilder->expr()->or($queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])), $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))))->executeQuery()
             ->fetchAssociative();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
@@ -386,12 +385,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
                 $groups = $queryBuilder
                     ->select('uid')
-                    ->from($userGroupTable)
-                    ->where(
-                        $queryBuilder->expr()->in('uid', $currentUserGroups),
-                        $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
-                    )
-                    ->execute()
+                    ->from($userGroupTable)->where($queryBuilder->expr()->in('uid', $currentUserGroups), $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote('')))->executeQuery()
                     ->fetchAllAssociative();
 
                 $oidcUserGroups = [];
@@ -410,11 +404,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->getQueryBuilderForTable($userGroupTable);
             $typo3Roles = $queryBuilder
                 ->select('uid', 'tx_oidc_pattern')
-                ->from($userGroupTable)
-                ->where(
-                    $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
-                )
-                ->execute()
+                ->from($userGroupTable)->where($queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote('')))->executeQuery()
                 ->fetchAllAssociative();
 
             $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
@@ -456,7 +446,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     'old' => $row,
                     'new' => $user,
                 ]);
-                $user['tstamp'] = $GLOBALS['EXEC_TIME'];
+                $user['tstamp'] = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
                 $tableConnection->update(
                     $userTable,
                     $user,
@@ -476,7 +466,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data = array_merge($data, [
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
-                'crdate' => $GLOBALS['EXEC_TIME'],
+                'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
             ]);
 
@@ -531,12 +521,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryBuilder->getRestrictions()->removeAll();
         $queryResult = $queryBuilder
             ->select('*')
-            ->from($table)
-            ->where($queryBuilder->expr()->eq(
-                'uid',
-                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
-            )
-            ->execute();
+            ->from($table)->where($queryBuilder->expr()->eq(
+            'uid',
+            $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)))->executeQuery();
 
         $user = $queryResult->fetchAssociative();
         if (!is_array($user) || $user === []) {

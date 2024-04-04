@@ -79,7 +79,9 @@ class LoginController
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
         }
-        $this->performRedirectToLogin($pluginConfiguration['authorizationUrlOptions.']);
+        $this->performRedirectToLogin(
+            $pluginConfiguration['authorizationUrlOptions.'] ?? []
+        );
     }
 
     protected function performRedirectToLogin(array $authorizationUrlOptions = [])
@@ -92,7 +94,7 @@ class LoginController
             session_start();
         }
         $options = [];
-        if ($this->settings['enableCodeVerifier']) {
+        if ($this->settings['enableCodeVerifier'] ?? false) {
             $codeVerifier = $this->generateCodeVerifier();
             $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
             $options = $this->addCodeChallengeToOptions($codeChallenge, $authorizationUrlOptions);
