@@ -58,8 +58,12 @@ class OidcLinkViewHelper extends AbstractViewHelper
 
             if (empty($_SESSION['requestId']) || $_SESSION['requestId'] !== $requestId) {
                 self::prepareAuthorizationUrl($settings);
+
+                $request = $GLOBALS['TYPO3_REQUEST'];
+                $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+
                 $_SESSION['requestId'] = $requestId;
-                $_SESSION['oidc_redirect_url'] = GeneralUtility::_GP('redirect_url');
+                $_SESSION['oidc_redirect_url'] = $redirectUrl;
 
                 static::getLogger()->debug('PHP session is available', [
                     'id' => session_id(),
