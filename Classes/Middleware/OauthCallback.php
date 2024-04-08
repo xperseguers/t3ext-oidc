@@ -25,7 +25,7 @@ class OauthCallback implements MiddlewareInterface
         if ($code) {
             $state = $queryParams['state'] ?? '';
             if (!$state) {
-                return new Response('Invalid state', 400);
+                return (new Response())->withStatus(400, 'Invalid state');
             }
 
             $queryParams['type'] = 1489657462;

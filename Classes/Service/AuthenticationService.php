@@ -18,10 +18,9 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Driver\Exception;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -60,26 +59,15 @@ use UnexpectedValueException;
  */
 class AuthenticationService extends \TYPO3\CMS\Core\Authentication\AuthenticationService
 {
-
-    /**
-     * true - this service was able to authenticate the user
-     */
-    const STATUS_AUTHENTICATION_SUCCESS_CONTINUE = true;
-
     /**
      * 200 - authenticated and no more checking needed
      */
-    const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
-
-    /**
-     * false - this service was the right one to authenticate the user, but it failed
-     */
-    const STATUS_AUTHENTICATION_FAILURE_BREAK = false;
+    private const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
 
     /**
      * 100 - just go on. User is not authenticated but there's still no reason to stop
      */
-    const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
+    private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
      * Global extension configuration
@@ -112,43 +100,50 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     public function getUser()
     {
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+
         $user = false;
-        $params = GeneralUtility::_GET('tx_oidc');
+        $request = ServerRequestFactory::fromGlobals();
+        $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
-        $username = $this->login['uname'] ?? null;
-
-        if (isset($this->login['uident_text'])) {
-            $password = $this->login['uident_text'];
-        } elseif (isset($this->login['uident'])) {
-            $password = $this->login['uident'];
-        } else {
-            $password = null;
-        }
-
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config['enableCodeVerifier']) {
                 $codeVerifier = $this->getCodeVerifierFromSession();
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
-        } elseif (!(empty($username) || empty($password))) {
-            $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
+        } else {
+            $event = new AuthenticationPreUserEvent($this->login);
+            $eventDispatcher->dispatch($event);
+            if (!$event->shouldProcess) {
+                return false;
+            }
+            $this->login = $event->loginData;
+
+            $username = $this->login['uname'] ?? null;
+            if (isset($this->login['uident_text'])) {
+                $password = $this->login['uident_text'];
+            } elseif (isset($this->login['uident'])) {
+                $password = $this->login['uident'];
+            } else {
+                $password = null;
+            }
+            if (!empty($username) && !empty($password)) {
+                $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
+            }
         }
 
-        // dispatch a signal (containing the user with his access token if auth was successful)
-        // so other extensions can use them to make further requests to an API
-        // provided by the authentication server
-        /** @var Dispatcher $dispatcher */
-        $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-        $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
+        if ($user) {
+            // dispatch a signal (containing the user with his access token if auth was successful)
+            // so other extensions can use them to make further requests to an API
+            // provided by the authentication server
+            /** @var Dispatcher $dispatcher */
+            $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
+            $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
 
-        $event = new AuthenticationGetUserEvent($user);
-        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
-        $eventDispatcher->dispatch($event);
-        $user = $event->getUser();
-
-        if (isset($user['accessToken'])) {
-            unset($user['accessToken']);
+            $event = new AuthenticationGetUserEvent($user);
+            $eventDispatcher->dispatch($event);
+            $user = $event->getUser();
         }
 
         return $user;
@@ -165,7 +160,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
-        /** @var OAuthService $service */
         $service = GeneralUtility::makeInstance(OAuthService::class);
         $service->setSettings($this->config);
 
@@ -292,10 +286,18 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     public function authUser(array $user): int
     {
-        if (!empty($user['tx_oidc'])) {
-            return static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
+        // missing access token means the actual OIDC authentication step in the `getUser` method failed
+        // or has neven been executed, if the user was discovered by some other authentication service
+        if (!isset($user['accessToken'])) {
+            return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
         }
-        return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+
+        // this is not a valid user authenticated via OIDC
+        if (empty($user['tx_oidc'])) {
+            return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+        }
+
+        return static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
     }
 
     /**
@@ -521,9 +523,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $user = $this->getUserByUidAndTable((int)$user['uid'], $userTable);
             $this->logger->debug('User record reloaded', $user);
         }
-
-        // We need that for the upcoming call to authUser()
-        $user['tx_oidc'] = true;
 
         return $user;
     }
