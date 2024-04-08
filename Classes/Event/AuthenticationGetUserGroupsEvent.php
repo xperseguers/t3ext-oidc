@@ -10,60 +10,41 @@ namespace Causal\Oidc\Event;
  */
 final class AuthenticationGetUserGroupsEvent
 {
-    /**
-     * @var array
-     */
-    protected $groupTable;
-    /**
-     * @var array
-     */
-    protected $groups;
-    /**
-     * @var array
-     */
-    protected $resource;
+    protected string $groupTable;
+    protected array $groups;
+    protected array $resource;
 
     /**
      * @param string $groupTable - fe_groups or be_groups
      * @param array $groups - known user group ids
      * @param array $resourceOwner - resource owner data
      */
-    public function __construct($groupTable, $groups, $resourceOwner)
+    public function __construct(string $groupTable, array $groups, array $resourceOwner)
     {
-        $this->groupTable = (string)$groupTable;
+        $this->groupTable = $groupTable;
         $this->groups = $groups;
         $this->resource = $resourceOwner;
     }
 
-    /**
-     * @return string
-     */
-    public function getGroupTable()
+    public function getGroupTable(): string
     {
         return $this->groupTable;
     }
 
-    /**
-     * @return array
-     */
-    public function getUserGroups()
+    public function getUserGroups(): array
     {
         return $this->groups;
     }
 
-    /**
-     * @return array
-     */
-    public function getResource()
+    public function getResource(): array
     {
         return $this->resource;
     }
 
     /**
      * Set your customized user group ids
-     * @param array $groups
      */
-    public function setUserGroups($groups): void
+    public function setUserGroups(array $groups): void
     {
         $this->groups = $groups;
     }
