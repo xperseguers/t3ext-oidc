@@ -95,10 +95,10 @@ class LoginController
         if ($this->settings['enableCodeVerifier']) {
             $codeVerifier = $this->generateCodeVerifier();
             $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
-            $options = $this->addCodeChallengeToOptions($codeChallenge, $authorizationUrlOptions);
+            $authorizationUrlOptions = $this->addCodeChallengeToOptions($codeChallenge, $authorizationUrlOptions);
             $_SESSION['oidc_code_verifier'] = $codeVerifier;
         }
-        $authorizationUrl = $service->getAuthorizationUrl($options);
+        $authorizationUrl = $service->getAuthorizationUrl($authorizationUrlOptions);
 
         $state = $service->getState();
         $_SESSION['oidc_state'] = $state;
