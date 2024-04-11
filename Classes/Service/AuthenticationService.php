@@ -133,7 +133,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // provided by the authentication server
             $versionInformation = GeneralUtility::makeInstance(Typo3Version::class);
             if ($versionInformation->getMajorVersion() < 12) {
-                //can not use import statement, Dispatcher is no longer available in typo3 12
+                //can not use import statement, Dispatcher is no longer available in TYPO3 12
                 /** @var TYPO3\CMS\Extbase\SignalSlot\Dispatcher $dispatcher */
                 $dispatcher = GeneralUtility::makeInstance(TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
                 $dispatcher->dispatch(__CLASS__, 'getUser', ['user' => $user]);
