@@ -20,6 +20,8 @@ namespace Causal\Oidc\Service;
 use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use GuzzleHttp\RequestOptions;
+use League\OAuth2\Client\Grant\AuthorizationCode;
+use League\OAuth2\Client\Grant\Password;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -98,21 +100,25 @@ class OAuthService
     public function getAccessToken(string $codeOrUsername, ?string $password = null, ?string $codeVerifier = null): AccessToken
     {
         if ($password === null) {
-            $options = ['code' => $codeOrUsername];
+            $options = [
+                'code' => $codeOrUsername,
+            ];
             if ($codeVerifier !== null) {
                 $options['code_verifier'] = $codeVerifier;
             }
-            $accessToken = $this->getProvider()->getAccessToken('authorization_code', $options);
+            $grant = new AuthorizationCode();
         } else {
-            $accessToken = $this->getProvider()->getAccessToken('password', [
+            $options = [
                 'username' => $codeOrUsername,
                 'password' => $password,
+            ];
+            if (is_callable([$this->getProvider(), 'getDefaultScopes'])) {
                 // Oddly, the client does not send scope along automatically but WSO2 expects it anyway...
-                'scope' => implode(',', $this->getProvider()->getDefaultScopes()),
-            ]);
+                $options['scope'] = implode(',', $this->getProvider()->getDefaultScopes());
+            }
+            $grant = new Password();
         }
-
-        return $accessToken;
+        return $this->getProvider()->getAccessToken($grant, $options);
     }
 
     /**
