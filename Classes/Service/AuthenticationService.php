@@ -111,7 +111,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } else {
-            $event = new AuthenticationPreUserEvent($this->login);
+            $event = new AuthenticationPreUserEvent($this->login, $this);
             $eventDispatcher->dispatch($event);
             if (!$event->shouldProcess) {
                 return false;
@@ -139,7 +139,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
             $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
 
-            $event = new AuthenticationGetUserEvent($user);
+            $event = new AuthenticationGetUserEvent($user, $this);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
         }
@@ -259,7 +259,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             );
         }
 
-        $event = new ModifyResourceOwnerEvent($resourceOwner);
+        $event = new ModifyResourceOwnerEvent($resourceOwner, $this);
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
         $eventDispatcher->dispatch($event);
 
@@ -446,7 +446,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
 
-            $event = new ModifyUserEvent($user);
+            $event = new ModifyUserEvent($user, $this);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
@@ -480,7 +480,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'tx_oidc' => $info['sub'],
             ]);
 
-            $event = new ModifyUserEvent($data);
+            $event = new ModifyUserEvent($data, $this);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $data = $event->getUser();
