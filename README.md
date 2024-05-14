@@ -135,3 +135,18 @@ $GLOBALS['TYPO3_CONF_VARS']['LOG']['Causal']['Oidc']['writerConfiguration'] = [
 **Hint:** Be sure to read
 [Configuration of the Logging system](https://docs.typo3.org/m/typo3/reference-coreapi/master/en-us/ApiOverview/Logging/Configuration/Index.html#logging-configuration)
 to fine-tune your configuration on any production website.
+
+## Session handling
+
+This extension is using PHP's native sessions (`$_SESSION`) to store state about
+ongoing authentication attempts.
+
+The following data is stored:
+
+* `oidc_state`
+* `oidc_login_url`
+* `oidc_authorization_url`
+* `oidc_redirect_url`
+* `oidc_code_verifier`
+* `requestId`
+
