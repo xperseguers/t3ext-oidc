@@ -82,12 +82,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    protected function getCodeVerifierFromSession()
+    protected function getCodeVerifierFromSession(): ?string
     {
         if (session_id() === '') {
             session_start();
         }
-        return @$_SESSION['oidc_code_verifier'];
+        return $_SESSION['oidc_code_verifier'] ?? null;
     }
 
     /**
@@ -154,7 +154,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string|null $codeVerifier
      * @return array|bool
      */
-    protected function authenticateWithAuthorizationCode(string $code, string $codeVerifier = null)
+    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier)
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
