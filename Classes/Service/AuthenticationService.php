@@ -17,10 +17,12 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Service;
 
+use Causal\Oidc\AuthenticationContext;
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
 use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
+use Causal\Oidc\Middleware\OauthCallback;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -82,14 +84,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    protected function getCodeVerifierFromSession(): ?string
-    {
-        if (session_id() === '') {
-            session_start();
-        }
-        return $_SESSION['oidc_code_verifier'] ?? null;
-    }
-
     /**
      * Finds a user.
      *
@@ -107,7 +101,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config['enableCodeVerifier']) {
-                $codeVerifier = $this->getCodeVerifierFromSession();
+                $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
+                if ($authContext) {
+                    $codeVerifier = $authContext->codeVerifier;
+                }
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } else {

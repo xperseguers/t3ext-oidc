@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\EventListener;
 
 use Causal\Oidc\Service\OpenIdConnectService;
+use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -31,8 +32,9 @@ class FrontendLoginEventListener implements LoggerAwareInterface
     {
         $authService = GeneralUtility::makeInstance(OpenIdConnectService::class);
         try {
-            $uri = $authService->generateOpenidConnectUri();
-        } catch (\InvalidArgumentException $e) {
+            $authContext = $authService->generateAuthenticationContext($GLOBALS['TYPO3_REQUEST']);
+            $uri = $authContext->authorizationUrl;
+        } catch (InvalidArgumentException $e) {
             $uri = '#InvalidOIDCConfiguration';
         }
         $event->getView()->assign('openidConnectUri', $uri);
