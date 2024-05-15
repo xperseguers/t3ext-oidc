@@ -28,7 +28,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    public function generateOpenidConnectUri(): string
+    public function generateOpenidConnectUri(array $authorizationUrlOptions = []): string
     {
         if (empty($this->config['oidcClientKey'])
             || empty($this->config['oidcClientSecret'])
@@ -48,15 +48,23 @@ class OpenIdConnectService implements LoggerAwareInterface
         }
 
         if (empty($_SESSION['requestId']) || $_SESSION['requestId'] !== $requestId) {
+            $codeVerifier = null;
+            if ($this->config['enableCodeVerifier']) {
+                $codeVerifier = $this->generateCodeVerifier();
+                $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
+                $authorizationUrlOptions = array_merge($authorizationUrlOptions, $this->getCodeChallengeOptions($codeChallenge));
+            }
+
             $request = $GLOBALS['TYPO3_REQUEST'];
             $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+            $data = $this->prepareAuthorizationUrl($authorizationUrlOptions);
 
-            $data = $this->prepareAuthorizationUrl();
             $_SESSION['oidc_state'] = $data['state'];
             $_SESSION['oidc_login_url'] = $data['login_url'];
             $_SESSION['oidc_authorization_url'] = $data['authorization_url'];
             $_SESSION['requestId'] = $requestId;
             $_SESSION['oidc_redirect_url'] = $redirectUrl;
+            $_SESSION['oidc_code_verifier'] = $codeVerifier;
 
             $this->logger->debug('PHP session is available', [
                 'id' => session_id(),
@@ -72,11 +80,11 @@ class OpenIdConnectService implements LoggerAwareInterface
      * Prepares the authorization URL and corresponding expected state (to mitigate CSRF attack)
      * and stores information into the session.
      */
-    protected function prepareAuthorizationUrl(): array
+    protected function prepareAuthorizationUrl(array $authorizationUrlOptions): array
     {
         $this->OAuthService->setSettings($this->config);
 
-        $authorizationUrl = $this->OAuthService->getAuthorizationUrl();
+        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($authorizationUrlOptions);
         $state = $this->OAuthService->getState();
 
         $this->logger->debug('Generating authorization URL', [
@@ -113,5 +121,23 @@ class OpenIdConnectService implements LoggerAwareInterface
     protected function getUniqueId(): string
     {
         return sprintf('%08x', abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME'] . $_SERVER['REMOTE_PORT'])));
+    }
+
+    protected function generateCodeVerifier(): string
+    {
+        return bin2hex(random_bytes(64));
+    }
+
+    protected function convertVerifierToChallenge($codeVerifier): string
+    {
+        return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
+    }
+
+    protected function getCodeChallengeOptions($codeChallenge): array
+    {
+        return [
+            'code_challenge' => $codeChallenge,
+            'code_challenge_method' => 'S256',
+        ];
     }
 }
