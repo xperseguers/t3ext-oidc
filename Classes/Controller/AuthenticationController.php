@@ -17,10 +17,14 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Controller;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use RuntimeException;
+use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
+use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
@@ -39,6 +43,8 @@ class AuthenticationController extends ActionController implements LoggerAwareIn
      * Initializes the controller before invoking an action method.
      *
      * @return void
+     * @throws ExtensionConfigurationExtensionNotConfiguredException
+     * @throws ExtensionConfigurationPathDoesNotExistException
      */
     public function initializeAction()
     {
@@ -47,10 +53,8 @@ class AuthenticationController extends ActionController implements LoggerAwareIn
 
     /**
      * Initiates the silent authentication action.
-     *
-     * @return void
      */
-    public function connectAction()
+    public function connectAction(): ResponseInterface
     {
         $this->logger->debug('Initiating the silent authentication');
         if ((empty($_GET['state']) || empty($_GET['code']))) {
@@ -86,6 +90,6 @@ class AuthenticationController extends ActionController implements LoggerAwareIn
         }
 
         $this->logger->info('Redirecting to login URL', ['url' => $loginUrl]);
-        $this->redirectToUri($loginUrl);
+        return new RedirectResponse($this->addBaseUriIfNecessary($loginUrl), 303);
     }
 }
