@@ -34,9 +34,6 @@
 			"Causal\\Oidc\\": "Classes/"
 		}
 	},
-	"replace": {
-		"typo3-ter/oidc": "self.version"
-	},
 	"scripts": {
 		"extension-create-libs": [
 			"mkdir -p Libraries/temp",
