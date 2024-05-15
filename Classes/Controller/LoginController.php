@@ -21,6 +21,7 @@ use Causal\Oidc\Service\OAuthService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
@@ -45,6 +46,8 @@ class LoginController
      * @var ContentObjectRenderer|null will automatically be injected, if this controller is called as a plugin
      */
     public ?ContentObjectRenderer $cObj = null;
+
+    protected ServerRequest $request;
 
     public function __construct()
     {
@@ -73,8 +76,8 @@ class LoginController
             $this->pluginConfiguration = $pluginConfiguration;
         }
 
-        $request = ServerRequestFactory::fromGlobals();
-        $loginType = $request->getParsedBody()['logintype'] ?? $request->getQueryParams()['logintype'] ?? '';
+        $this->request = ServerRequestFactory::fromGlobals();
+        $loginType = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
         if ($loginType === 'login') {
             // performRedirectAfterLogin stops flow by emitting a redirect
             $this->performRedirectAfterLogin();
@@ -91,7 +94,6 @@ class LoginController
         if (session_id() === '') {
             session_start();
         }
-        $options = [];
         if ($this->settings['enableCodeVerifier']) {
             $codeVerifier = $this->generateCodeVerifier();
             $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
@@ -117,8 +119,7 @@ class LoginController
 
     protected function determineRedirectUrl()
     {
-        $request = $GLOBALS['TYPO3_REQUEST'];
-        $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+        $redirectUrl = $this->request->getParsedBody()['redirect_url'] ?? $this->request->getQueryParams()['redirect_url'] ?? '';
         if (!empty($redirectUrl)) {
             return $redirectUrl;
         }
@@ -148,7 +149,7 @@ class LoginController
         return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
     }
 
-    protected function addCodeChallengeToOptions($codeChallenge, array $options = []): array
+    protected function addCodeChallengeToOptions($codeChallenge, array $options): array
     {
         return array_merge(
             $options,
