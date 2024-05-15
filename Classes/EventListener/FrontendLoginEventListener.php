@@ -33,7 +33,7 @@ class FrontendLoginEventListener implements LoggerAwareInterface
         try {
             $uri = $authService->generateOpenidConnectUri();
         } catch (\InvalidArgumentException $e) {
-            $uri = '#InvalidOIDCConfiguration';
+            $uri = '';
         }
         $event->getView()->assign('openidConnectUri', $uri);
     }
