@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Hooks for \TYPO3\CMS\Core\DataHandling\DataHandler.
  */
-class DataHandler
+class DataHandlerOidc
 {
 
     /**
