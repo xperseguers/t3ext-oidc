@@ -33,7 +33,7 @@ class FrontendLoginEventListener implements LoggerAwareInterface
         $authService = GeneralUtility::makeInstance(OpenIdConnectService::class);
         try {
             $authContext = $authService->generateAuthenticationContext($GLOBALS['TYPO3_REQUEST']);
-            $uri = $authContext->authorizationUrl;
+            $uri = $authContext->getAuthorizationUrl();
         } catch (InvalidArgumentException $e) {
             $uri = '#InvalidOIDCConfiguration';
         }

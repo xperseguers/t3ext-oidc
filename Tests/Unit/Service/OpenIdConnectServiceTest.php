@@ -17,7 +17,6 @@ class OpenIdConnectServiceTest extends UnitTestCase
     {
         parent::setUp();
         $this->service = new OpenIdConnectService(new OAuthService(), ['dummy']);
-        $this->service->setAuthenticationContext(new AuthenticationContext('', '', '', '', 'https://example.com/redirect'));
     }
 
     /**
@@ -26,7 +25,7 @@ class OpenIdConnectServiceTest extends UnitTestCase
      */
     public function getFinalLoginUrlReturnsExpectedUrl(string $loginUrl, string $expected): void
     {
-        $this->service->getAuthenticationContext()->loginUrl = $loginUrl;
+        $this->service->setAuthenticationContext(new AuthenticationContext('', $loginUrl, '', '', 'https://example.com/redirect'));
         self::assertSame($expected, (string)$this->service->getFinalLoginUrl('somecode'));
     }
 

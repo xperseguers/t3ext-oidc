@@ -84,7 +84,7 @@ class LoginController
         // The redirect will be handled by this plugin
         $authContext->redirectUrl = '';
 
-        return $authContext->authorizationUrl;
+        return $authContext->getAuthorizationUrl();
     }
 
     protected function determineRedirectUrl()

@@ -43,26 +43,21 @@ class OpenIdConnectService implements LoggerAwareInterface
         }
 
         $requestId = $this->getUniqueId();
-
-        $this->logger->debug('Generating OpenID Connect URI', ['request' => $requestId]);
-
-        if (!$this->authContext || $this->authContext->requestId !== $requestId) {
-            $codeVerifier = null;
-            if ($this->config['enableCodeVerifier']) {
-                $codeVerifier = $this->generateCodeVerifier();
-                $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
-                $authorizationUrlOptions = array_merge($authorizationUrlOptions, $this->getCodeChallengeOptions($codeChallenge));
-            }
-
-            $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
-
-            $this->authContext = $this->prepareAuthorizationContext($authorizationUrlOptions);
-            $this->authContext->requestId = $requestId;
-            $this->authContext->redirectUrl = $redirectUrl;
-            $this->authContext->codeVerifier = $codeVerifier;
-        } else {
-            $this->logger->debug('Reusing same authorization URL and state');
+        $codeVerifier = null;
+        if ($this->config['enableCodeVerifier']) {
+            $codeVerifier = $this->generateCodeVerifier();
+            $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
+            $authorizationUrlOptions = array_merge($authorizationUrlOptions, $this->getCodeChallengeOptions($codeChallenge));
         }
+
+        $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+
+        $this->authContext = $this->prepareAuthorizationContext($authorizationUrlOptions, $requestId);
+        $this->authContext->redirectUrl = $redirectUrl;
+        $this->authContext->codeVerifier = $codeVerifier;
+
+        $this->logger->debug('Generated new Authentication Context', ['authContext' => $this->authContext]);
+
         return $this->authContext;
     }
 
@@ -82,10 +77,10 @@ class OpenIdConnectService implements LoggerAwareInterface
             'logintype' => 'login',
             'tx_oidc' => ['code' => $code],
         ];
-        if ($this->authContext->redirectUrl && strpos($this->authContext->loginUrl, 'redirect_url=') === false) {
+        if ($this->authContext->redirectUrl && strpos($this->authContext->getLoginUrl(), 'redirect_url=') === false) {
             $loginUrlParams['redirect_url'] = $this->authContext->redirectUrl;
         }
-        $loginUrl = new Uri($this->authContext->loginUrl);
+        $loginUrl = new Uri($this->authContext->getLoginUrl());
 
         $query = $loginUrl->getQuery() . GeneralUtility::implodeArrayForUrl('', $loginUrlParams);
 
@@ -95,19 +90,14 @@ class OpenIdConnectService implements LoggerAwareInterface
     /**
      * Prepares the authorization URL and corresponding expected state (to mitigate CSRF attack)
      */
-    protected function prepareAuthorizationContext(array $authorizationUrlOptions): AuthenticationContext
+    protected function prepareAuthorizationContext(array $authorizationUrlOptions, string $requestId): AuthenticationContext
     {
         $this->OAuthService->setSettings($this->config);
 
         $authorizationUrl = $this->OAuthService->getAuthorizationUrl($authorizationUrlOptions);
         $state = $this->OAuthService->getState();
 
-        $this->logger->debug('Generating authorization URL', [
-            'url' => $authorizationUrl,
-            'state' => $state,
-        ]);
-
-        return new AuthenticationContext($state, (string)$this->getLoginUrlForContext(), $authorizationUrl);
+        return new AuthenticationContext($state, (string)$this->getLoginUrlForContext(), $authorizationUrl, $requestId);
     }
 
     protected function getLoginUrlForContext(): Uri

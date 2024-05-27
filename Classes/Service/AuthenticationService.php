@@ -17,12 +17,10 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Service;
 
-use Causal\Oidc\AuthenticationContext;
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
 use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
-use Causal\Oidc\Middleware\OauthCallback;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
