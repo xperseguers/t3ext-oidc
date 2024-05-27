@@ -46,6 +46,10 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        if ($request->getMethod() !== 'GET') {
+            return $handler->handle($request);
+        }
+
         $authContext = $this->resolveAuthenticationContext($request);
         if ($authContext) {
             $this->openIdConnectService->setAuthenticationContext($authContext);
