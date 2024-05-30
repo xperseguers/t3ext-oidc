@@ -17,13 +17,23 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Event;
 
+use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
+
 final class AuthenticationPreUserEvent
 {
     public array $loginData = [];
+
+    protected AbstractAuthenticationService $authenticationService;
+
     public bool $shouldProcess = true;
 
-    public function __construct(array $loginData)
+    public function __construct(array $loginData, AbstractAuthenticationService $authenticationService)
     {
         $this->loginData = $loginData;
+    }
+
+    public function getAuthenticationService(): AbstractAuthenticationService
+    {
+        return $this->authenticationService;
     }
 }

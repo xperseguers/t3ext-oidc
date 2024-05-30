@@ -17,6 +17,8 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Event;
 
+use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
+
 final class ModifyResourceOwnerEvent
 {
     /**
@@ -24,9 +26,12 @@ final class ModifyResourceOwnerEvent
      */
     protected array $resourceOwner;
 
-    public function __construct(array $resourceOwner)
+    protected AbstractAuthenticationService $authenticationService;
+
+    public function __construct(array $resourceOwner, AbstractAuthenticationService $authenticationService)
     {
         $this->resourceOwner = $resourceOwner;
+        $this->authenticationService = $authenticationService;
     }
 
     public function getResourceOwner(): array
@@ -37,5 +42,10 @@ final class ModifyResourceOwnerEvent
     public function setResourceOwner(array $resourceOwner): void
     {
         $this->resourceOwner = $resourceOwner;
+    }
+
+    public function getAuthenticationService(): AbstractAuthenticationService
+    {
+        return $this->authenticationService;
     }
 }
