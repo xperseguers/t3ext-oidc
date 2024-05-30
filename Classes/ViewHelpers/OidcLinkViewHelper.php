@@ -39,7 +39,8 @@ class OidcLinkViewHelper extends AbstractViewHelper
     {
         $authService = GeneralUtility::makeInstance(OpenIdConnectService::class);
         try {
-            $uri = $authService->generateOpenidConnectUri();
+            $authContext = $authService->generateAuthenticationContext($GLOBALS['TYPO3_REQUEST']);
+            $uri = $authContext->getAuthorizationUrl();
         } catch (InvalidArgumentException $e) {
             $uri = '#InvalidOIDCConfiguration';
         }

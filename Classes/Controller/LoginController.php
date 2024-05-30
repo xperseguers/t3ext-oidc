@@ -79,12 +79,12 @@ class LoginController
     protected function determineAuthorizationUrl(array $authorizationUrlOptions): string
     {
         $oidcService = GeneralUtility::makeInstance(OpenIdConnectService::class);
-        $authorizationUrl = $oidcService->generateOpenidConnectUri($authorizationUrlOptions);
+        $authContext = $oidcService->generateAuthenticationContext($this->request, $authorizationUrlOptions);
 
         // The redirect will be handled by this plugin
-        unset($_SESSION['oidc_redirect_url']);
+        $authContext->redirectUrl = '';
 
-        return $authorizationUrl;
+        return $authContext->getAuthorizationUrl();
     }
 
     protected function determineRedirectUrl()

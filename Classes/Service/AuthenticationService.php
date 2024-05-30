@@ -82,14 +82,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    protected function getCodeVerifierFromSession(): ?string
-    {
-        if (session_id() === '') {
-            session_start();
-        }
-        return $_SESSION['oidc_code_verifier'] ?? null;
-    }
-
     /**
      * Finds a user.
      *
@@ -107,7 +99,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config['enableCodeVerifier']) {
-                $codeVerifier = $this->getCodeVerifierFromSession();
+                $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
+                if ($authContext) {
+                    $codeVerifier = $authContext->codeVerifier;
+                }
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } else {

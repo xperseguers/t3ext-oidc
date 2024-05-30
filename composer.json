@@ -27,21 +27,29 @@
 		"typo3/cms-core": "^11.5",
 		"typo3/cms-frontend": "^11.5",
 		"typo3/cms-felogin": "^11.5",
-		"league/oauth2-client": "^2.7"
+		"league/oauth2-client": "^2.7",
+		"firebase/php-jwt": "^6.10"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^10",
+		"typo3/testing-framework": "7.x-dev",
+		"typo3/minimal": "^11"
 	},
 	"autoload": {
 		"psr-4": {
 			"Causal\\Oidc\\": "Classes/"
 		}
 	},
-	"replace": {
-		"typo3-ter/oidc": "self.version"
+	"autoload-dev": {
+		"psr-4": {
+			"Causal\\Oidc\\Tests\\": "Tests/"
+		}
 	},
 	"scripts": {
 		"extension-create-libs": [
 			"mkdir -p Libraries/temp",
 			"[ -f $HOME/.composer/vendor/bin/phar-composer ] || composer global require clue/phar-composer",
-			"if [ ! -f Libraries/league-oauth2-client.phar ]; then cd Libraries/temp && composer require league/oauth2-client=^2.7 && composer config classmap-authoritative true && composer config prepend-autoloader false && composer dump-autoload; fi",
+			"if [ ! -f Libraries/league-oauth2-client.phar ]; then cd Libraries/temp && composer require league/oauth2-client=^2.7 && composer require firebase/php-jwt=^6.10 composer config classmap-authoritative true && composer config prepend-autoloader false && composer dump-autoload; fi",
 			"[ -f Libraries/league-oauth2-client.phar ] || $HOME/.composer/vendor/bin/phar-composer build Libraries/temp/ Libraries/league-oauth2-client.phar",
 			"chmod -x Libraries/*.phar",
 			"rm -rf Libraries/temp"
@@ -61,7 +69,7 @@
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-master": "2.1.x-dev"
+			"dev-master": "2.2.x-dev"
 		},
 		"typo3/cms": {
 			"app-dir": ".Build",
