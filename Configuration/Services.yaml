@@ -16,3 +16,6 @@ services:
 
   Causal\Oidc\Service\OAuthService:
     public: true
+
+  Causal\Oidc\Service\OpenIdConnectService:
+    public: true

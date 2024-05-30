@@ -82,12 +82,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    protected function getCodeVerifierFromSession()
+    protected function getCodeVerifierFromSession(): ?string
     {
         if (session_id() === '') {
             session_start();
         }
-        return @$_SESSION['oidc_code_verifier'];
+        return $_SESSION['oidc_code_verifier'] ?? null;
     }
 
     /**
@@ -101,7 +101,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
         $user = false;
-        $request = ServerRequestFactory::fromGlobals();
+        $request = $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
         if ($code !== null) {
@@ -154,7 +154,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string|null $codeVerifier
      * @return array|bool
      */
-    protected function authenticateWithAuthorizationCode(string $code, string $codeVerifier = null)
+    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier)
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
@@ -734,7 +734,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getLocalTSFE(): TypoScriptFrontendController
     {
-        $request = ServerRequestFactory::fromGlobals();
+        $request = $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
         $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
         $routeResult = $siteMatcher->matchRequest($request);
         if ($routeResult instanceof SiteRouteResult) {
