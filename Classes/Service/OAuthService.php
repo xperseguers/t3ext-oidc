@@ -68,7 +68,7 @@ class OAuthService
         if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
             if (!empty($languageOption)) {
-                $language = $this->getTSFE()->getLanguage()->getTwoLetterIsoCode();
+                $language = $this->getTSFE() ? $this->getTSFE()->getLanguage()->getTwoLetterIsoCode() : 'en';
                 $options[$languageOption] = $language;
             }
         }
@@ -271,8 +271,8 @@ class OAuthService
         return $this->settings['oidcRedirectUri'] ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
     }
 
-    protected function getTSFE(): TypoScriptFrontendController
+    protected function getTSFE(): ? TypoScriptFrontendController
     {
-        return $GLOBALS['TSFE'];
+        return $GLOBALS['TSFE'] ?? null;
     }
 }
