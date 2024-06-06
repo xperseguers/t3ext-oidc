@@ -21,6 +21,7 @@ use Causal\Oidc\Service\OpenIdConnectService;
 use InvalidArgumentException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Throwable;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\FrontendLogin\Event\ModifyLoginFormViewEvent;
 
@@ -36,6 +37,9 @@ class FrontendLoginEventListener implements LoggerAwareInterface
             $uri = $authContext->getAuthorizationUrl();
         } catch (InvalidArgumentException $e) {
             $uri = '#InvalidOIDCConfiguration';
+        } catch (Throwable $e) {
+            // whatever the provider did wrong (can be connection errors)
+            $uri = '#oidcError';
         }
         $event->getView()->assign('openidConnectUri', $uri);
     }
