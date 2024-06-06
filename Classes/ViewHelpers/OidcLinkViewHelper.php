@@ -19,6 +19,7 @@ namespace Causal\Oidc\ViewHelpers;
 
 use Causal\Oidc\Service\OpenIdConnectService;
 use InvalidArgumentException;
+use Throwable;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
@@ -43,8 +44,10 @@ class OidcLinkViewHelper extends AbstractViewHelper
             $uri = $authContext->getAuthorizationUrl();
         } catch (InvalidArgumentException $e) {
             $uri = '#InvalidOIDCConfiguration';
+        } catch (Throwable $e) {
+            // whatever the provider did wrong (can be connection errors)
+            $uri = '#oidcError';
         }
-
         return $uri;
     }
 }
