@@ -7,8 +7,17 @@ return [
                 'typo3/cms-core/normalized-params-attribute',
             ],
             'before' => [
-                'typo3/cms-frontend/eid'
-            ]
+                'typo3/cms-frontend/eid',
+            ],
+        ],
+        'oidcauthurl' => [
+            'target' => \Causal\Oidc\Middleware\AuthenticationUrlRequest::class,
+            'after' => [
+                'typo3/cms-frontend/site',
+            ],
+            'before' => [
+                'typo3/cms-frontend/authentication',
+            ],
         ],
     ],
 ];

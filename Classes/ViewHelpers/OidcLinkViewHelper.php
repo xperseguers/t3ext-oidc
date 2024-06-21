@@ -18,8 +18,6 @@ declare(strict_types=1);
 namespace Causal\Oidc\ViewHelpers;
 
 use Causal\Oidc\Service\OpenIdConnectService;
-use InvalidArgumentException;
-use Throwable;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
@@ -38,16 +36,7 @@ class OidcLinkViewHelper extends AbstractViewHelper
      */
     public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
     {
-        $authService = GeneralUtility::makeInstance(OpenIdConnectService::class);
-        try {
-            $authContext = $authService->generateAuthenticationContext($GLOBALS['TYPO3_REQUEST']);
-            $uri = $authContext->getAuthorizationUrl();
-        } catch (InvalidArgumentException $e) {
-            $uri = '#InvalidOIDCConfiguration';
-        } catch (Throwable $e) {
-            // whatever the provider did wrong (can be connection errors)
-            $uri = '#oidcError';
-        }
-        return $uri;
+        $uri = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationRequestUrl();
+        return (string)$uri;
     }
 }

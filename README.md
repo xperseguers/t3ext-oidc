@@ -19,7 +19,7 @@ the authorization server.
 ```html
 <f:if condition="{openidConnectUri}">
     <f:then>
-        <a href="{openidConnectUri}" class="btn btn-default"><span class="fa fa-openid"></span> OpenID Connect</a>
+        <a href="{openidConnectUri}" rel="nofollow" class="btn btn-default"><span class="fa fa-openid"></span> OpenID Connect</a>
     </f:then>
     <f:else>
         Invalid OpenID Connect configuration
