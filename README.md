@@ -22,27 +22,6 @@ the Swiss Alpine Club, but may be used with any OpenID Connect identity server a
 If you are a Swiss Alpine Club section, be sure to get in touch with Bern in
 order to get your dedicated private key and secret.
 
-
-## Default frontend login box
-
-This extension integrates with the system extension 'felogin', if it is installed.
-
-This Fluid markup can be used to include a link to the authentication endpoint of
-the identity provider.
-
-```html
-<f:if condition="{openidConnectUri}">
-    <f:then>
-        <a href="{openidConnectUri}" rel="nofollow" class="btn btn-default"><span class="fa fa-openid"></span> OpenID Connect</a>
-    </f:then>
-    <f:else>
-        Invalid OpenID Connect configuration
-    </f:else>
-</f:if>
-```
-
-See also `Resources/Private/Templates/Login/Login.html` as reference.
-
 ## Direct OIDC Login
 
 If OpenID Connect is your only means of frontend login, you can use the included
