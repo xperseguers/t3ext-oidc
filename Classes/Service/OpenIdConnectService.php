@@ -6,12 +6,14 @@ namespace Causal\Oidc\Service;
 
 use Causal\Oidc\AuthenticationContext;
 use InvalidArgumentException;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 class OpenIdConnectService implements LoggerAwareInterface
 {
@@ -32,7 +34,33 @@ class OpenIdConnectService implements LoggerAwareInterface
         $this->config = $config ?: GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    public function generateAuthenticationContext(ServerRequest $request, array $authorizationUrlOptions = []): AuthenticationContext
+    public function isAuthenticationRequest(ServerRequestInterface $request): bool
+    {
+        $language = $request->getAttribute('language');
+        return $request->getUri()->getPath() === $language->getBase()->getPath() . $this->config['authenticationUrlRoute'];
+    }
+
+    public function getAuthenticationRequestUrl(): ?UriInterface
+    {
+        /** @var TypoScriptFrontendController $tsfe */
+        $tsfe = $GLOBALS['TSFE'] ?? null;
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
+        if ($tsfe && $request) {
+            $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
+            $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+            $query = GeneralUtility::implodeArrayForUrl('', [
+                'login_url' => $loginUrl,
+                'redirect_url' => $redirectUrl,
+                'validation_hash' => GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc'),
+            ]);
+            return $tsfe->getLanguage()->getBase()
+                ->withPath($tsfe->getLanguage()->getBase()->getPath() . $this->config['authenticationUrlRoute'])
+                ->withQuery($query);
+        }
+        return null;
+    }
+
+    public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
     {
         if (empty($this->config['oidcClientKey'])
             || empty($this->config['oidcClientSecret'])
@@ -40,6 +68,13 @@ class OpenIdConnectService implements LoggerAwareInterface
             || empty($this->config['oidcEndpointToken'])
         ) {
             throw new InvalidArgumentException('Missing extension configuration', 1715775147);
+        }
+
+        $loginUrl = $request->getQueryParams()['login_url'] ?? '';
+        $redirectUrl = $request->getQueryParams()['redirect_url'] ?? '';
+        $hash = $request->getQueryParams()['validation_hash'] ?? '';
+        if (GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc') !== $hash) {
+            throw new InvalidArgumentException('Invalid query string', 1719003567);
         }
 
         $requestId = $this->getUniqueId();
@@ -50,11 +85,19 @@ class OpenIdConnectService implements LoggerAwareInterface
             $authorizationUrlOptions = array_merge($authorizationUrlOptions, $this->getCodeChallengeOptions($codeChallenge));
         }
 
-        $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+        $this->OAuthService->setSettings($this->config);
 
-        $this->authContext = $this->prepareAuthorizationContext($authorizationUrlOptions, $requestId);
-        $this->authContext->redirectUrl = $redirectUrl;
-        $this->authContext->codeVerifier = $codeVerifier;
+        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($authorizationUrlOptions);
+        $state = $this->OAuthService->getState();
+
+        $this->authContext = new AuthenticationContext(
+            $state,
+            (string)$this->getLoginUrlForContext($loginUrl),
+            $authorizationUrl,
+            $requestId,
+            $redirectUrl,
+            $codeVerifier
+        );
 
         $this->logger->debug('Generated new Authentication Context', ['authContext' => $this->authContext]);
 
@@ -87,22 +130,9 @@ class OpenIdConnectService implements LoggerAwareInterface
         return $loginUrl->withQuery(ltrim($query, '&'));
     }
 
-    /**
-     * Prepares the authorization URL and corresponding expected state (to mitigate CSRF attack)
-     */
-    protected function prepareAuthorizationContext(array $authorizationUrlOptions, string $requestId): AuthenticationContext
+    protected function getLoginUrlForContext(string $loginUrl): Uri
     {
-        $this->OAuthService->setSettings($this->config);
-
-        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($authorizationUrlOptions);
-        $state = $this->OAuthService->getState();
-
-        return new AuthenticationContext($state, (string)$this->getLoginUrlForContext(), $authorizationUrl, $requestId);
-    }
-
-    protected function getLoginUrlForContext(): Uri
-    {
-        $loginUrl = new Uri(GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL'));
+        $loginUrl = new Uri($loginUrl);
 
         // filter query string
         $queryParts = array_filter(explode('&', $loginUrl->getQuery()), function ($k) {
