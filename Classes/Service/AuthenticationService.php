@@ -436,7 +436,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         // emit a generic groups mapping event
         // to customize the groups if the resource structure pattern "Roles" does not fit
-        $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info);
+        $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info, $this);
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
         $eventDispatcher->dispatch($event);
         if ($newUserGroups !== $event->getUserGroups()) {
