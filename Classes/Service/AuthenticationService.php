@@ -83,14 +83,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
-    protected function getCodeVerifierFromSession()
-    {
-        if (session_id() === '') {
-            session_start();
-        }
-        return @$_SESSION['oidc_code_verifier'];
-    }
-
     /**
      * Finds a user.
      *
@@ -102,17 +94,20 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
         $user = false;
-        $request = ServerRequestFactory::fromGlobals();
+        $request = $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config['enableCodeVerifier']) {
-                $codeVerifier = $this->getCodeVerifierFromSession();
+                $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
+                if ($authContext) {
+                    $codeVerifier = $authContext->codeVerifier;
+                }
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } else {
-            $event = new AuthenticationPreUserEvent($this->login);
+            $event = new AuthenticationPreUserEvent($this->login, $this);
             $eventDispatcher->dispatch($event);
             if (!$event->shouldProcess) {
                 return false;
@@ -140,7 +135,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
             $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
 
-            $event = new AuthenticationGetUserEvent($user);
+            $event = new AuthenticationGetUserEvent($user, $this);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
         }
@@ -155,7 +150,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string|null $codeVerifier
      * @return array|bool
      */
-    protected function authenticateWithAuthorizationCode(string $code, string $codeVerifier = null)
+    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier)
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
@@ -260,7 +255,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             );
         }
 
-        $event = new ModifyResourceOwnerEvent($resourceOwner);
+        $event = new ModifyResourceOwnerEvent($resourceOwner, $this);
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
         $eventDispatcher->dispatch($event);
 
@@ -460,7 +455,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
 
-            $event = new ModifyUserEvent($user);
+            $event = new ModifyUserEvent($user, $this);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
@@ -494,7 +489,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'tx_oidc' => $info['sub'],
             ]);
 
-            $event = new ModifyUserEvent($data);
+            $event = new ModifyUserEvent($data, $this);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $data = $event->getUser();
@@ -748,7 +743,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getLocalTSFE(): TypoScriptFrontendController
     {
-        $request = ServerRequestFactory::fromGlobals();
+        $request = $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
         $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
         $routeResult = $siteMatcher->matchRequest($request);
         if ($routeResult instanceof SiteRouteResult) {

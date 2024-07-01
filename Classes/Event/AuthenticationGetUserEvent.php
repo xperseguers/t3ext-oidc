@@ -17,6 +17,8 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Event;
 
+use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
+
 final class AuthenticationGetUserEvent
 {
     /**
@@ -24,12 +26,15 @@ final class AuthenticationGetUserEvent
      */
     protected $user;
 
+    protected AbstractAuthenticationService $authenticationService;
+
     /**
      * @param array|bool $user
      */
-    public function __construct($user)
+    public function __construct($user, AbstractAuthenticationService $authenticationService)
     {
         $this->user = $user;
+        $this->authenticationService = $authenticationService;
     }
 
     /**
@@ -47,5 +52,10 @@ final class AuthenticationGetUserEvent
     public function setUser($user): void
     {
         $this->user = $user;
+    }
+
+    public function getAuthenticationService(): AbstractAuthenticationService
+    {
+        return $this->authenticationService;
     }
 }

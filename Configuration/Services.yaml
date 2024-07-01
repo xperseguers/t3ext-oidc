@@ -4,9 +4,18 @@ services:
     autoconfigure: true
     public: false
 
+  Causal\Oidc\:
+    resource: '../Classes/*'
+
   Causal\Oidc\EventListener\FrontendLoginEventListener:
     tags:
       - name: event.listener
         identifier: 'causal/oidc'
         method: 'modifyLoginFormView'
         event: TYPO3\CMS\FrontendLogin\Event\ModifyLoginFormViewEvent
+
+  Causal\Oidc\Service\OAuthService:
+    public: true
+
+  Causal\Oidc\Service\OpenIdConnectService:
+    public: true

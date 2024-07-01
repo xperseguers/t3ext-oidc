@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xliff version="1.2" xmlns:t3="http://typo3.org/schemas/xliff" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-	<file source-language="en" original="messages" datatype="plaintext" product-name="oidc" date="2023-05-09T13:26:53+02:00">
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" original="messages" datatype="plaintext" product-name="oidc" date="2024-06-21T21:43:35+02:00">
 		<header></header>
 		<body>
 			<trans-unit id="fe_groups.tx_oidc_pattern" resname="fe_groups.tx_oidc_pattern">
@@ -14,6 +14,9 @@
 			</trans-unit>
 			<trans-unit id="settings.authenticationServiceQuality" resname="settings.authenticationServiceQuality">
 				<source>Authentication service Quality: This is used by TYPO3 if two authentication services have the same priority. Higher number wins.</source>
+			</trans-unit>
+			<trans-unit id="settings.authenticationUrlRoute" resname="settings.authenticationUrlRoute">
+				<source>Route for retrieving the authentication URL of the Identity Provider</source>
 			</trans-unit>
 			<trans-unit id="settings.enableCodeVerifier" resname="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
