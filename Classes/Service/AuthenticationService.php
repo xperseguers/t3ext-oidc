@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
+use Causal\Oidc\Event\AuthenticationGetUserGroupsEvent;
 use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
@@ -432,6 +433,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         // Add default user groups
         $newUserGroups = array_unique(array_merge($newUserGroups, $defaultUserGroups));
+
+        // emit a generic groups mapping event
+        // to customize the groups if the resource structure pattern "Roles" does not fit
+        $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info, $this);
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch($event);
+        if ($newUserGroups !== $event->getUserGroups()) {
+            $this->logger->debug('Got customized user groups by AuthenticationGetUserGroupsEvent', [
+                'previous' => implode(',', $newUserGroups),
+                'new' => implode(',', $event->getUserGroups()),
+            ]);
+            $newUserGroups = $event->getUserGroups();
+        }
 
         $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable($userTable);
