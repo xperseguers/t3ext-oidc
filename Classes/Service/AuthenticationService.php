@@ -28,6 +28,7 @@ use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
 use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
@@ -37,6 +38,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
@@ -93,7 +95,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
         $user = false;
-        $request = $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+        $request = $this->getRequest();
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
         if ($code !== null) {
@@ -598,6 +600,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
             /** @var $contentObj ContentObjectRenderer */
             $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class);
+            $contentObj->setRequest($this->getRequest());
             $contentObj->start($oidc);
 
             // Process every TypoScript definition
@@ -747,7 +750,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getLocalTSFE(): TypoScriptFrontendController
     {
-        $request = $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+        $request = $this->getRequest();
         $siteMatcher = GeneralUtility::makeInstance(SiteMatcher::class);
         $routeResult = $siteMatcher->matchRequest($request);
         if ($routeResult instanceof SiteRouteResult) {
@@ -772,5 +775,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
         throw new InvalidArgumentException('Failed to initialize TSFE');
+    }
+
+    protected function getRequest(): ServerRequestInterface
+    {
+        return $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
     }
 }
