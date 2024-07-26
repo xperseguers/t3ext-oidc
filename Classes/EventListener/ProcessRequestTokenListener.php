@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+
 namespace Causal\Oidc\EventListener;
 
 use TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent;
@@ -16,8 +17,8 @@ final class ProcessRequestTokenListener
             // fine, there is a valid request-token
             return;
         }
-        // @TODO how to improve security? Maybe get rid of redirect in \Causal\Oidc\Controller\AuthenticationController::connectAction?
-        if (!isset($_GET['tx_oidc'])) {
+        // @TODO how to improve security? Maybe get rid of redirects?
+        if (!isset($event->getRequest()->getQueryParams()['tx_oidc'])) {
             return;
         }
         $event->setRequestToken(RequestToken::create('core/user-auth/' . strtolower($user->loginType)));
