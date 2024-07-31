@@ -19,13 +19,27 @@ namespace Causal\Oidc\Factory;
 
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\GenericProvider;
+use TYPO3\CMS\Core\Http\Client\GuzzleClientFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
 {
+    private RequestFactory $requestFactory;
+
+    public function __construct(RequestFactory $requestFactory)
+    {
+        $this->requestFactory = $requestFactory;
+    }
 
     public function create(array $settings): AbstractProvider
     {
+        // @todo Use DI for GuzzleClientFactory once TYPO3 v11 support is dropped
+        $clientFactory = GeneralUtility::makeInstance(GuzzleClientFactory::class);
+        $collaborators = [
+            'httpClient' => $clientFactory->getClient(),
+            'requestFactory' => $this->requestFactory,
+        ];
+
         return new GenericProvider([
                 'clientId' => $settings['oidcClientKey'],
                 'clientSecret' => $settings['oidcClientSecret'],
@@ -34,6 +48,8 @@ final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
                 'urlAccessToken' => $settings['oidcEndpointToken'],
                 'urlResourceOwnerDetails' => $settings['oidcEndpointUserInfo'],
                 'scopes' => GeneralUtility::trimExplode(',', $settings['oidcClientScopes'], true),
-            ]);
+            ],
+            $collaborators
+        );
     }
 }
