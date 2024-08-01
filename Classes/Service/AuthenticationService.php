@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Service;
 
+use Causal\Oidc\Event\AuthenticationFetchUserEvent;
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
 use Causal\Oidc\Event\AuthenticationGetUserGroupsEvent;
 use Causal\Oidc\Event\AuthenticationPreUserEvent;
@@ -296,6 +297,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function convertResourceOwner(array $info)
     {
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+
         $mode = $this->authInfo['loginType'];
         $userTable = $this->db_user['table'];
         $userGroupTable = $mode === 'FE' ? 'fe_groups' : 'be_groups';
@@ -303,20 +306,26 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($userTable);
         $queryBuilder->getRestrictions()->removeAll();
+
+        $userFetchConditions = [
+            $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
+                GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
+                Connection::PARAM_INT_ARRAY
+            )),
+            $queryBuilder->expr()->orX(
+                $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
+                $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
+            )
+        ];
+
+        $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this);
+        $eventDispatcher->dispatch($event);
+
         $row = $queryBuilder
             ->select('*')
             ->from($userTable)
-            ->where(
-                $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
-                    GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
-                    Connection::PARAM_INT_ARRAY
-                )),
-                $queryBuilder->expr()->or(
-                    $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
-                    $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email'] ?? ''))
-                )
-            )
-            ->executeQuery()
+            ->where(...$event->getConditions())
+            ->execute()
             ->fetchAssociative();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
@@ -431,7 +440,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // emit a generic groups mapping event
         // to customize the groups if the resource structure pattern "Roles" does not fit
         $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info, $this);
-        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
         $eventDispatcher->dispatch($event);
         if ($newUserGroups !== $event->getUserGroups()) {
             $this->logger->debug('Got customized user groups by AuthenticationGetUserGroupsEvent', [
