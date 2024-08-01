@@ -72,7 +72,7 @@ class LoginController
             $this->redirect($redirectUrl);
         }
 
-        $authorizationUrl = $this->determineAuthorizationUrl($pluginConfiguration['authorizationUrlOptions.']);
+        $authorizationUrl = $this->determineAuthorizationUrl($pluginConfiguration['authorizationUrlOptions.'] ?? []);
         $this->redirect($authorizationUrl);
     }
 

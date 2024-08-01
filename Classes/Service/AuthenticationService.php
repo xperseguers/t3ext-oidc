@@ -46,8 +46,6 @@ use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\TypoScript\TemplateService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\RootlineUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
@@ -132,10 +130,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // dispatch a signal (containing the user with his access token if auth was successful)
             // so other extensions can use them to make further requests to an API
             // provided by the authentication server
-            /** @var Dispatcher $dispatcher */
-            $dispatcher = GeneralUtility::makeInstance(ObjectManager::class)->get(Dispatcher::class);
-            $dispatcher->dispatch(__CLASS__, 'getUser', [$user]);
-
             $event = new AuthenticationGetUserEvent($user, $this);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
@@ -251,7 +245,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
             throw new RuntimeException(
                 'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
-                . '. Your access token has been revoked. Please try again.',
+                    . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
@@ -396,7 +390,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                         $queryBuilder->expr()->in('uid', $currentUserGroups),
                         $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
                     )
-                    ->execute()
+                    ->executeQuery()
                     ->fetchAllAssociative();
 
                 $oidcUserGroups = [];
@@ -419,7 +413,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->where(
                     $queryBuilder->expr()->neq('tx_oidc_pattern', $queryBuilder->quote(''))
                 )
-                ->execute()
+                ->executeQuery()
                 ->fetchAllAssociative();
 
             $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
@@ -473,7 +467,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     'old' => $row,
                     'new' => $user,
                 ]);
-                $user['tstamp'] = $GLOBALS['EXEC_TIME'];
+                $user['tstamp'] = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
                 $tableConnection->update(
                     $userTable,
                     $user,
@@ -493,7 +487,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data = array_merge($data, [
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
-                'crdate' => $GLOBALS['EXEC_TIME'],
+                'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
             ]);
 
@@ -549,11 +543,13 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryResult = $queryBuilder
             ->select('*')
             ->from($table)
-            ->where($queryBuilder->expr()->eq(
-                'uid',
-                $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'uid',
+                    $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)
+                )
             )
-            ->execute();
+            ->executeQuery();
 
         $user = $queryResult->fetchAssociative();
         if (!is_array($user) || $user === []) {

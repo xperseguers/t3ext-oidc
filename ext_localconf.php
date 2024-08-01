@@ -44,7 +44,7 @@ ExtensionManagementUtility::addService(
 );
 
 // Add typoscript for custom login plugin
-ExtensionManagementUtility::addPItoST43('oidc', null, '_login');
+ExtensionManagementUtility::addPItoST43('oidc', '', '_login');
 
 // Require 3rd-party libraries, in case TYPO3 does not run in composer mode
 $pharFileName = ExtensionManagementUtility::extPath('oidc') . 'Libraries/league-oauth2-client.phar';

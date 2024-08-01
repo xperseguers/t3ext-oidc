@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Hooks;
 
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -52,7 +53,7 @@ class DataHandlerOidc
                 ->where(
                     $queryBuilder->expr()->inSet('usergroup', (string)$id)
                 )
-                ->execute();
+                ->executeQuery();
 
             $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getConnectionForTable('fe_users');
@@ -66,7 +67,7 @@ class DataHandlerOidc
                     'fe_users',
                     [
                         'usergroup' => implode(',', $userGroups),
-                        'tstamp' => $GLOBALS['EXEC_TIME'],
+                        'tstamp' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                     ],
                     [
                         'uid' => $user['uid'],
@@ -75,5 +76,4 @@ class DataHandlerOidc
             }
         }
     }
-
 }
