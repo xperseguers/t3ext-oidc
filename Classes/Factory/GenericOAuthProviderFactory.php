@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Factory;
 
+use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Provider\GenericOpenIdProvider;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use TYPO3\CMS\Core\Http\Client\GuzzleClientFactory;
@@ -23,7 +24,7 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
         private RequestFactory $requestFactory,
     ) {}
 
-    public function create(array $settings): AbstractProvider
+    public function create(OidcConfiguration $settings): AbstractProvider
     {
         $collaborators = [
             'httpClient' => $this->clientFactory->getClient(),
@@ -32,15 +33,15 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
 
         return new GenericOpenIdProvider(
             [
-                'clientId' => $settings['oidcClientKey'],
-                'clientSecret' => $settings['oidcClientSecret'],
-                'redirectUri' => $settings['oidcRedirectUri'],
-                'urlAuthorize' => $settings['oidcEndpointAuthorize'],
-                'urlAccessToken' => $settings['oidcEndpointToken'],
-                'urlResourceOwnerDetails' => $settings['oidcEndpointUserInfo'],
+                'clientId' => $settings->oidcClientKey,
+                'clientSecret' => $settings->oidcClientSecret,
+                'redirectUri' => $settings->oidcRedirectUri,
+                'urlAuthorize' => $settings->endpointAuthorize,
+                'urlAccessToken' => $settings->endpointToken,
+                'urlResourceOwnerDetails' => $settings->endpointUserInfo,
                 'responseResourceOwnerId' => 'sub',
                 'accessTokenResourceOwnerId' => 'sub',
-                'scopes' => GeneralUtility::trimExplode(',', $settings['oidcClientScopes'], true),
+                'scopes' => GeneralUtility::trimExplode(',', $settings->oidcClientScopes, true),
             ],
             $collaborators
         );

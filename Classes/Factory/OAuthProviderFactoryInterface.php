@@ -17,9 +17,10 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Factory;
 
+use Causal\Oidc\OidcConfiguration;
 use League\OAuth2\Client\Provider\AbstractProvider;
 
 interface OAuthProviderFactoryInterface
 {
-    public function create(array $settings): AbstractProvider;
+    public function create(OidcConfiguration $settings): AbstractProvider;
 }

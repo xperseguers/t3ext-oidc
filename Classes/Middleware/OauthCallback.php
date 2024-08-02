@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Middleware;
 
 use Causal\Oidc\AuthenticationContext;
+use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\OpenIdConnectService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -13,9 +14,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Cookie;
-use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
-use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Response;
@@ -29,20 +27,16 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
     protected const COOKIE_PREFIX = '';
     protected const SECURE_PREFIX = '__Secure-';
 
-    protected OpenIdConnectService $openIdConnectService;
-
-    public function __construct(OpenIdConnectService $openIdConnectService)
-    {
-        $this->openIdConnectService = $openIdConnectService;
-    }
+    public function __construct(
+        protected OpenIdConnectService $openIdConnectService,
+        protected OidcConfiguration $settings
+    ) {}
 
     /**
      * @param ServerRequestInterface $request
      * @param RequestHandlerInterface $handler
      * @return ResponseInterface
      * see https://github.com/thephpleague/oauth2-client
-     * @throws ExtensionConfigurationExtensionNotConfiguredException
-     * @throws ExtensionConfigurationPathDoesNotExistException
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -75,8 +69,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
             return (new Response())->withStatus(400, 'Invalid state');
         }
         if ($state !== $authContext->getState()) {
-            $globalSettings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
-            if (!$globalSettings['oidcDisableCSRFProtection']) {
+            if (!$this->settings->disableCSRFProtection) {
                 $this->logger->error('Invalid returning state detected', [
                     'expected' => $authContext->getState(),
                     'actual' => $state,

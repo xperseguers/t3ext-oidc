@@ -12,8 +12,8 @@ class GetAuthorizationUrlSetLanguageEventListener
     public function __invoke(GetAuthorizationUrlEvent $event): void
     {
         $settings = $event->settings;
-        $languageOption = $settings['oidcAuthorizeLanguageParameter'] ?? null;
-        if (empty($languageOption)) {
+        $languageOption = $settings->authorizeLanguageParameter;
+        if (!$languageOption) {
             return;
         }
 
