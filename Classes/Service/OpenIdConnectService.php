@@ -37,7 +37,7 @@ class OpenIdConnectService implements LoggerAwareInterface
     public function isAuthenticationRequest(ServerRequestInterface $request): bool
     {
         $language = $request->getAttribute('language');
-        return $request->getUri()->getPath() === $language->getBase()->getPath() . $this->config['authenticationUrlRoute'];
+        return $language && $request->getUri()->getPath() === $language->getBase()->getPath() . $this->config['authenticationUrlRoute'];
     }
 
     public function getAuthenticationRequestUrl(): ?UriInterface
