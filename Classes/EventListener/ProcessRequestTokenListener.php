@@ -17,7 +17,6 @@ final class ProcessRequestTokenListener
             // fine, there is a valid request-token
             return;
         }
-        // @TODO how to improve security? Maybe get rid of redirects?
         if (!isset($event->getRequest()->getQueryParams()['tx_oidc'])) {
             return;
         }
