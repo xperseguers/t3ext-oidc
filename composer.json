@@ -18,6 +18,11 @@
 			"email": "xavier@causal.ch",
 			"homepage": "https://www.causal.ch",
 			"role": "Developer"
+		},
+		{
+			"name": "Markus Klein",
+			"homepage": "https://reelworx.at/",
+			"role": "Developer"
 		}
 	],
 	"license": "GPL-2.0-or-later",
