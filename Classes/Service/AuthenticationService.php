@@ -652,7 +652,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                         if (is_array($oidcValue)) {
                             $oidcValue = $oidcValue[0];
                         }
-                        $sectionValue = str_replace($fullMatchedMarker, $oidcValue, $sectionValue);
+                        $sectionValue = str_replace($fullMatchedMarker, (string)$oidcValue, $sectionValue);
                     } else {
                         $sectionValue = str_replace($fullMatchedMarker, '', $sectionValue);
                     }
