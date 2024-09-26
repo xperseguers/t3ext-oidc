@@ -19,3 +19,15 @@ services:
 
   Causal\Oidc\Service\OpenIdConnectService:
     public: true
+
+  Causal\Oidc\Factory\RequestFactory:
+    public: true
+
+  Causal\Oidc\Factory\GenericOAuthProviderFactory:
+    public: true
+
+  Causal\Oidc\EventListener\ProcessRequestTokenListener:
+    tags:
+      - name: event.listener
+        identifier: 'causal/oidc-request-token'
+        event: TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent

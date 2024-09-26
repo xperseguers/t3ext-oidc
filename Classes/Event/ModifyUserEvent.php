@@ -26,12 +26,18 @@ final class ModifyUserEvent
      */
     protected array $user;
 
+    protected array $oidcResourceOwner;
+
     protected AbstractAuthenticationService $authenticationService;
 
-    public function __construct(array $user, AbstractAuthenticationService $authenticationService)
-    {
+    public function __construct(
+        array $user,
+        AbstractAuthenticationService $authenticationService,
+        array $oidcResourceOwner
+    ) {
         $this->user = $user;
         $this->authenticationService = $authenticationService;
+        $this->oidcResourceOwner = $oidcResourceOwner;
     }
 
     public function getUser(): array
@@ -47,5 +53,10 @@ final class ModifyUserEvent
     public function getAuthenticationService(): AbstractAuthenticationService
     {
         return $this->authenticationService;
+    }
+
+    public function getOidcResourceOwner(): array
+    {
+        return $this->oidcResourceOwner;
     }
 }
