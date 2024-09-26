@@ -457,7 +457,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
 
-            $event = new ModifyUserEvent($user, $this);
+            $event = new ModifyUserEvent($user, $this, $info);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
@@ -491,7 +491,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'tx_oidc' => $info['sub'],
             ]);
 
-            $event = new ModifyUserEvent($data, $this);
+            $event = new ModifyUserEvent($data, $this, $info);
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $data = $event->getUser();
