@@ -37,7 +37,7 @@ class OpenIdConnectService implements LoggerAwareInterface
     public function isAuthenticationRequest(ServerRequestInterface $request): bool
     {
         $language = $request->getAttribute('language');
-        return $request->getUri()->getPath() === $language->getBase()->getPath() . $this->config['authenticationUrlRoute'];
+        return $language && $request->getUri()->getPath() === $language->getBase()->getPath() . $this->config['authenticationUrlRoute'];
     }
 
     public function getAuthenticationRequestUrl(): ?UriInterface
@@ -73,7 +73,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         $loginUrl = $request->getQueryParams()['login_url'] ?? '';
         $redirectUrl = $request->getQueryParams()['redirect_url'] ?? '';
         $hash = $request->getQueryParams()['validation_hash'] ?? '';
-        if (GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc') !== $hash) {
+        if (($loginUrl || $redirectUrl) && GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc') !== $hash) {
             throw new InvalidArgumentException('Invalid query string', 1719003567);
         }
 
