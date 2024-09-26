@@ -12,6 +12,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Uri;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
@@ -36,8 +37,9 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     public function isAuthenticationRequest(ServerRequestInterface $request): bool
     {
+        /** @var SiteLanguage $language */
         $language = $request->getAttribute('language');
-        return $language && $request->getUri()->getPath() === $language->getBase()->getPath() . $this->config['authenticationUrlRoute'];
+        return $language && $request->getUri()->getPath() === $this->getAuthenticationUrlRoutePath($language);
     }
 
     public function getAuthenticationRequestUrl(): ?UriInterface
@@ -54,7 +56,7 @@ class OpenIdConnectService implements LoggerAwareInterface
                 'validation_hash' => GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc'),
             ]);
             return $tsfe->getLanguage()->getBase()
-                ->withPath($tsfe->getLanguage()->getBase()->getPath() . $this->config['authenticationUrlRoute'])
+                ->withPath($this->getAuthenticationUrlRoutePath($tsfe->getLanguage()))
                 ->withQuery($query);
         }
         return null;
@@ -174,5 +176,10 @@ class OpenIdConnectService implements LoggerAwareInterface
             'code_challenge' => $codeChallenge,
             'code_challenge_method' => 'S256',
         ];
+    }
+
+    protected function getAuthenticationUrlRoutePath(SiteLanguage $language): string
+    {
+        return $language->getBase()->getPath() . ($this->config['authenticationUrlRoute'] ?? 'oidc/authentication');
     }
 }
