@@ -280,15 +280,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // missing access token means the actual OIDC authentication step in the `getUser` method failed
         // or has neven been executed, if the user was discovered by some other authentication service
         if (!isset($user['accessToken'])) {
-            return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+            return self::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
         }
 
         // this is not a valid user authenticated via OIDC
         if (empty($user['tx_oidc'])) {
-            return static::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+            return self::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
         }
 
-        return static::STATUS_AUTHENTICATION_SUCCESS_BREAK;
+        return self::STATUS_AUTHENTICATION_SUCCESS_BREAK;
     }
 
     /**
