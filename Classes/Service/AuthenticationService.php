@@ -313,7 +313,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
                 Connection::PARAM_INT_ARRAY
             )),
-            $queryBuilder->expr()->orX(
+            $queryBuilder->expr()->or(
                 $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
                 $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
             )
@@ -326,7 +326,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->select('*')
             ->from($userTable)
             ->where(...$event->getConditions())
-            ->execute()
+            ->executeQuery()
             ->fetchAssociative();
 
         $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
