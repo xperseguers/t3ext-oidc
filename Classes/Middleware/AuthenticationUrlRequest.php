@@ -40,7 +40,7 @@ class AuthenticationUrlRequest implements MiddlewareInterface, LoggerAwareInterf
                 $authContext = $this->openIdConnectService->generateAuthenticationContext($request);
                 $uri = $authContext->getAuthorizationUrl();
                 return new RedirectResponse($uri);
-            } catch (InvalidArgumentException|Throwable $e) {
+            } catch (InvalidArgumentException|Throwable) {
                 // config error or
                 // whatever the provider did wrong (can be connection errors)
                 return (new Response())->withStatus(500, 'Authentication provider error');

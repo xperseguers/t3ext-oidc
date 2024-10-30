@@ -21,35 +21,25 @@ use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 
 final class AuthenticationGetUserEvent
 {
-    /**
-     * @var array|bool
-     */
-    protected $user;
+    protected array|bool $user;
 
     protected AbstractAuthenticationService $authenticationService;
 
-    /**
-     * @param array|bool $user
-     */
-    public function __construct($user, AbstractAuthenticationService $authenticationService)
+    public function __construct(bool|array $user, AbstractAuthenticationService $authenticationService)
     {
         $this->user = $user;
         $this->authenticationService = $authenticationService;
     }
 
     /**
-     * Array with user if authentication was successfull or false on failure.
-     * @return array|bool
+     * Array with user if authentication was successful or false on failure.
      */
-    public function getUser()
+    public function getUser(): bool|array
     {
         return $this->user;
     }
 
-    /**
-     * @param array|bool $user
-     */
-    public function setUser($user): void
+    public function setUser(bool|array $user): void
     {
         $this->user = $user;
     }

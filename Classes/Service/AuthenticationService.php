@@ -38,7 +38,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
-use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
@@ -90,7 +89,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @return array|bool
      * @throws RuntimeException
      */
-    public function getUser()
+    public function getUser(): bool|array
     {
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
@@ -147,7 +146,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string|null $codeVerifier
      * @return array|bool
      */
-    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier)
+    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier): bool|array
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
@@ -183,7 +182,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param string $password
      * @return array|bool
      */
-    protected function authenticateWithResourceOwnerPasswordCredentials(string $username, string $password)
+    protected function authenticateWithResourceOwnerPasswordCredentials(string $username, #[\SensitiveParameter] string $password): bool|array
     {
         $user = false;
         $this->logger->debug('Initializing OpenID Connect service');
@@ -226,7 +225,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param AccessToken $accessToken
      * @return array|bool
      */
-    protected function getUserFromAccessToken(OAuthService $service, AccessToken $accessToken)
+    protected function getUserFromAccessToken(OAuthService $service, AccessToken $accessToken): bool|array
     {
         // Using the access token, we may look up details about the resource owner
         try {
@@ -297,7 +296,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * @param array $info
      * @return array|bool
      */
-    protected function convertResourceOwner(array $info)
+    protected function convertResourceOwner(array $info): bool|array
     {
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
@@ -578,7 +577,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
         foreach ($mapping as $field => $value) {
-            if (substr($field, -1) !== '.') {
+            if (!str_ends_with($field, '.')) {
                 if ($field !== 'usergroup' && $field !== 'parentGroup') {
                     try {
                         $out = $this->mergeSimple($oidc, $out, $field, $value);
@@ -640,7 +639,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $mappedValue = $value;
 
         if (preg_match("`<([^$]*)>`", $value)) {    // OIDC attribute
-            $sections = !strstr($value, '//')
+            $sections = !str_contains($value, '//')
                 ? [$value]
                 : GeneralUtility::trimExplode('//', $value, true);
             $mappedValue = '';
@@ -742,7 +741,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $passwordHashFactory = GeneralUtility::makeInstance(PasswordHashFactory::class);
         try {
             $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($this->authInfo['loginType']);
-        } catch (InvalidPasswordHashException $e) {
+        } catch (InvalidPasswordHashException) {
             return '';
         }
         return $objInstanceSaltedPW->getHashedPassword($password);
@@ -770,7 +769,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                             $frontendUser
                         );
                     }
-                } catch (RouteNotFoundException $e) {
+                } catch (RouteNotFoundException) {
                 }
             }
         }

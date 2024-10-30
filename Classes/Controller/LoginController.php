@@ -44,7 +44,7 @@ class LoginController
         $this->request = $GLOBALS['TYPO3_REQUEST'];
     }
 
-    public function setContentObjectRenderer(ContentObjectRenderer $cObj)
+    public function setContentObjectRenderer(ContentObjectRenderer $cObj): void
     {
         $this->cObj = $cObj;
     }
@@ -61,7 +61,7 @@ class LoginController
      * @param array|null $pluginConfiguration
      * @throws PropagateResponseException
      */
-    public function login(string $_, ?array $pluginConfiguration)
+    public function login(string $_, ?array $pluginConfiguration): void
     {
         if (is_array($pluginConfiguration)) {
             $this->pluginConfiguration = $pluginConfiguration;
