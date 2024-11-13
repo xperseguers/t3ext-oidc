@@ -97,7 +97,11 @@ class OAuthService
      * @return AccessToken
      * @throws IdentityProviderException
      */
-    public function getAccessToken(string $codeOrUsername, ?string $password = null, ?string $codeVerifier = null): AccessToken
+    public function getAccessToken(
+        string $codeOrUsername,
+        #[\SensitiveParameter] ?string $password = null,
+        #[\SensitiveParameter] ?string $codeVerifier = null
+    ): AccessToken
     {
         if ($password === null) {
             $options = [
@@ -144,7 +148,7 @@ class OAuthService
      * @return AccessToken|null
      * @throws IdentityProviderException
      */
-    public function getAccessTokenWithRequestPathAuthentication(string $username, string $password): ?AccessToken
+    public function getAccessTokenWithRequestPathAuthentication(string $username, #[\SensitiveParameter] string $password): ?AccessToken
     {
         $url = $this->settings['oidcEndpointAuthorize'] . '?' . http_build_query([
                 'response_type' => 'code',

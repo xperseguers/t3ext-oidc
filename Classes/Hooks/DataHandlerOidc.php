@@ -26,17 +26,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class DataHandlerOidc
 {
-
-    /**
-     * Hooks into \TYPO3\CMS\Core\DataHandling\DataHandler after records have been saved to the database.
-     *
-     * @param string $operation
-     * @param string $table
-     * @param int|string $id
-     * @param array $fieldArray
-     * @return void
-     */
-    public function processDatamap_afterDatabaseOperations(string $operation, string $table, $id, array $fieldArray)
+    public function processDatamap_afterDatabaseOperations(string $operation, string $table, int|string $id, array $fieldArray): void
     {
         if ($table !== 'fe_groups' || $operation !== 'update') {
             return;

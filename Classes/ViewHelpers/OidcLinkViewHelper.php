@@ -19,24 +19,16 @@ namespace Causal\Oidc\ViewHelpers;
 
 use Causal\Oidc\Service\OpenIdConnectService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
-use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\CompileWithRenderStatic;
 
 class OidcLinkViewHelper extends AbstractViewHelper
 {
-
-    use CompileWithRenderStatic;
-
     /**
-     * @param array $arguments
-     * @param \Closure $renderChildrenClosure
-     * @param RenderingContextInterface $renderingContext
-     * @return string URI
+     * @return string Authentication Request URL
      */
-    public static function renderStatic(array $arguments, \Closure $renderChildrenClosure, RenderingContextInterface $renderingContext)
+    public function render(): string
     {
-        $uri = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationRequestUrl();
-        return (string)$uri;
+        $url = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationRequestUrl();
+        return (string)$url;
     }
 }

@@ -106,7 +106,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         return $this->authContext;
     }
 
-    public function setAuthenticationContext(AuthenticationContext $authContext)
+    public function setAuthenticationContext(AuthenticationContext $authContext): void
     {
         $this->authContext = $authContext;
     }
@@ -122,7 +122,7 @@ class OpenIdConnectService implements LoggerAwareInterface
             'logintype' => 'login',
             'tx_oidc' => ['code' => $code],
         ];
-        if ($this->authContext->redirectUrl && strpos($this->authContext->getLoginUrl(), 'redirect_url=') === false) {
+        if ($this->authContext->redirectUrl && !str_contains($this->authContext->getLoginUrl(), 'redirect_url=')) {
             $loginUrlParams['redirect_url'] = $this->authContext->redirectUrl;
         }
         $loginUrl = new Uri($this->authContext->getLoginUrl());
