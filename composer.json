@@ -31,7 +31,7 @@
 		"ext-json": "*",
 		"typo3/cms-core": "^11.5 || ^12.4",
 		"typo3/cms-frontend": "^11.5 || ^12.4",
-		"league/oauth2-client": "^2.7",
+		"league/oauth2-client": "^2.8",
 		"firebase/php-jwt": "^6.10"
 	},
 	"require-dev": {
