@@ -386,7 +386,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $newUserGroups = [];
         $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup']);
 
-        if (!empty($row)) {
+        if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
             if (!empty($currentUserGroups)) {
                 $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
