@@ -115,13 +115,7 @@ class OAuthService
             $options = [
                 'username' => $codeOrUsername,
                 'password' => $password,
-                'scope' => $this->settings['oidcClientScopes'],
             ];
-            // The GenericProvider has this as a public function (contrary to the interface),
-            // so we use its scopes instead as there might be some modified provider.
-            if (is_callable([$this->getProvider(), 'getDefaultScopes'])) {
-                $options['scope'] = implode(',', $this->getProvider()->getDefaultScopes());
-            }
             $grant = new Password();
         }
         return $this->getProvider()->getAccessToken($grant, $options);
@@ -132,9 +126,7 @@ class OAuthService
      */
     public function getAccessTokenForClient(): AccessTokenInterface
     {
-        return $this->getProvider()->getAccessToken('client_credentials', [
-            'scope' => implode(',', $this->getProvider()->getDefaultScopes()),
-        ]);
+        return $this->getProvider()->getAccessToken('client_credentials');
     }
 
     /**
