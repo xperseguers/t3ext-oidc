@@ -14,7 +14,6 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 class OpenIdConnectService implements LoggerAwareInterface
 {
@@ -44,19 +43,27 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     public function getAuthenticationRequestUrl(): ?UriInterface
     {
-        /** @var TypoScriptFrontendController $tsfe */
-        $tsfe = $GLOBALS['TSFE'] ?? null;
         $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
-        if ($tsfe && $request) {
+        if ($request) {
             $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
             $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+
+            // TYPO3 v13
+            if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
+                $hash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($loginUrl . $redirectUrl, 'oidc');
+            } else {
+                $hash = GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc');
+            }
+
             $query = GeneralUtility::implodeArrayForUrl('', [
                 'login_url' => $loginUrl,
                 'redirect_url' => $redirectUrl,
-                'validation_hash' => GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc'),
+                'validation_hash' => $hash,
             ]);
-            return $tsfe->getLanguage()->getBase()
-                ->withPath($this->getAuthenticationUrlRoutePath($tsfe->getLanguage()))
+
+            $language = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
+            return $language->getBase()
+                ->withPath($this->getAuthenticationUrlRoutePath($language))
                 ->withQuery($query);
         }
         return null;
@@ -75,7 +82,13 @@ class OpenIdConnectService implements LoggerAwareInterface
         $loginUrl = $request->getQueryParams()['login_url'] ?? '';
         $redirectUrl = $request->getQueryParams()['redirect_url'] ?? '';
         $hash = $request->getQueryParams()['validation_hash'] ?? '';
-        if (($loginUrl || $redirectUrl) && GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc') !== $hash) {
+        // TYPO3 v13
+        if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
+            $calculatedHash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($loginUrl . $redirectUrl, 'oidc');
+        } else {
+            $calculatedHash = GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc');
+        }
+        if (($loginUrl || $redirectUrl) && $calculatedHash !== $hash) {
             throw new InvalidArgumentException('Invalid query string', 1719003567);
         }
 
