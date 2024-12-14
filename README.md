@@ -1,20 +1,34 @@
-# OpenID Connect
+# OpenID Connect for TYPO3 frontend login
 
-This extension lets you authenticate Frontend users against an OpenID Connect
-server. It is preconfigured to work with the
+This extension lets you authenticate frontend users against an OpenID Connect
+provider.
+
+Examples of such identity provider software or services are:
+
+- Microsoft EntraID
+- Google
+- GitHub
+- ID Austria
+- WSO2 Identity Server
+- Keycloak
+- Authentik
+
+## Pre-configuration for Swiss Alpine Club
+
+The extension is preconfigured to work with the
 [WSO2 Identity Server](https://wso2.com/identity-and-access-management/) from
-the Swiss Alpine Club but may be used with your own identity server as well.
+the Swiss Alpine Club, but may be used with any OpenID Connect identity server as well.
 
 If you are a Swiss Alpine Club section, be sure to get in touch with Bern in
 order to get your dedicated private key and secret.
 
 
-## Default FE Loginbox
+## Default frontend login box
 
-This extension integrates with the system extension 'felogin'.
+This extension integrates with the system extension 'felogin', if it is installed.
 
-This Fluid markup can be used to include a link to the authorization endpoint of
-the authorization server.
+This Fluid markup can be used to include a link to the authentication endpoint of
+the identity provider.
 
 ```html
 <f:if condition="{openidConnectUri}">
@@ -29,12 +43,12 @@ the authorization server.
 
 See also `Resources/Private/Templates/Login/Login.html` as reference.
 
-## OIDC Login
+## Direct OIDC Login
 
-If openid_connect is your only means of frontend login, you can use the included
+If OpenID Connect is your only means of frontend login, you can use the included
 "OIDC Login" plugin. Add it to your login page, where you would normally add the
 felogin box. After adding the OIDC Login plugin, requests to the login page will
-immediately be redirected to the authorization server.
+immediately be redirected to the identity provider.
 
 After the login process, the user will be redirected:
 
@@ -50,7 +64,7 @@ by checking `enableCodeVerifier` in the extension configuration. A shared secret
 will be sent along preventing _Authorization Code Interception Attacks_. See
 https://tools.ietf.org/html/rfc7636 for details.
 
-## Configuring
+## Configuration
 
 ### Mapping Frontend User Fields
 
@@ -135,3 +149,74 @@ $GLOBALS['TYPO3_CONF_VARS']['LOG']['Causal']['Oidc']['writerConfiguration'] = [
 **Hint:** Be sure to read
 [Configuration of the Logging system](https://docs.typo3.org/m/typo3/reference-coreapi/master/en-us/ApiOverview/Logging/Configuration/Index.html#logging-configuration)
 to fine-tune your configuration on any production website.
+
+
+## Using additional identity provider packages
+
+The underlying PHP library for OAuth2 can be extended for specific
+identity providers by adding additional packages.
+
+Example: For Microsoft EntraID (Azure) the package is [thenetworg/oauth2-azure](https://packagist.org/packages/thenetworg/oauth2-azure)
+
+In order to use these kinds of packages, one needs to implement a custom
+`OAuth2ProviderFactory`, which takes care of initializing the specific provider.
+
+Here is an example for the aforementioned Azure package:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Reelworx\Sitesetup\Authentication;
+
+use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
+use League\OAuth2\Client\Provider\AbstractProvider;
+use TheNetworg\OAuth2\Client\Provider\Azure;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
+/* requires some ENV variables to be set, see below */
+final class OAuth2ProviderFactory implements OAuthProviderFactoryInterface
+{
+    public function create(array $settings): AbstractProvider
+    {
+        $options = [
+            'clientId' => $settings['oidcClientKey'],
+            'redirectUri' => $settings['oidcRedirectUri'],
+            'urlAuthorize' => $settings['oidcEndpointAuthorize'],
+            'urlAccessToken' => $settings['oidcEndpointToken'],
+            'urlResourceOwnerDetails' => $settings['oidcEndpointUserInfo'],
+            'scopes' => GeneralUtility::trimExplode(',', $settings['oidcClientScopes'], true),
+            'defaultEndPointVersion' => Azure::ENDPOINT_VERSION_2_0,
+            'tenant' => getenv('AZURE_OAUTH_CLIENT_TENANT'),
+        ];
+        if ($settings['oidcClientSecret']) {
+            $options['clientSecret'] = $settings['oidcClientSecret'];
+        } else {
+            // https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials
+            // PEM certificate (newline potentially encoded as '\n'
+            $options['clientCertificatePrivateKey'] = getenv('AZURE_OAUTH_CLIENT_CERTIFICATE');
+            // SHA-1 thumbprint of the X.509 certificate's DER encoding.
+            $options['clientCertificateThumbprint'] = getenv('AZURE_OAUTH_CLIENT_CERTIFICATE_THUMBPRINT');
+        }
+        return new Azure($options);
+    }
+}
+```
+
+## Migration from v2 to v3
+
+Version 3 has developed to a major rewrite of the extension.
+It gets rid of extbase dependencies, handles things as early as possible (middleware)
+and streamlines a lot of code.
+
+Please refer to the `CHANGELOG.md` for further details.
+
+## Credits
+
+This TYPO3 extension is created and maintained by:
+ - Xavier Perseguers (https://www.causal.ch/)
+ - Markus Klein (https://reelworx.at/)
+
+A big "Thanks" goes out to all contributors.
+
