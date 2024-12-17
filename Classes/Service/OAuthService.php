@@ -28,9 +28,9 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Http\RequestFactory;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use League\OAuth2\Client\Token\AccessToken;
-use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
 /**
  * Class OAuthService.
@@ -68,7 +68,16 @@ class OAuthService
         if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
             if (!empty($languageOption)) {
-                $language = $this->getTSFE() ? $this->getTSFE()->getLanguage()->getTwoLetterIsoCode() : 'en';
+                $language = 'en';
+                $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
+                if ($request) {
+                    /** @var SiteLanguage $siteLanguage */
+                    $siteLanguage = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
+                    // fallback for TYPO3 v11
+                    $language = is_object($siteLanguage->getLocale())
+                        ? $siteLanguage->getLocale()->getLanguageCode()
+                        : $siteLanguage->getTwoLetterIsoCode();
+                }
                 $options[$languageOption] = $language;
             }
         }
@@ -179,6 +188,7 @@ class OAuthService
      *
      * @param AccessToken $token
      * @return ResourceOwnerInterface
+     * @throws IdentityProviderException May be thrown by provider
      */
     public function getResourceOwner(AccessToken $token): ResourceOwnerInterface
     {
@@ -265,10 +275,5 @@ class OAuthService
     protected function getRedirectUrl(): string
     {
         return $this->settings['oidcRedirectUri'] ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
-    }
-
-    protected function getTSFE(): ? TypoScriptFrontendController
-    {
-        return $GLOBALS['TSFE'] ?? null;
     }
 }

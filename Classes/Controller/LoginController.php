@@ -67,6 +67,7 @@ class LoginController
             $this->pluginConfiguration = $pluginConfiguration;
         }
 
+        /** @var Context $context */
         $context = GeneralUtility::makeInstance(Context::class);
         $loginType = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
         if ($loginType === 'login' || $context->getAspect('frontend.user')->isLoggedIn()) {
