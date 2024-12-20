@@ -102,7 +102,7 @@ class OpenIdConnectService implements LoggerAwareInterface
 
         $this->OAuthService->setSettings($this->config);
 
-        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($authorizationUrlOptions);
+        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($request, $authorizationUrlOptions);
         $state = $this->OAuthService->getState();
 
         $this->authContext = new AuthenticationContext(
