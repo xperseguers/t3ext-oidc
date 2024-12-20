@@ -26,6 +26,7 @@ use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
@@ -60,16 +61,16 @@ class OAuthService
     /**
      * Returns the authorization URL.
      *
+     * @param ServerRequestInterface|null $request
      * @param array $options
      * @return string
      */
-    public function getAuthorizationUrl(array $options = []): string
+    public function getAuthorizationUrl(?ServerRequestInterface $request, array $options = []): string
     {
         if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
             $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
             if (!empty($languageOption)) {
                 $language = 'en';
-                $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
                 if ($request) {
                     /** @var SiteLanguage $siteLanguage */
                     $siteLanguage = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
