@@ -21,7 +21,9 @@ use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use GuzzleHttp\RequestOptions;
 use League\OAuth2\Client\Grant\AuthorizationCode;
+use League\OAuth2\Client\Grant\ClientCredentials;
 use League\OAuth2\Client\Grant\Password;
+use League\OAuth2\Client\Grant\RefreshToken;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -135,7 +137,7 @@ class OAuthService
      */
     public function getAccessTokenForClient(): AccessTokenInterface
     {
-        return $this->getProvider()->getAccessToken('client_credentials');
+        return $this->getProvider()->getAccessToken(new ClientCredentials());
     }
 
     /**
@@ -258,7 +260,7 @@ class OAuthService
 
         if ($accessToken->hasExpired()) {
             try {
-                $newAccessToken = $this->getProvider()->getAccessToken('refresh_token', [
+                $newAccessToken = $this->getProvider()->getAccessToken(new RefreshToken(), [
                     'refresh_token' => $accessToken->getRefreshToken(),
                 ]);
 
