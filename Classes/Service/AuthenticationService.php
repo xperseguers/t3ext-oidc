@@ -378,7 +378,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // preserve username and password for existing users
         if ($row) {
             unset($data['username']);
-            unset($data['email']);
+            $preserve = $this->config['preserveUserEmail'] ?? true;
+            if($preserve) {
+                unset($data['email']);
+            }
             unset($data['password']);
         }
 

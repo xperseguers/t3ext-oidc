@@ -13,6 +13,9 @@ frontendUserMustExistLocally = 0
 # cat=basic/enable/5; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableCodeVerifier
 enableCodeVerifier = 0
 
+# cat=basic/enable/6; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.preserveUserEmail
+preserveUserEmail = 0
+
 # cat=basic//1; type=int; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.usersStoragePid
 usersStoragePid =
 

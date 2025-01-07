@@ -21,6 +21,9 @@
 			<trans-unit id="settings.enableCodeVerifier" resname="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>
+			<trans-unit id="settings.preserveUserEmail" resname="settings.preserveUserEmail">
+				<source>Preserve User E-Mail in Database. If ticked, the E-Mail in the local Database will not be updated on Login.</source>
+			</trans-unit>
 			<trans-unit id="settings.enableFrontendAuthentication" resname="settings.enableFrontendAuthentication">
 				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
 			</trans-unit>

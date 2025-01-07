@@ -27,6 +27,10 @@
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 				<target>PKCE aktivieren: Aktiviert den PKCE-Fluss. Code-Challenge und Code-Verifier werden mitgeschickt.</target>
 			</trans-unit>
+			<trans-unit id="settings.preserveUserEmail" resname="settings.preserveUserEmail">
+				<source>Preserve User E-Mail in Database. If ticked, the E-Mail in the local Database will not be updated on Login.</source>
+				<target>E-Mail des Benutzers in der Datenbank beibehalten. Wenn aktiviert, wird die E-Mail in der lokalen Datenbank beim Login nicht aktualisiert.</target>
+			</trans-unit>
 			<trans-unit id="settings.enableFrontendAuthentication" resname="settings.enableFrontendAuthentication">
 				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
 				<target>Frontend-Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend.</target>
