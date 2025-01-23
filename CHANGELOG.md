@@ -2,6 +2,10 @@
 
 ## Version 4.x.x
 
+- Breaking: Existing fe_users are not looked up by their username anymore.
+  You may use the `AuthenticationFetchUserEvent` to re-add this functionality,
+  if this is secure for your use case.
+  See commit `[!!!][SECURITY] Do not look up existing users via username field` for details.
 - Breaking: Upon login the user's username and email address will now be updated
   according to the mapping configuration. The default mapping configuration maps
   the username, but not the email address. Custom mapping configurations can now

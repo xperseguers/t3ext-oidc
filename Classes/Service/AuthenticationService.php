@@ -325,10 +325,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
                 Connection::PARAM_INT_ARRAY
             )),
-            $queryBuilder->expr()->or(
-                $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
-                $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($info['email']))
-            )
+            $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
         ];
 
         $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this);
