@@ -21,6 +21,7 @@ use Causal\Oidc\Event\AuthenticationFetchUserEvent;
 use Causal\Oidc\Event\AuthenticationGetUserEvent;
 use Causal\Oidc\Event\AuthenticationGetUserGroupsEvent;
 use Causal\Oidc\Event\AuthenticationPreUserEvent;
+use Causal\Oidc\Event\AuthenticationProcessMappingEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
@@ -369,16 +370,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $row ?: [],
             [
                 'tx_oidc' => $info['sub'],
-                'password' => $this->generatePassword(),
                 'deleted' => 0,
                 'disable' => 0,
             ]
         );
 
-        // preserve username and password for existing users
+        // preserve password for existing users
+        // this line disallows the integrator to mess with the password
         if ($row) {
-            unset($data['username']);
-            unset($data['email']);
             unset($data['password']);
         }
 
@@ -502,6 +501,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
+                'password' => $this->generatePassword(),
             ]);
 
             $event = new ModifyUserEvent($data, $this, $info);
@@ -576,16 +576,16 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * Merges info from OIDC to TYPO3 using a mapping configuration.
      *
      * @param string $table
-     * @param array $oidc
-     * @param array $typo3
-     * @param array $baseData
+     * @param array $oidc Data retrieved from identity provider
+     * @param array $typo3User Existing user found in database
+     * @param array $baseData Data to replace in existing user
      * @param bool $reportErrors
      * @return array
      */
-    protected function applyMapping(string $table, array $oidc, array $typo3, array $baseData = [], bool $reportErrors = false): array
+    protected function applyMapping(string $table, array $oidc, array $typo3User, array $baseData = [], bool $reportErrors = false): array
     {
         $request = $this->getRequest();
-        $out = array_merge($typo3, $baseData);
+        $out = array_merge($typo3User, $baseData);
         $typoScriptKeys = [];
         $mapping = $this->getMapping($table, $request);
 
@@ -628,7 +628,13 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $feSim->cleanupTSFE();
         }
 
-        return $out;
+        $event = new AuthenticationProcessMappingEvent($request, $table, $typo3User, $oidc, $out);
+
+        /** @var EventDispatcherInterface $eventDispatcher */
+        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+        $eventDispatcher->dispatch($event);
+
+        return $event->mappedData;
     }
 
     /**
