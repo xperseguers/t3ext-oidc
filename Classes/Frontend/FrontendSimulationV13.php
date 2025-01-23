@@ -65,7 +65,7 @@ class FrontendSimulationV13 extends FrontendSimulationV12
                         $cache,
                     );
                     $frontendTypoScript = $frontendTypoScriptFactory->createSetupConfigOrFullSetup(
-                        false,
+                        true,
                         $frontendTypoScript,
                         $site,
                         $pageInformation->getSysTemplateRows(),
