@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Service;
 
+use Causal\Oidc\Event\GetAuthorizationUrlEvent;
 use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use GuzzleHttp\RequestOptions;
@@ -26,6 +27,7 @@ use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Http\RequestFactory;
@@ -44,6 +46,11 @@ class OAuthService
     protected array $settings = [];
 
     protected ?AbstractProvider $provider = null;
+
+    public function __construct(
+        private readonly EventDispatcherInterface $eventDispatcher,
+    ) {}
+
 
     /**
      * Sets the settings.
@@ -67,22 +74,8 @@ class OAuthService
      */
     public function getAuthorizationUrl(?ServerRequestInterface $request, array $options = []): string
     {
-        if (!empty($this->settings['oidcAuthorizeLanguageParameter'])) {
-            $languageOption = $this->settings['oidcAuthorizeLanguageParameter'];
-            if (!empty($languageOption)) {
-                $language = 'en';
-                if ($request) {
-                    /** @var SiteLanguage $siteLanguage */
-                    $siteLanguage = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
-                    // fallback for TYPO3 v11
-                    $language = is_object($siteLanguage->getLocale())
-                        ? $siteLanguage->getLocale()->getLanguageCode()
-                        : $siteLanguage->getTwoLetterIsoCode();
-                }
-                $options[$languageOption] = $language;
-            }
-        }
-
+        $event = $this->eventDispatcher->dispatch(new GetAuthorizationUrlEvent($request, $this->settings, $options));
+        $options = $event->options;
         return $this->getProvider()->getAuthorizationUrl($options);
     }
 

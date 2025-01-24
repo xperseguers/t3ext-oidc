@@ -31,3 +31,9 @@ services:
       - name: event.listener
         identifier: 'causal/oidc-request-token'
         event: TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent
+
+  Causal\Oidc\EventListener\GetAuthorizationUrlSetLanguageEventListener:
+    tags:
+      - name: event.listener
+        identifier: 'causal/oidc-get-authorization-url-set-language'
+        event: Causal\Oidc\Event\GetAuthorizationUrlEvent
