@@ -1,5 +1,13 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 4.x.x
+
+- Breaking: Upon login the user's username and email address will now be updated
+  according to the mapping configuration. The default mapping configuration maps
+  the username, but not the email address. Custom mapping configurations can now
+  map none, one or both of those fields.
+  It is now possible to post-process the mapping by ìmplementing the `AuthenticationProcessMappingEvent`
+
 ## Version 3.0.0
 
 - The callback URL changed from `/typo3conf/ext/oidc/Public/callback.php` to `TYPO3_SITE_URL`. (configurable with option `oidcRedirectUri`) [#116](https://github.com/xperseguers/t3ext-oidc/issues/116)
