@@ -27,8 +27,6 @@ class GetAuthorizationUrlSetLanguageEventListener
                 ? $siteLanguage->getLocale()->getLanguageCode()
                 : $siteLanguage->getTwoLetterIsoCode();
         }
-        $event->options = array_replace($event->options, [
-            $languageOption => $language,
-        ]);
+        $event->options[$languageOption] = $language;
     }
 }
