@@ -1,6 +1,6 @@
 # OpenID Connect integration for TYPO3 - changelog
 
-## Version 4.x.x
+## Version 4.0.0
 
 - Breaking: Existing fe_users are not looked up by their username anymore.
   You may use the `AuthenticationFetchUserEvent` to re-add this functionality,
