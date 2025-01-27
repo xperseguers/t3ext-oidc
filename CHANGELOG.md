@@ -7,6 +7,7 @@
   the username, but not the email address. Custom mapping configurations can now
   map none, one or both of those fields.
   It is now possible to post-process the mapping by ìmplementing the `AuthenticationProcessMappingEvent`
+- The query parameters for the authorization URL can now be modified via `GetAuthorizationUrlEvent`.
 
 ## Version 3.0.0
 
