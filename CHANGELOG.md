@@ -11,6 +11,7 @@
 - Breaking: The default scope separator is changed from comma (`,`) to the space-character (` `)
   to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
   Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
+- Breaking: Public method `OpenIdConnectService::getAuthenticationRequestUrl` has been replaced by `OpenIdConnectService::getFrontendAuthenticationRequestUrl`.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
 

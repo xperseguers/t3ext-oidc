@@ -34,25 +34,24 @@ class OpenIdConnectService implements LoggerAwareInterface
         return $language && $request->getUri()->getPath() === $this->getAuthenticationUrlRoutePath($language);
     }
 
-    public function getAuthenticationRequestUrl(): ?UriInterface
-    {
-        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
-        if ($request) {
-            $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
-            $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
-
-            $query = GeneralUtility::implodeArrayForUrl('', [
-                'login_url' => $loginUrl,
-                'redirect_url' => $redirectUrl,
-                'validation_hash' => $this->calculateUrlHash($loginUrl . $redirectUrl),
-            ]);
-
-            $language = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
-            return $language->getBase()
-                ->withPath($this->getAuthenticationUrlRoutePath($language))
-                ->withQuery($query);
+    public function getFrontendAuthenticationRequestUrl(
+        SiteLanguage $language,
+        UriInterface $loginUrl,
+        ?UriInterface $redirectUrl = null,
+    ): ?UriInterface {
+        $queryParameters = ['login_url' => (string)$loginUrl];
+        if ($redirectUrl) {
+            $queryParameters['redirect_url'] = (string)$redirectUrl;
         }
-        return null;
+
+        $queryParametersString = implode(array_values($queryParameters));
+        $queryParameters['validation_hash'] =  $this->calculateUrlHash($queryParametersString);
+
+        $query = GeneralUtility::implodeArrayForUrl('', $queryParameters);
+
+        return $language->getBase()
+            ->withPath($this->getAuthenticationUrlRoutePath($language))
+            ->withQuery($query);
     }
 
     /**
