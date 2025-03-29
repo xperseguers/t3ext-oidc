@@ -28,6 +28,7 @@ use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\OidcConfiguration;
+use Causal\Oidc\Http\CookieService;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -87,7 +88,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
-                $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
+                $cookieService = GeneralUtility::makeInstance(CookieService::class);
+                $authContext = $cookieService->resolveAuthenticationContext($request);
                 if ($authContext) {
                     $codeVerifier = $authContext->codeVerifier;
                 }
