@@ -236,7 +236,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             );
         }
 
-        $user = $this->convertResourceOwner($resourceOwnerObject);
+        $user = $this->convertResourceOwner($resourceOwnerObject, $accessToken);
 
         if ($this->config->revokeAccessTokenAfterLogin) {
             try {
@@ -276,12 +276,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      *
      * @return array|bool
      */
-    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject): bool|array
+    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): bool|array
     {
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
-        $event = new ModifyResourceOwnerEvent($resourceOwnerObject->toArray(), $this);
+        $event = new ModifyResourceOwnerEvent($resourceOwnerObject->toArray(), $this, $accessToken);
         $eventDispatcher->dispatch($event);
         $info = $event->getResourceOwner();
 
