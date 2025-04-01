@@ -261,7 +261,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             );
         }
 
-        $event = new ModifyResourceOwnerEvent($resourceOwner, $this);
+        $event = new ModifyResourceOwnerEvent($resourceOwner, $this, $accessToken);
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
         $eventDispatcher->dispatch($event);
