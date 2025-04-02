@@ -121,30 +121,28 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     public function getFinalLoginUrl(string $code): Uri
     {
-        $loginUrlParams = [
+        $loginUrl = new Uri($this->authContext->getLoginUrl());
+        $finalLoginUrlParameters = [
             'logintype' => 'login',
             'tx_oidc' => ['code' => $code],
         ];
-        if ($this->authContext->redirectUrl && !str_contains($this->authContext->getLoginUrl(), 'redirect_url=')) {
-            $loginUrlParams['redirect_url'] = $this->authContext->redirectUrl;
+
+        if ($this->authContext->redirectUrl && !str_contains($loginUrl->getQuery(), 'redirect_url=')) {
+            $finalLoginUrlParameters['redirect_url'] = $this->authContext->redirectUrl;
         }
-        $loginUrl = new Uri($this->authContext->getLoginUrl());
 
-        $query = $loginUrl->getQuery() . GeneralUtility::implodeArrayForUrl('', $loginUrlParams);
+        $finalLoginUrl = \GuzzleHttp\Psr7\Uri::withQueryValues($loginUrl, $finalLoginUrlParameters);
 
-        return $loginUrl->withQuery(ltrim($query, '&'));
+        return $finalLoginUrl;
     }
 
     protected function getLoginUrlForContext(string $loginUrl): Uri
     {
-        $loginUrl = new Uri($loginUrl);
-
-        // filter query string
-        $queryParts = array_filter(explode('&', $loginUrl->getQuery()), function ($param) {
-            return !str_starts_with($param, 'logintype') && !str_starts_with($param, 'tx_oidc%5Bcode%5D') && !str_starts_with($param, 'cHash');
-        });
-
-        return $loginUrl->withQuery(implode('&', $queryParts));
+        return array_reduce(
+            ['logintype', 'tx_oidc[code]', 'cHash'],
+            fn(UriInterface $uri, string $key) => \GuzzleHttp\Psr7\Uri::withoutQueryValue($uri, $key),
+            new Uri($loginUrl),
+        );
     }
 
     /**
