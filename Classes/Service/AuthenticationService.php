@@ -25,7 +25,6 @@ use Causal\Oidc\Event\AuthenticationProcessMappingEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
-use Causal\Oidc\Frontend\FrontendSimulationV11;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use InvalidArgumentException;
@@ -732,10 +731,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $typo3Version = (new Typo3Version())->getMajorVersion();
         if ($typo3Version === 13) {
             $feSim = GeneralUtility::makeInstance(FrontendSimulationV13::class);
-        } elseif ($typo3Version === 12) {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV12::class);
         } else {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV11::class);
+            $feSim = GeneralUtility::makeInstance(FrontendSimulationV12::class);
         }
         return $feSim;
     }
