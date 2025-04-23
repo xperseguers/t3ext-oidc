@@ -32,6 +32,9 @@ services:
         identifier: 'causal/oidc-request-token'
         event: TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent
 
+  Causal\Oidc\Frontend\FrontendSimulationV13:
+    public: true
+
   Causal\Oidc\EventListener\GetAuthorizationUrlSetLanguageEventListener:
     tags:
       - name: event.listener
