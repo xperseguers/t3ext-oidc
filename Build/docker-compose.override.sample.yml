@@ -1,0 +1,8 @@
+services:
+  v12:
+    volumes:
+      - ../:/app/packages/oidc/
+
+  v13:
+    volumes:
+      - ../:/app/packages/oidc/

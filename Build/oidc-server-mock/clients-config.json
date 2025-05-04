@@ -1,0 +1,16 @@
+[
+  {
+    "ClientId": "t3ext-oidc",
+    "ClientSecrets": ["t3ext-oidc"],
+    "Description": "Client for implicit flow",
+    "AllowedGrantTypes": ["authorization_code"],
+    "AllowAccessTokensViaBrowser": true,
+    "RedirectUris": [
+      "https://v12.t3ext-oidc.test/login/redirect",
+      "https://v13.t3ext-oidc.test/login/redirect"
+    ],
+    "AllowedScopes": ["openid", "profile", "email"],
+    "IdentityTokenLifetime": 3600,
+    "AccessTokenLifetime": 3600
+  }
+]

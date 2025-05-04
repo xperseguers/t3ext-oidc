@@ -1,0 +1,21 @@
+services:
+  composer-v12:
+    build:
+      context: typo3
+      target: php-composer
+    image: composer:2.7.2
+    volumes:
+      - ./typo3/typo3-v12:/app
+      - ..:/app/packages/oidc
+      - ./typo3/typo3/packages/oidc-sitepackage:/app/packages/oidc-sitepackage
+    command: install
+
+  composer-v13:
+    build:
+      context: typo3
+      target: php-composer
+    volumes:
+      - ./typo3/typo3-v13:/app
+      - ..:/app/packages/oidc
+      - ./typo3/typo3/packages/oidc-sitepackage:/app/packages/oidc-sitepackage
+    command: install
