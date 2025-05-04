@@ -23,13 +23,6 @@ use TYPO3\CMS\Frontend\Page\PageInformationFactory;
 
 class FrontendSimulationV13 extends FrontendSimulationV12
 {
-
-    public function __construct(
-        protected PageInformationFactory $pageInformationFactory,
-        protected FrontendTypoScriptFactory $frontendTypoScriptFactory,
-    ) {
-    }
-
     public function getTSFE(ServerRequestInterface $originalRequest): TypoScriptFrontendController
     {
         return GeneralUtility::makeInstance(TypoScriptFrontendController::class);
@@ -53,7 +46,8 @@ class FrontendSimulationV13 extends FrontendSimulationV12
                     $pageArguments = $site->getRouter()->matchRequest($originalRequest, $routeResult);
                     $originalRequest = $originalRequest->withAttribute('routing', $pageArguments);
 
-                    $pageInformation = $this->pageInformationFactory->create($originalRequest);
+                    $pageInformationFactory = GeneralUtility::makeInstance(PageInformationFactory::class);
+                    $pageInformation = $pageInformationFactory->create($originalRequest);
                     $originalRequest = $originalRequest->withAttribute('frontend.page.information', $pageInformation);
 
                     $expressionMatcherVariables = $this->getExpressionMatcherVariables($site, $originalRequest, $tsfe);
@@ -62,14 +56,15 @@ class FrontendSimulationV13 extends FrontendSimulationV12
                     /** @var PhpFrontend $cache */
                     $cache = $cacheManager->getCache('typoscript');
 
-                    $frontendTypoScript = $this->frontendTypoScriptFactory->createSettingsAndSetupConditions(
+                    $frontendTypoScriptFactory = GeneralUtility::makeInstance(FrontendTypoScriptFactory::class);
+                    $frontendTypoScript = $frontendTypoScriptFactory->createSettingsAndSetupConditions(
                         $site,
                         $pageInformation->getSysTemplateRows(),
                         // $originalRequest does not contain site ...
                         $expressionMatcherVariables,
                         $cache,
                     );
-                    $frontendTypoScript = $this->frontendTypoScriptFactory->createSetupConfigOrFullSetup(
+                    $frontendTypoScript = $frontendTypoScriptFactory->createSetupConfigOrFullSetup(
                         true,
                         $frontendTypoScript,
                         $site,
