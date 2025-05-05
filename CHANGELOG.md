@@ -3,6 +3,8 @@
 ## Version 5.x.x
 
 - Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
+- Breaking: Dropped direct felogin-integration (via event).
+  Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
 
 
 ## Version 4.0.0
