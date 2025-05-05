@@ -24,19 +24,16 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
 {
-    private RequestFactory $requestFactory;
-
-    public function __construct(RequestFactory $requestFactory)
-    {
-        $this->requestFactory = $requestFactory;
+    public function __construct(
+        private GuzzleClientFactory $clientFactory,
+        private RequestFactory $requestFactory,
+    ) {
     }
 
     public function create(array $settings): AbstractProvider
     {
-        // @todo Use DI for GuzzleClientFactory once TYPO3 v11 support is dropped
-        $clientFactory = GeneralUtility::makeInstance(GuzzleClientFactory::class);
         $collaborators = [
-            'httpClient' => $clientFactory->getClient(),
+            'httpClient' => $this->clientFactory->getClient(),
             'requestFactory' => $this->requestFactory,
         ];
 

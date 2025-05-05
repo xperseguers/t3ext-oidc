@@ -22,10 +22,7 @@ class GetAuthorizationUrlSetLanguageEventListener
         if ($request) {
             /** @var SiteLanguage $siteLanguage */
             $siteLanguage = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
-            // fallback for TYPO3 v11
-            $language = is_object($siteLanguage->getLocale())
-                ? $siteLanguage->getLocale()->getLanguageCode()
-                : $siteLanguage->getTwoLetterIsoCode();
+            $language = $siteLanguage->getLocale()->getLanguageCode();
         }
         $event->options[$languageOption] = $language;
     }
