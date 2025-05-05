@@ -204,14 +204,6 @@ final class OAuth2ProviderFactory implements OAuthProviderFactoryInterface
 }
 ```
 
-## Migration from v2 to v3
-
-Version 3 has developed to a major rewrite of the extension.
-It gets rid of extbase dependencies, handles things as early as possible (middleware)
-and streamlines a lot of code.
-
-Please refer to the `CHANGELOG.md` for further details.
-
 ## Credits
 
 This TYPO3 extension is created and maintained by:
