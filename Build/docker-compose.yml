@@ -1,0 +1,183 @@
+name: t3ext-oidc
+services:
+  v12:
+    build:
+      context: typo3
+      additional_contexts:
+        - certs=./certs
+        - oidc=..
+        - typo3-version=./typo3/typo3-v12
+    networks:
+      default:
+        aliases:
+          - v12.t3ext-oidc.test
+    depends_on:
+      db-v12:
+        condition: service_healthy
+    env_file:
+      - typo3/oidc.env
+    environment:
+      - SERVER_NAME=v12.t3ext-oidc.test
+      - TYPO3_CONTEXT=Development
+
+      - TYPO3_DB_HOST=db-v12
+      - TYPO3_DB_PORT=3306
+      - TYPO3_DB_USERNAME=app
+      - TYPO3_DB_PASSWORD=app
+      - TYPO3_DB_DBNAME=app
+
+      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v12.t3ext-oidc.test/login/redirect
+
+  db-v12:
+    image: mariadb:10.11.10
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_USER: app
+      MARIADB_PASSWORD: app
+      MARIADB_DATABASE: app
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  v13:
+    build:
+      context: typo3
+      additional_contexts:
+        - certs=./certs
+        - oidc=..
+        - typo3-version=./typo3/typo3-v13
+    networks:
+      default:
+        aliases:
+          - v13.t3ext-oidc.test
+    depends_on:
+      db-v13:
+        condition: service_healthy
+    env_file:
+      - typo3/oidc.env
+    environment:
+      - SERVER_NAME=v13.t3ext-oidc.test
+      - TYPO3_CONTEXT=Development
+
+      - TYPO3_DB_HOST=db-v13
+      - TYPO3_DB_PORT=3306
+      - TYPO3_DB_USERNAME=app
+      - TYPO3_DB_PASSWORD=app
+      - TYPO3_DB_DBNAME=app
+
+      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v13.t3ext-oidc.test/login/redirect
+
+  db-v13:
+    image: mariadb:10.11.10
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_USER: app
+      MARIADB_PASSWORD: app
+      MARIADB_DATABASE: app
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  oidc-server-mock:
+    platform: linux/amd64
+    container_name: oidc-server-mock
+    image: ghcr.io/soluto/oidc-server-mock:0.9.2
+    networks:
+      default:
+        aliases:
+          - oidc.t3ext-oidc.test
+    environment:
+      ASPNETCORE_HTTP_PORTS: 80
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+      SERVER_OPTIONS_INLINE: |
+        {
+          "AccessTokenJwtType": "JWT",
+          "Discovery": {
+            "ShowKeySet": true
+          },
+          "Authentication": {
+            "CookieSameSiteMode": "Lax",
+            "CheckSessionCookieSameSiteMode": "Lax"
+          }
+        }
+      LOGIN_OPTIONS_INLINE: |
+        {
+          "AllowRememberLogin": false
+        }
+      LOGOUT_OPTIONS_INLINE: |
+        {
+          "AutomaticRedirectAfterSignOut": true
+        }
+      API_SCOPES_INLINE: |
+        - Name: some-app-scope-1
+        - Name: some-app-scope-2
+      API_RESOURCES_INLINE: |
+        - Name: some-app
+          Scopes:
+            - some-app-scope-1
+            - some-app-scope-2
+      USERS_CONFIGURATION_INLINE: |
+        [
+          {
+            "SubjectId":"1",
+            "Username":"User1",
+            "Password":"pwd",
+            "Claims": [
+              {
+                "Type": "name",
+                "Value": "Sam Tailor",
+                "ValueType": "string"
+              },
+              {
+                "Type": "email",
+                "Value": "sam.tailor@gmail.com",
+                "ValueType": "string"
+              },
+              {
+                "Type": "some-api-resource-claim",
+                "Value": "Sam's Api Resource Custom Claim",
+                "ValueType": "string"
+              },
+              {
+                "Type": "some-api-scope-claim",
+                "Value": "Sam's Api Scope Custom Claim",
+                "ValueType": "string"
+              },
+              {
+                "Type": "some-identity-resource-claim",
+                "Value": "Sam's Identity Resource Custom Claim",
+                "ValueType": "string"
+              }
+            ]
+          }
+        ]
+      CLIENTS_CONFIGURATION_PATH: /tmp/config/clients-config.json
+      ASPNET_SERVICES_OPTIONS_INLINE: |
+        {
+          "ForwardedHeadersOptions": {
+            "ForwardedHeaders" : "All"
+          }
+        }
+    volumes:
+      - ./oidc-server-mock:/tmp/config:ro
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.50.0-noble
+    volumes:
+      - ./playwright/e2e:/e2e
+    environment:
+      - DISPLAY=vnc:1
+    working_dir: /e2e
+
+  vnc:
+    image: consol/ubuntu-xfce-vnc
+    environment:
+      - VNC_PW=password
+    command: /bin/bash -c "xhost + && tail -f /dev/null"

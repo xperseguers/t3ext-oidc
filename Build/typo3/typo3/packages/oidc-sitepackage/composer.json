@@ -1,0 +1,19 @@
+{
+	"name": "somebdyelse/oidc-sitepackage",
+	"type": "typo3-cms-extension",
+	"require": {
+		"typo3/cms-core": "^12.4 || ^13.4"
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "oidc-sitepackage"
+		}
+	},
+	"config": {
+		"vendor-dir": ".Build/vendor",
+		"allow-plugins": {
+			"typo3/cms-composer-installers": true,
+			"typo3/class-alias-loader": true
+		}
+	}
+}

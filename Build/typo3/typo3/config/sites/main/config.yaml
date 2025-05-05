@@ -1,0 +1,31 @@
+rootPageId: 1
+base: 'https://%env(SERVER_NAME)%/'
+dependencies:
+  - somebdyelse/oidc-sitepackage
+baseVariants: {  }
+languages:
+  -
+    title: English
+    enabled: true
+    languageId: '0'
+    base: /en/
+    typo3Language: en
+    locale: en_US.UTF-8
+    iso-639-1: en
+    navigationTitle: EN
+    hreflang: en-US
+    direction: ltr
+    flag: us
+  -
+    title: Deutsch
+    enabled: true
+    languageId: '1'
+    base: /de/
+    typo3Language: de
+    locale: de_DE.UTF-8
+    iso-639-1: de
+    navigationTitle: DE
+    hreflang: de_DE
+    direction: ltr
+    fallbackType: strict
+    flag: de
