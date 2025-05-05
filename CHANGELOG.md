@@ -1,5 +1,10 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 5.x.x
+
+- Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
+
+
 ## Version 4.0.0
 
 - Breaking: Existing fe_users are not looked up by their username anymore.
