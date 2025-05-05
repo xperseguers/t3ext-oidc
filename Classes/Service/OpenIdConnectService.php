@@ -41,32 +41,48 @@ class OpenIdConnectService implements LoggerAwareInterface
         return $language && $request->getUri()->getPath() === $this->getAuthenticationUrlRoutePath($language);
     }
 
+    /**
+     * @deprecated
+     */
     public function getAuthenticationRequestUrl(): ?UriInterface
     {
-        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
-        if ($request) {
-            $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
-            $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
+        trigger_error(
+            'Calling getAuthenticationRequestUrl will be removed. Consider using getFrontendAuthenticationRequestUrl instead.',
+            E_USER_DEPRECATED,
+        );
+        $request = $GLOBALS['TYPO3_REQUEST'];
+        return $this->getFrontendAuthenticationRequestUrl(
+            $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage()),
+            GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL'),
+            $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '',
+        );
+    }
 
-            // TYPO3 v13
-            if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
-                $hash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($loginUrl . $redirectUrl, 'oidc');
-            } else {
-                $hash = GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc');
-            }
-
-            $query = GeneralUtility::implodeArrayForUrl('', [
-                'login_url' => $loginUrl,
-                'redirect_url' => $redirectUrl,
-                'validation_hash' => $hash,
-            ]);
-
-            $language = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
-            return $language->getBase()
-                ->withPath($this->getAuthenticationUrlRoutePath($language))
-                ->withQuery($query);
+    public function getFrontendAuthenticationRequestUrl(
+        SiteLanguage $language,
+        UriInterface $loginUrl,
+        ?UriInterface $redirectUrl = null,
+    ): ?UriInterface {
+        $queryParameters = ['login_url' => (string)$loginUrl];
+        if ($redirectUrl) {
+            $queryParameters['redirect_url'] = (string)$redirectUrl;
         }
-        return null;
+
+        $queryParametersString = implode(array_values($queryParameters));
+        // TYPO3 v13
+        if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
+            $hash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($queryParametersString, 'oidc');
+        } else {
+            $hash = GeneralUtility::hmac($queryParametersString, 'oidc');
+        }
+
+        $queryParameters['validation_hash'] = $hash;
+
+        $query = GeneralUtility::implodeArrayForUrl('', $queryParameters);
+
+        return $language->getBase()
+            ->withPath($this->getAuthenticationUrlRoutePath($language))
+            ->withQuery($query);
     }
 
     public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
