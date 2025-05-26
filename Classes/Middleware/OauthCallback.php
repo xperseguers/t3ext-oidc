@@ -97,7 +97,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
     }
 
     /**
-     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::resolveNoncePool (v12+)
+     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::resolveNoncePool
      */
     protected function resolveAuthenticationContext(ServerRequestInterface $request): ?AuthenticationContext
     {
@@ -122,7 +122,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
     }
 
     /**
-     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::enrichResponseWithCookie (v12+)
+     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::enrichResponseWithCookie
      */
     protected function enrichResponseWithCookie(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
