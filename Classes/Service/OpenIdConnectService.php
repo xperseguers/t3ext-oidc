@@ -10,7 +10,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
@@ -133,7 +132,7 @@ class OpenIdConnectService implements LoggerAwareInterface
     public function getFinalLoginUrl(string $code): Uri
     {
         $loginUrlParams = [
-            'logintype' => LoginType::LOGIN,
+            'logintype' => 'login',
             'tx_oidc' => ['code' => $code],
         ];
         if ($this->authContext->redirectUrl && !str_contains($this->authContext->getLoginUrl(), 'redirect_url=')) {
