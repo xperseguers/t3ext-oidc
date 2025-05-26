@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Controller;
 
 use Causal\Oidc\Service\OpenIdConnectService;
+use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
@@ -70,7 +71,7 @@ class LoginController
         /** @var Context $context */
         $context = GeneralUtility::makeInstance(Context::class);
         $loginType = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
-        if ($loginType === 'login' || $context->getAspect('frontend.user')->isLoggedIn()) {
+        if ($loginType === LoginType::LOGIN || $context->getAspect('frontend.user')->isLoggedIn()) {
             $redirectUrl = $this->determineRedirectUrl();
             $this->redirect($redirectUrl);
         }
