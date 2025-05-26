@@ -7,6 +7,7 @@ namespace Causal\Oidc\Tests\Unit\Service;
 use Causal\Oidc\AuthenticationContext;
 use Causal\Oidc\Service\OAuthService;
 use Causal\Oidc\Service\OpenIdConnectService;
+use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class OpenIdConnectServiceTest extends UnitTestCase
@@ -16,7 +17,8 @@ class OpenIdConnectServiceTest extends UnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new OpenIdConnectService(new OAuthService(), ['dummy']);
+        $oauthService = new OAuthService($this->createStub(EventDispatcher::class));
+        $this->service = new OpenIdConnectService($oauthService, ['dummy']);
     }
 
     /**
