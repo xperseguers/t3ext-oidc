@@ -497,7 +497,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
-                'password' => $this->generatePassword(),
+                'password' => $this->generatePassword($mode),
             ]);
 
             $event = new ModifyUserEvent($data, $this, $info);
@@ -737,13 +737,16 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         return $feSim;
     }
 
-    protected function generatePassword(): string
+    /**
+     * @param string $mode Must either be 'FE' or 'BE'
+     */
+    protected function generatePassword(string $mode): string
     {
         $password = substr(str_shuffle('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$'), 0, 20);
 
         $passwordHashFactory = GeneralUtility::makeInstance(PasswordHashFactory::class);
         try {
-            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($this->authInfo['loginType']);
+            $objInstanceSaltedPW = $passwordHashFactory->getDefaultHashInstance($mode);
         } catch (InvalidPasswordHashException) {
             return '';
         }
