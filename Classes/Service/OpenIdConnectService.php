@@ -150,9 +150,9 @@ class OpenIdConnectService implements LoggerAwareInterface
         $loginUrl = new Uri($loginUrl);
 
         // filter query string
-        $queryParts = array_filter(explode('&', $loginUrl->getQuery()), function ($k) {
-            return $k !== 'logintype' && $k !== 'tx_oidc[code]' && $k !== 'cHash';
-        }, ARRAY_FILTER_USE_KEY);
+        $queryParts = array_filter(explode('&', $loginUrl->getQuery()), function ($param) {
+            return !str_starts_with($param, 'logintype') && !str_starts_with($param, 'tx_oidc%5Bcode%5D') && !str_starts_with($param, 'cHash');
+        });
 
         return $loginUrl->withQuery(implode('&', $queryParts));
     }
