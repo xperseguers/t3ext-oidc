@@ -3,7 +3,7 @@
 ## Version 5.x.x
 
 - Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
-
+- Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 
 ## Version 4.0.0
 

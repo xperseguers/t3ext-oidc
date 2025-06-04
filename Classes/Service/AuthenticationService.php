@@ -103,7 +103,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 }
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
-        } else {
+        } elseif ($this->config['enablePasswordCredentials'] ?? true) {
             $event = new AuthenticationPreUserEvent($this->login, $this);
             $eventDispatcher->dispatch($event);
             if (!$event->shouldProcess) {

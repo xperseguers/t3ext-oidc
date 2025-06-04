@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-	<file source-language="en" target-language="de" original="messages" datatype="plaintext" product-name="oidc" date="2025-06-05T00:30:16+02:00">
+	<file source-language="en" target-language="de" original="messages" datatype="plaintext" product-name="oidc" date="2025-06-05T00:33:23+02:00">
 		<body>
 			<trans-unit id="fe_groups.tx_oidc_pattern">
 				<source>Case-insensitive pattern to match OpenID Connect role names (&#34;*&#34; matches every character, &#34;|&#34; to separate expressions)</source>
@@ -29,6 +29,10 @@
 			<trans-unit id="settings.enableFrontendAuthentication">
 				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
 				<target>Frontend-Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend.</target>
+			</trans-unit>
+			<trans-unit id="settings.enablePasswordCredentials">
+				<source>Enable username/password authentication: Enable authentication with username/password via OpenID Connect. e.g. via felogin</source>
+				<target>Authentifizierung mittels Benutzername/Passwort aktivieren: Aktiviere Authentifizierung mittels Benutzername/Passwort über OpenID Connect. z.B. über felogin</target>
 			</trans-unit>
 			<trans-unit id="settings.frontendUserMustExistLocally">
 				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
