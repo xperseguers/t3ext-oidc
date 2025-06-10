@@ -1,5 +1,6 @@
+/composer.lock
+/.phpunit.result.cache
 /.idea
 /.Build/*
-/composer.lock
 /Libraries/*
 /typo3cms
