@@ -29,7 +29,7 @@
 	"require": {
 		"php": "^8.2",
 		"ext-json": "*",
-		"typo3/cms-core": "^12.4 || ^13.4",
+		"typo3/cms-core": "^12.4.33 || ^13.4.14",
 		"typo3/cms-frontend": "^12.4 || ^13.4",
 		"league/oauth2-client": "^2.8",
 		"firebase/php-jwt": "^6.10"
