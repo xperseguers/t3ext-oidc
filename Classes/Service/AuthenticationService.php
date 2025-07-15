@@ -308,6 +308,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function convertResourceOwner(array $info): bool|array
     {
+        $definedRoles = [];        
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
@@ -378,7 +379,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         $newUserGroups = [];
-        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup']);
+        $defaultUserGroups = isset($this->config['usersDefaultGroup']) ? GeneralUtility::intExplode(',', $this->config['usersDefaultGroup']) : [];
 
         if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
@@ -409,9 +410,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 $newUserGroups = array_diff($currentUserGroups, $oidcUserGroups);
             }
         }
+        
+        $extConfRoles = GeneralUtility::trimExplode(',', $this->config['feUserRoles'], true);
+        foreach ($extConfRoles as $extConfRole) { 
+	        $definedRoles = array_merge($definedRoles, GeneralUtility::trimExplode(',', $info[$extConfRole] ?? '', true));
+        }
 
         // Map OIDC roles to TYPO3 user groups
-        if (!empty($info['Roles'])) {
+        if (!empty($definedRoles)) {
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getQueryBuilderForTable($userGroupTable);
             $typo3Roles = $queryBuilder
@@ -423,9 +429,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->executeQuery()
                 ->fetchAllAssociative();
 
-            $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
-            $roles = ',' . implode(',', $roles) . ',';
-
+            $roles = ',' . \implode(',', $definedRoles) . ',';
+            
             foreach ($typo3Roles as $typo3Role) {
                 // Convert the pattern into a proper regular expression
                 $subpatterns = GeneralUtility::trimExplode('|', $typo3Role['tx_oidc_pattern'], true);
@@ -476,6 +481,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     'new' => $user,
                 ]);
                 $user['tstamp'] = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
+                $user['tx_oidc_info'] = json_encode($info);
                 $tableConnection->update(
                     $userTable,
                     $user,
@@ -497,6 +503,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
+                'tx_oidc_info' => json_encode($info),
                 'password' => $this->generatePassword($mode),
             ]);
 

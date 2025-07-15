@@ -10,6 +10,10 @@
 				<source>OpenID Connect Identifier</source>
 				<target>OpenID Connect Identifier</target>
 			</trans-unit>
+            <trans-unit id="fe_users.tx_oidc_info">
+				<source>OpenID Connect Info</source>
+                <target>OpenID Connect Info</target>
+			</trans-unit>
 			<trans-unit id="settings.authenticationServicePriority">
 				<source>Authentication service priority: This defines the order of the OIDC authentication service in relation to other authentication services. Higher number wins.</source>
 				<target>Authentifizierungs-Service Priorität: Definiert die Reihenfolge des OIDC Authentifizierungs-Service in Bezug auf andere Authentifizierungs-Services. Höhere Zahl gewinnt.</target>
@@ -109,6 +113,10 @@
 			<trans-unit id="tt_content.oidc_login">
 				<source>OIDC Login</source>
 				<target>OIDC-Anmeldung</target>
+			</trans-unit>
+            <trans-unit id="settings.feUserRoles">
+                <source>Default user roles (comma-separated list of roles)</source>
+				<target>Standard Rollen für Web-Benutzer (CSV Liste)</target>
 			</trans-unit>
 		</body>
 	</file>

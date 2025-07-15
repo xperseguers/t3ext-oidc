@@ -1,6 +1,7 @@
 CREATE TABLE fe_users
 (
 	tx_oidc varchar(100) DEFAULT '' NOT NULL,
+    tx_oidc_info text DEFAULT '' NOT NULL
 
 	KEY fk_oidc (tx_oidc)
 );
