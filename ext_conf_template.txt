@@ -1,4 +1,4 @@
-# cat=basic/enable/1; type=options[Disable=,Frontend=FE]; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableAuthentication
+# cat=basic/enable/1; type=options[Disable=,Frontend=FE,Backend=BE]; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableAuthentication
 enableAuthentication =
 
 # cat=basic/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.reEnableUsers

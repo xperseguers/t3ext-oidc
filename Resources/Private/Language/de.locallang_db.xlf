@@ -27,8 +27,8 @@
 				<target>PKCE aktivieren: Aktiviert den PKCE-Fluss. Code-Challenge und Code-Verifier werden mitgeschickt.</target>
 			</trans-unit>
 			<trans-unit id="settings.enableAuthentication">
-				<source>Authentication: Enable OpenID Connect authentication for the frontend.</source>
-				<target>Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend.</target>
+				<source>Authentication: Enable OpenID Connect authentication for the frontend or backend.</source>
+				<target>Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend oder Backend.</target>
 			</trans-unit>
 			<trans-unit id="settings.userMustExistLocally">
 				<source>User Must Exist: If ticked, only Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>

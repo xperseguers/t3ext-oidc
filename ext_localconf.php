@@ -18,13 +18,21 @@ $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oi
 
 // Service configuration
 $subTypes = '';
-if ($settings['enableAuthentication'] ?? '' && $settings['enableAuthentication'] === 'FE') {
-    $subTypesArr = [
-        'getUserFE',
-        'authUserFE',
-        'getGroupsFE',
-    ];
-    $subTypes = implode(',', $subTypesArr);
+if ($settings['enableAuthentication'] ?? '') {
+    if ($settings['enableAuthentication'] === 'FE') {
+        $subTypesArr = [
+            'getUserFE',
+            'authUserFE',
+            'getGroupsFE',
+        ];
+    }
+    if ($settings['enableAuthentication'] === 'BE') {
+        $subTypesArr = [
+            'getUserBE',
+            'authUserBE',
+        ];
+    }
+    $subTypes = implode(',', $subTypesArr ?? []);
 }
 
 $authenticationClassName = AuthenticationService::class;
