@@ -26,13 +26,13 @@
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 				<target>PKCE aktivieren: Aktiviert den PKCE-Fluss. Code-Challenge und Code-Verifier werden mitgeschickt.</target>
 			</trans-unit>
-			<trans-unit id="settings.enableFrontendAuthentication">
-				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
-				<target>Frontend-Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend.</target>
+			<trans-unit id="settings.enableAuthentication">
+				<source>Authentication: Enable OpenID Connect authentication for the frontend.</source>
+				<target>Authentifizierung: Aktivieren Sie die OpenID Connect-Authentifizierung für das Frontend.</target>
 			</trans-unit>
-			<trans-unit id="settings.frontendUserMustExistLocally">
-				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
-				<target>Frontend-Benutzer muss vorhanden sein: Wenn dieses Häkchen gesetzt ist, können sich nur Frontend User, die lokal in TYPO3 vorhanden sind, mit OpenID Connect authentifizieren. Möglicherweise müssen Sie die Logs beobachten, um Benutzer zu finden, die sich nicht authentifizieren konnten.</target>
+			<trans-unit id="settings.userMustExistLocally">
+				<source>User Must Exist: If ticked, only Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
+				<target>Benutzer muss vorhanden sein: Wenn dieses Häkchen gesetzt ist, können sich nur Benutzer, die lokal in TYPO3 vorhanden sind, mit OpenID Connect authentifizieren. Möglicherweise müssen Sie die Logs beobachten, um Benutzer zu finden, die sich nicht authentifizieren konnten.</target>
 			</trans-unit>
 			<trans-unit id="settings.oauthProviderFactory">
 				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
@@ -86,17 +86,17 @@
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 				<target>Anfragepfad-Authentifizierung verwenden: Wenn dieser Wert angekreuzt ist, wird die Request Path Authentication anstelle der standardmäßigen Password Grant verwendet.</target>
 			</trans-unit>
-			<trans-unit id="settings.reEnableFrontendUsers">
-				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as &#34;disabled&#34; upon successful authentication.</source>
-				<target>Frontend-Benutzer wieder aktivieren: Wenn angekreuzt, werden als &#34;deaktiviert&#34; markierte Frontend-Benutzer nach erfolgreicher Authentifizierung automatisch wieder aktiviert.</target>
+			<trans-unit id="settings.reEnableUsers">
+				<source>Re-enable Users: If ticked, will automatically re-enable users marked as &#34;disabled&#34; upon successful authentication.</source>
+				<target>Benutzer wieder aktivieren: Wenn angekreuzt, werden als &#34;deaktiviert&#34; markierte Benutzer nach erfolgreicher Authentifizierung automatisch wieder aktiviert.</target>
 			</trans-unit>
 			<trans-unit id="settings.revokeAccessTokenAfterLogin">
 				<source>Revoke TYPO3&#39;s access token at the end of the login process</source>
 				<target>Zugriffstoken von TYPO3 am Ende des Anmeldevorgangs widerrufen</target>
 			</trans-unit>
-			<trans-unit id="settings.undeleteFrontendUsers">
-				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as &#34;deleted&#34; upon successful authentication.</source>
-				<target>Frontend-Benutzer wiederherstellen: Wenn angekreuzt, werden als &#34;gelöscht&#34; markierte Frontend-Benutzer nach erfolgreicher Authentifizierung automatisch wiederhergestellt.</target>
+			<trans-unit id="settings.undeleteUsers">
+				<source>Undelete Users: If ticked, will automatically restore users marked as &#34;deleted&#34; upon successful authentication.</source>
+				<target>Benutzer wiederherstellen: Wenn angekreuzt, werden als &#34;gelöscht&#34; markierte Benutzer nach erfolgreicher Authentifizierung automatisch wiederhergestellt.</target>
 			</trans-unit>
 			<trans-unit id="settings.usersDefaultGroup">
 				<source>Default user group(s) (comma-separated list of UIDs)</source>

@@ -337,9 +337,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->executeQuery()
             ->fetchAssociative();
 
-        $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
-        $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
-        $frontendUserMustExistLocally = (bool)$this->config['frontendUserMustExistLocally'];
+        $reEnableUser = (bool)$this->config['reEnableUsers'];
+        $undeleteUser = (bool)$this->config['undeleteUsers'];
+        $userMustExistLocally = (bool)$this->config['userMustExistLocally'];
 
         if (!empty($row) && $row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
@@ -353,7 +353,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
             return false;
         }
-        if (empty($row) && $frontendUserMustExistLocally) {
+        if (empty($row) && $userMustExistLocally) {
             // User does not exist locally, it should not be created on-the-fly
             $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
 

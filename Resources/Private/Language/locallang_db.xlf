@@ -20,11 +20,11 @@
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>
-			<trans-unit id="settings.enableFrontendAuthentication">
-				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
+			<trans-unit id="settings.enableAuthentication">
+				<source>Authentication: Enable OpenID Connect authentication for the frontend.</source>
 			</trans-unit>
-			<trans-unit id="settings.frontendUserMustExistLocally" resname="settings.frontendUserMustExistLocally">
-				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
+			<trans-unit id="settings.userMustExistLocally">
+				<source>User Must Exist: If ticked, only Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
 			</trans-unit>
 			<trans-unit id="settings.oauthProviderFactory">
 				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
@@ -65,14 +65,14 @@
 			<trans-unit id="settings.oidcUseRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 			</trans-unit>
-			<trans-unit id="settings.reEnableFrontendUsers">
-				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as &#34;disabled&#34; upon successful authentication.</source>
+			<trans-unit id="settings.reEnableUsers">
+				<source>Re-enable Users: If ticked, will automatically re-enable users marked as &#34;disabled&#34; upon successful authentication.</source>
 			</trans-unit>
 			<trans-unit id="settings.revokeAccessTokenAfterLogin">
 				<source>Revoke TYPO3&#39;s access token at the end of the login process</source>
 			</trans-unit>
-			<trans-unit id="settings.undeleteFrontendUsers">
-				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as &#34;deleted&#34; upon successful authentication.</source>
+			<trans-unit id="settings.undeleteUsers">
+				<source>Undelete Users: If ticked, will automatically restore users marked as &#34;deleted&#34; upon successful authentication.</source>
 			</trans-unit>
 			<trans-unit id="settings.usersDefaultGroup">
 				<source>Default user group(s) (comma-separated list of UIDs)</source>

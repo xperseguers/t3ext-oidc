@@ -58,7 +58,7 @@
     $GLOBALS['TYPO3_CONF_VARS']['BE']['passwordPolicy'] = '';
 
     $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] = array_replace_recursive($GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc'] ?? [], [
-        'enableFrontendAuthentication' => getenv('TYPO3_OIDC_ENABLE_FRONTEND_AUTHENTICATION'),
+        'enableAuthentication' => getenv('TYPO3_OIDC_ENABLE_AUTHENTICATION'),
         'oidcClientKey' => getenv('TYPO3_OIDC_OIDC_CLIENT_KEY'),
         'oidcClientScopes' => getenv('TYPO3_OIDC_OIDC_CLIENT_SCOPES'),
         'oidcClientSecret' => getenv('TYPO3_OIDC_OIDC_CLIENT_SECRET'),

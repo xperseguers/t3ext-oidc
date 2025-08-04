@@ -18,7 +18,7 @@ $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oi
 
 // Service configuration
 $subTypes = '';
-if ($settings['enableFrontendAuthentication'] ?? '') {
+if ($settings['enableAuthentication'] ?? '' && $settings['enableAuthentication'] === 'FE') {
     $subTypesArr = [
         'getUserFE',
         'authUserFE',
