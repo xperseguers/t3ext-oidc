@@ -10,6 +10,14 @@
 				<source>OpenID Connect Identifier</source>
 				<target>OpenID Connect Identifier</target>
 			</trans-unit>
+			<trans-unit id="be_groups.tx_oidc_pattern">
+				<source>Case-insensitive pattern to match OpenID Connect role names (&#34;*&#34; matches every character, &#34;|&#34; to separate expressions)</source>
+				<target>Groß-/Kleinschreibung-unempfindliches Muster zum Abgleichen von OpenID Connect-Rollennamen (&#34;*&#34; passt zu jedem Zeichen, &#34;|&#34; zu getrennten Ausdrücken)</target>
+			</trans-unit>
+			<trans-unit id="be_users.tx_oidc">
+				<source>OpenID Connect Identifier</source>
+				<target>OpenID Connect Identifier</target>
+			</trans-unit>
 			<trans-unit id="settings.authenticationServicePriority">
 				<source>Authentication service priority: This defines the order of the OIDC authentication service in relation to other authentication services. Higher number wins.</source>
 				<target>Authentifizierungs-Service Priorität: Definiert die Reihenfolge des OIDC Authentifizierungs-Service in Bezug auf andere Authentifizierungs-Services. Höhere Zahl gewinnt.</target>

@@ -6,6 +6,7 @@ namespace Causal\Oidc\Middleware;
 
 use Causal\Oidc\AuthenticationContext;
 use Causal\Oidc\Http\CookieService;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\Service\OpenIdConnectService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,13 +15,16 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Cookie;
+use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Response;
+use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use function PHPUnit\Framework\isNull;
 
 class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
 {
@@ -42,23 +46,22 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getMethod() !== 'GET') {
+        $route = $request->getAttribute('route');
+        if (!is_null($route)) {
             return $handler->handle($request);
+        }
+
+        $queryParams = $request->getQueryParams();
+        $code = $queryParams['code'] ?? '';
+        if (!$code) {
+            return $this->enrichResponseWithCookie($request, $handler->handle($request));
         }
 
         $authContext = $this->resolveAuthenticationContext($request);
         if ($authContext) {
             $this->openIdConnectService->setAuthenticationContext($authContext);
             $this->logger->debug('Authentication context is available', ['data' => $authContext]);
-        }
-
-        $queryParams = $request->getQueryParams();
-        $code = $queryParams['code'] ?? '';
-        if (!$code) {
-            $response = $handler->handle($request);
-            return $this->enrichResponseWithCookie($request, $response);
-        }
-        if (!$authContext) {
+        } else {
             return (new Response())->withStatus(400, 'Missing OIDC authentication context');
         }
 
@@ -123,9 +126,30 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
         $path = $normalizedParams->getSitePath();
 
         $cookie = $this->cookieService->getCookieForAuthenticationContext($authContext, $secure, $path);
-        $response = $response->withAddedHeader('Set-Cookie', (string)$cookie);
 
-        return $response;
+        return $response->withAddedHeader('Set-Cookie', (string)$cookie);
+    }
+
+    /**
+     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::enrichResponseWithCookie
+     */
+    protected function enrichRequestWithLoginParams(ServerRequestInterface $request, $code): ServerRequestInterface
+    {
+        $loginUrlParams = ['logintype' => 'login'];
+        if ($request->getUri()->getPath() === '/typo3/login') {
+            $loginUrlParams = [
+                'login_status' => 'login',
+                'loginProvider' => OidcLoginProvider::IDENTIFIER,
+            ];
+        }
+
+        $loginUrlParams['tx_oidc'] = ['code' => $code];
+
+        if ($this->openIdConnectService->getAuthenticationContext()->redirectUrl && !str_contains($this->openIdConnectService->getAuthenticationContext()->getLoginUrl(), 'redirect_url=')) {
+            $loginUrlParams['redirect_url'] = $this->openIdConnectService->getAuthenticationContext()->redirectUrl;
+        }
+
+        return $request->withQueryParams(array_merge($request->getQueryParams(), $loginUrlParams));
     }
 
     protected function isHttps(ServerRequestInterface $request): bool

@@ -34,7 +34,7 @@ return [
             'authenticationServiceQuality' => '80',
             'authenticationUrlRoute' => 'oidc/authentication',
             'enableCodeVerifier' => '1',
-            'enableAuthentication' => '1',
+            'enableAuthentication' => 'FE',
             'userMustExistLocally' => '0',
             'oauthProviderFactory' => '',
             'oidcAuthorizeLanguageParameter' => 'language',

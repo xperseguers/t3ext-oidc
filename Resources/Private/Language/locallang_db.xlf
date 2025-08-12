@@ -8,6 +8,12 @@
 			<trans-unit id="fe_users.tx_oidc">
 				<source>OpenID Connect Identifier</source>
 			</trans-unit>
+			<trans-unit id="be_groups.tx_oidc_pattern">
+				<source>Case-insensitive pattern to match OpenID Connect role names (&#34;*&#34; matches every character, &#34;|&#34; to separate expressions)</source>
+			</trans-unit>
+			<trans-unit id="be_users.tx_oidc">
+				<source>OpenID Connect Identifier</source>
+			</trans-unit>
 			<trans-unit id="settings.authenticationServicePriority">
 				<source>Authentication service priority: This defines the order of the OIDC authentication service in relation to other authentication services. Higher number wins.</source>
 			</trans-unit>
@@ -82,6 +88,9 @@
 			</trans-unit>
 			<trans-unit id="tt_content.oidc_login">
 				<source>OIDC Login</source>
+			</trans-unit>
+			<trans-unit id="backend.login.link">
+				<source>Login with OpenID Connect</source>
 			</trans-unit>
 		</body>
 	</file>

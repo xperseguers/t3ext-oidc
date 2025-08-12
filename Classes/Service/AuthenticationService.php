@@ -27,6 +27,7 @@ use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -42,6 +43,8 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\PropagateResponseException;
+use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -321,7 +324,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         $userFetchConditions = [
             $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
-                GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
+                ($mode === 'FE' ? GeneralUtility::intExplode(',', $this->config['usersStoragePid']) : [0]),
                 Connection::PARAM_INT_ARRAY
             )),
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
@@ -493,7 +496,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
             $this->logger->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
-                'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
+                'pid' => ($mode === 'FE' ? GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0] : 0),
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
@@ -699,8 +702,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function getMapping(string $table, ServerRequestInterface $request): array
     {
-        $mapping = [];
-
         $defaultMapping = [
             'username'   => '<sub>',
             'name'       => '<name>',
@@ -713,7 +714,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             'country'    => '<Land>',
         ];
 
-        if ($table === 'fe_users') {
+        if ($table === 'fe_users' || $table === 'be_users') {
             $feSim = $this->getFrontendSimulation();
             $GLOBALS['TSFE'] = $feSim->getTSFE($request);
             $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
@@ -723,7 +724,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        return $mapping ?: $defaultMapping;
+        return $mapping ?? $defaultMapping;
     }
 
     protected function getFrontendSimulation(): FrontendSimulationInterface
@@ -756,5 +757,28 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     protected function getRequest(): ServerRequestInterface
     {
         return $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+    }
+
+    /**
+     * @throws PropagateResponseException
+     */
+    public function initAuth($mode, $loginData, $authInfo, $pObj): void
+    {
+        parent::initAuth($mode, $loginData, $authInfo, $pObj);
+
+        if ($mode === 'getUserBE'
+            && array_key_exists('loginProvider', $authInfo['request']->getQueryParams())
+            && $authInfo['request']->getQueryParams()['loginProvider'] === (string) OidcLoginProvider::IDENTIFIER
+            && (!array_key_exists('tx_oidc', $authInfo['request']->getQueryParams())
+                || !array_key_exists('code', $authInfo['request']->getQueryParams()['tx_oidc'])
+                || empty($authInfo['request']->getQueryParams()['tx_oidc']['code']))
+        ) {
+            $this->logger->debug('Initiate backend authentication');
+
+            throw new PropagateResponseException(
+                GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthorizationResponseRedirect($authInfo['request']),
+                1754406694
+            );
+        }
     }
 }
