@@ -82,6 +82,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
     }
 
+    public function getConfig(): array
+    {
+        return $this->config;
+    }
+
     /**
      * Finds a user.
      *
@@ -413,8 +418,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        // Map OIDC roles to TYPO3 user groups
+        // Map OIDC roles to TYPO3 user groups or admin field
         if (!empty($info['Roles'])) {
+            $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
+
+            // If no admin role is configured, authentication service doesn't manage that capability.
+            if ($mode == 'BE' && !empty($this->config['adminRole'])) {
+                $data['admin'] = 0;
+                if (in_array($this->config['adminRole'], $roles, true)) {
+                    $data['admin'] = 1;
+                    unset($roles[array_search($this->config['adminRole'], $roles, true)]);
+                }
+            }
+
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getQueryBuilderForTable($userGroupTable);
             $typo3Roles = $queryBuilder
@@ -426,7 +442,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->executeQuery()
                 ->fetchAllAssociative();
 
-            $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
             $roles = ',' . implode(',', $roles) . ',';
 
             foreach ($typo3Roles as $typo3Role) {
@@ -487,10 +502,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     ]
                 );
             }
-        } else {    // fe_users record does not already exist => create it
-            if (empty($newUserGroups)) {
-                // Somehow the user is not mapped to any local user group, we should not create the record
-                $this->logger->info('User has no associated local TYPO3 user group, denying access', ['user' => $row]);
+        } else {
+            // fe_users record does not already exist => create it
+            if (empty($newUserGroups) || ($mode == 'BE' && !empty($this->config['adminRole']) && $data['admin'] === 0)) {
+                // Somehow the user is not mapped to any local user group and is not an admin, we should not create the record
+                $this->logger->info('User has no associated local TYPO3 user group, denying access', ['user' => $data]);
 
                 return false;
             }

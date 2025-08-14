@@ -23,6 +23,9 @@
 			<trans-unit id="settings.authenticationUrlRoute">
 				<source>Route for retrieving the authentication URL of the Identity Provider</source>
 			</trans-unit>
+			<trans-unit id="settings.adminRole">
+				<source>Name of the role that elevates the user to administrator: If none, the authentication service doesn't manage that capability.</source>
+			</trans-unit>
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>

@@ -30,6 +30,10 @@
 				<source>Route for retrieving the authentication URL of the Identity Provider</source>
 				<target>Route um die Authentifzierungs-URL des Identitäts-Anbieters zu erhalten</target>
 			</trans-unit>
+			<trans-unit id="settings.adminRole">
+				<source>Name of the role that elevates the user to administrator: If none, the authentication service doesn't manage that capability.</source>
+				<target>Name der Rolle, die den Benutzer zum Administrator macht: Wenn keine vorhanden ist, verwaltet der Authentifizierungsdienst diese Funktion nicht.</target>
+			</trans-unit>
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 				<target>PKCE aktivieren: Aktiviert den PKCE-Fluss. Code-Challenge und Code-Verifier werden mitgeschickt.</target>
