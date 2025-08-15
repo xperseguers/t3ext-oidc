@@ -68,6 +68,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
+     * -100 - User is not authenticated - User is disabled or deleted
+     */
+    private const STATUS_AUTHENTICATION_FAILURE_BREAK = -100;
+
+    /**
      * Global extension configuration
      *
      * @var array
@@ -305,11 +310,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             return self::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
         }
 
+        if ($user['disable'] === 1 || $user['deleted'] === 1) {
+            return self::STATUS_AUTHENTICATION_FAILURE_BREAK;
+        }
+
         return self::STATUS_AUTHENTICATION_SUCCESS_BREAK;
     }
 
     /**
-     * Converts a resource owner into a TYPO3 Frontend user.
+     * Converts a resource owner into a TYPO3 user.
      *
      * @param array $info
      * @return array|bool
@@ -349,6 +358,29 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $undeleteUser = (bool)$this->config['undeleteUsers'];
         $userMustExistLocally = (bool)$this->config['userMustExistLocally'];
 
+        $data = $this->applyMapping(
+            $userTable,
+            $info,
+            $row ?: [],
+            [
+                'tx_oidc' => $info['sub'],
+                'deleted' => 0,
+                'disable' => 0,
+            ]
+        );
+
+        // preserve password for existing users
+        // this line disallows the integrator to mess with the password
+        if ($row) {
+            unset($data['password']);
+        }
+
+        if (session_id() === '') { // If no session exists, start a new one
+            session_start();
+        }
+
+        $_SESSION['oidc_user'] = $data;
+
         if (!empty($row) && $row['deleted'] && !$undeleteUser) {
             // User was manually deleted, it should not get automatically restored
             $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
@@ -366,23 +398,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
 
             return false;
-        }
-
-        $data = $this->applyMapping(
-            $userTable,
-            $info,
-            $row ?: [],
-            [
-                'tx_oidc' => $info['sub'],
-                'deleted' => 0,
-                'disable' => 0,
-            ]
-        );
-
-        // preserve password for existing users
-        // this line disallows the integrator to mess with the password
-        if ($row) {
-            unset($data['password']);
         }
 
         $newUserGroups = [];
@@ -482,6 +497,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
 
+            // User without group or admin flag must not be able to log in.
+            if (($mode == 'FE' && empty($user['usergroup']))
+                || ($mode == 'BE' && empty($user['usergroup']) && $user['admin'] === 0) ) {
+                $user['disable'] = 1;
+            }
+
             $event = new ModifyUserEvent($user, $this, $info);
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
@@ -503,14 +524,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 );
             }
         } else {
-            // fe_users record does not already exist => create it
-            if (empty($newUserGroups) || ($mode == 'BE' && !empty($this->config['adminRole']) && $data['admin'] === 0)) {
-                // Somehow the user is not mapped to any local user group and is not an admin, we should not create the record
-                $this->logger->info('User has no associated local TYPO3 user group, denying access', ['user' => $data]);
+            // fe_users/be_users record does not already exist => create it
+            if (empty($newUserGroups) && $mode == 'FE') {
+                // Somehow the user is not mapped to any local user group, we should not create the record
+                $this->logger->info('User has no associated local TYPO3 frontend user group, denying access', ['user' => $data]);
 
                 return false;
             }
-            $this->logger->info('New user detected, creating a TYPO3 user');
+
             $data = array_merge($data, [
                 'pid' => ($mode === 'FE' ? GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0] : 0),
                 'usergroup' => implode(',', $newUserGroups),
@@ -524,6 +545,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $data = $event->getUser();
+
+            if (empty($newUserGroups) && (!array_key_exists('admin', $data) || $data['admin'] === 0)) {
+                // Somehow the user is not mapped to any local user group and is not an admin, we should not create the record
+                $this->logger->info('User has no associated local TYPO3 backend user group and is not an admin, denying access', ['user' => $data]);
+
+                return false;
+            }
+
+            $this->logger->info('New user detected, creating a TYPO3 user');
 
             $tableConnection->insert(
                 $userTable,

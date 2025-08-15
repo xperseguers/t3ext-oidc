@@ -1,2 +1,12 @@
 <f:layout name="Login" />
-<f:section name="loginFormFields"></f:section>
+<f:section name="loginFormFields">
+    <f:if condition="{hasOidcLoginError}">
+        <h2 class="card-title text-center my-3"><f:translate key="LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:login.welcome" arguments="{0:oidcUser}" /></h2>
+        <div class="t3js-login-error mb-2" id="t3-login-error">
+            <div class="alert alert-danger">
+                <strong><f:translate key="LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.error.message" /></strong>
+                <p><f:translate key="LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:login.error.description" /></p>
+            </div>
+        </div>
+    </f:if>
+</f:section>

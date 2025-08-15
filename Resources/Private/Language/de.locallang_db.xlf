@@ -122,6 +122,17 @@
 				<source>OIDC Login</source>
 				<target>OIDC-Anmeldung</target>
 			</trans-unit>
+			<trans-unit id="backend.login.link">
+				<source>Login with OpenID Connect</source>
+				<target>Anmeldung mit OpenID Connect</target>
+			</trans-unit>
+			<trans-unit id="login.welcome">
+				<source>Hallo %s</source>
+			</trans-unit>
+			<trans-unit id="login.error.description">
+				<source>It appears you do not have access to this environment. Please contact your local administrator if you believe this is an error.</source>
+				<target>Sie haben offenbar keinen Zugriff auf diese Umgebung. Wenden Sie sich an Ihren lokalen Administrator, wenn Sie glauben, dass es sich um einen Fehler handelt.</target>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

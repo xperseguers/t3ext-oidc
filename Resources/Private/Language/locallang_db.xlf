@@ -95,6 +95,12 @@
 			<trans-unit id="backend.login.link">
 				<source>Login with OpenID Connect</source>
 			</trans-unit>
+			<trans-unit id="login.welcome">
+				<source>Hello %s</source>
+			</trans-unit>
+			<trans-unit id="login.error.description">
+				<source>It appears you do not have access to this environment. Please contact your local administrator if you believe this is an error.</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>
