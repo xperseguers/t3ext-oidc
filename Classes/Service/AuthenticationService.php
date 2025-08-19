@@ -35,6 +35,7 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Configuration\ConfigurationManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
@@ -331,6 +332,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $mode = $this->authInfo['loginType'];
         $userTable = $this->db_user['table'];
         $userGroupTable = $mode === 'FE' ? 'fe_groups' : 'be_groups';
+        $isSystemMaintainer = false;
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($userTable);
@@ -437,13 +439,23 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if (!empty($info['Roles'])) {
             $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
 
-            // If no admin role is configured, authentication service doesn't manage that capability.
-            if ($mode == 'BE' && !empty($this->config['adminRole'])) {
+            // If no admin role is configured, authentication service doesn't manage that capability nor system maintainers.
+            if ($mode === 'BE' && !empty($this->config['adminRole'])) {
                 $data['admin'] = 0;
                 if (in_array($this->config['adminRole'], $roles, true)) {
                     $data['admin'] = 1;
-                    unset($roles[array_search($this->config['adminRole'], $roles, true)]);
+                    if (!empty($this->config['maintainerRole']) && in_array($this->config['maintainerRole'], $roles, true)) {
+                        $isSystemMaintainer = true;
+                    }
                 }
+            }
+
+            if (!empty($this->config['adminRole']) && ($adminRoleKey = array_search($this->config['adminRole'], $roles, true)) !== false) {
+                unset($roles[$adminRoleKey]);
+            }
+
+            if (!empty($this->config['maintainerRole']) && ($maintainerRoleKey = array_search($this->config['maintainerRole'], $roles, true)) !== false) {
+                unset($roles[$maintainerRoleKey]);
             }
 
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
@@ -503,11 +515,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 $user['disable'] = 1;
             }
 
-            $event = new ModifyUserEvent($user, $this, $info);
+            $event = new ModifyUserEvent($user, $this, $info, $isSystemMaintainer);
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
+            $isSystemMaintainer = $event->isSystemMaintainer();
 
             if ($user != $row) {
                 $this->logger->debug('Updating existing user', [
@@ -540,11 +553,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'password' => $this->generatePassword($mode),
             ]);
 
-            $event = new ModifyUserEvent($data, $this, $info);
+            $event = new ModifyUserEvent($data, $this, $info, $isSystemMaintainer);
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $data = $event->getUser();
+            $isSystemMaintainer = $event->isSystemMaintainer();
 
             if (empty($newUserGroups) && (!array_key_exists('admin', $data) || $data['admin'] === 0)) {
                 // Somehow the user is not mapped to any local user group and is not an admin, we should not create the record
@@ -562,6 +576,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $userUid = $tableConnection->lastInsertId();
             // Retrieve the created user from database to get all columns
             $user = $this->getUserByUidAndTable((int)$userUid, $userTable);
+        }
+
+        if ($mode == 'BE' && !empty($this->config['adminRole']) && !empty($this->config['maintainerRole'])) {
+            $this->manageSystemMaintainers($user['uid'], $isSystemMaintainer);
         }
 
         $this->logger->debug('Authentication user record processed', $user);
@@ -826,5 +844,32 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 1754406694
             );
         }
+    }
+
+    protected function manageSystemMaintainers(int $uid, bool $isSystemMaintainer): void
+    {
+        $configurationManager = GeneralUtility::makeInstance(ConfigurationManager::class);
+        $validatedUserList = $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'];
+
+        if (!$isSystemMaintainer && in_array($uid, $validatedUserList)) {
+            // User must not be granted "System Maintainer" rights
+            unset($validatedUserList[array_search($uid, $validatedUserList)]);
+        }
+        if ($isSystemMaintainer && !in_array($uid, $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'])) {
+            // User must be granted "System Maintainer" rights
+            $validatedUserList[] = $uid;
+        }
+        if ($validatedUserList === $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers']) {
+            return;
+        }
+
+        $configurationManager->setLocalConfigurationValuesByPathValuePairs(
+            ['SYS/systemMaintainers' => $validatedUserList]
+        );
+
+        $this->logger->debug('Updating existing System Maintainers', [
+            'old' => $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'],
+            'new' => $validatedUserList,
+        ]);
     }
 }
