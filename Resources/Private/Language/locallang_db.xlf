@@ -8,6 +8,12 @@
 			<trans-unit id="fe_users.tx_oidc">
 				<source>OpenID Connect Identifier</source>
 			</trans-unit>
+			<trans-unit id="be_groups.tx_oidc_pattern">
+				<source>Case-insensitive pattern to match OpenID Connect role names (&#34;*&#34; matches every character, &#34;|&#34; to separate expressions)</source>
+			</trans-unit>
+			<trans-unit id="be_users.tx_oidc">
+				<source>OpenID Connect Identifier</source>
+			</trans-unit>
 			<trans-unit id="settings.authenticationServicePriority">
 				<source>Authentication service priority: This defines the order of the OIDC authentication service in relation to other authentication services. Higher number wins.</source>
 			</trans-unit>
@@ -17,14 +23,20 @@
 			<trans-unit id="settings.authenticationUrlRoute">
 				<source>Route for retrieving the authentication URL of the Identity Provider</source>
 			</trans-unit>
+			<trans-unit id="settings.adminRole">
+				<source>Name of the role that elevates the user to administrator: If none, the authentication service doesn't manage that capability.</source>
+			</trans-unit>
+			<trans-unit id="settings.maintainerRole">
+				<source>Name of the role that elevates the user to maintainer</source>
+			</trans-unit>
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>
-			<trans-unit id="settings.enableFrontendAuthentication">
-				<source>Frontend Authentication: Enable OpenID Connect authentication for the frontend.</source>
+			<trans-unit id="settings.enableAuthentication">
+				<source>Authentication: Enable OpenID Connect authentication for the frontend or backend.</source>
 			</trans-unit>
-			<trans-unit id="settings.frontendUserMustExistLocally" resname="settings.frontendUserMustExistLocally">
-				<source>Frontend User Must Exist: If ticked, only Frontend Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
+			<trans-unit id="settings.userMustExistLocally">
+				<source>User Must Exist: If ticked, only Users who are present locally in TYPO3 will be able to authenticate with OpenID Connect. You may need to watch logs to find users who could not authenticate.</source>
 			</trans-unit>
 			<trans-unit id="settings.oauthProviderFactory">
 				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
@@ -65,14 +77,14 @@
 			<trans-unit id="settings.oidcUseRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 			</trans-unit>
-			<trans-unit id="settings.reEnableFrontendUsers">
-				<source>Re-enable Frontend Users: If ticked, will automatically re-enable Frontend users marked as &#34;disabled&#34; upon successful authentication.</source>
+			<trans-unit id="settings.reEnableUsers">
+				<source>Re-enable Users: If ticked, will automatically re-enable users marked as &#34;disabled&#34; upon successful authentication.</source>
 			</trans-unit>
 			<trans-unit id="settings.revokeAccessTokenAfterLogin">
 				<source>Revoke TYPO3&#39;s access token at the end of the login process</source>
 			</trans-unit>
-			<trans-unit id="settings.undeleteFrontendUsers">
-				<source>Undelete Frontend Users: If ticked, will automatically restore Frontend users marked as &#34;deleted&#34; upon successful authentication.</source>
+			<trans-unit id="settings.undeleteUsers">
+				<source>Undelete Users: If ticked, will automatically restore users marked as &#34;deleted&#34; upon successful authentication.</source>
 			</trans-unit>
 			<trans-unit id="settings.usersDefaultGroup">
 				<source>Default user group(s) (comma-separated list of UIDs)</source>
@@ -82,6 +94,15 @@
 			</trans-unit>
 			<trans-unit id="tt_content.oidc_login">
 				<source>OIDC Login</source>
+			</trans-unit>
+			<trans-unit id="backend.login.link">
+				<source>Login with OpenID Connect</source>
+			</trans-unit>
+			<trans-unit id="login.welcome">
+				<source>Hello %s</source>
+			</trans-unit>
+			<trans-unit id="login.error.description">
+				<source>It appears you do not have access to this environment. Please contact your local administrator if you believe this is an error.</source>
 			</trans-unit>
 		</body>
 	</file>

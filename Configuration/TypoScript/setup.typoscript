@@ -12,4 +12,8 @@ plugin.tx_oidc.mapping {
         city       = <locality>
         country    = <country>
     }
+    be_users {
+        username   = <sub>
+        realName   = <name>
+    }
 }
