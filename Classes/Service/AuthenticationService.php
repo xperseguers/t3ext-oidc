@@ -509,18 +509,18 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
 
-            // User without group or admin flag must not be able to log in.
-            if (($mode == 'FE' && empty($user['usergroup']))
-                || ($mode == 'BE' && empty($user['usergroup']) && $user['admin'] === 0) ) {
-                $user['disable'] = 1;
-            }
-
             $event = new ModifyUserEvent($user, $this, $info, $isSystemMaintainer);
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
             $isSystemMaintainer = $event->isSystemMaintainer();
+
+            // User without group or admin flag must not be able to log in.
+            if (($mode == 'FE' && empty($user['usergroup']))
+                || ($mode == 'BE' && empty($user['usergroup']) && $user['admin'] === 0) ) {
+                $user['disable'] = 1;
+            }
 
             if ($user != $row) {
                 $this->logger->debug('Updating existing user', [
