@@ -77,6 +77,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     public function __construct()
     {
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
+        if (!array_key_exists('userIDClaim', $this->config) || empty($this->config['userIDClaim'])) {
+            $this->config['userIDClaim'] = 'sub';
+        }
     }
 
     /**
@@ -245,8 +248,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        if (empty($resourceOwner['sub'])) {
-            $this->logger->error('No "sub" found in resource owner, revoking access token');
+        if (empty($resourceOwner[$this->config['userIDClaim']])) {
+            $this->logger->error('No "' . $this->config['userIDClaim'] . '" found in resource owner, revoking access token');
             try {
                 $service->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
@@ -254,8 +257,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 return false;
             }
             throw new RuntimeException(
-                'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
-                    . '. Your access token has been revoked. Please try again.',
+                'Resource owner does not have a ' . $this->config['userIDClaim'] . ' part: '
+                    . json_encode($resourceOwner) . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
@@ -324,7 +327,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
                 Connection::PARAM_INT_ARRAY
             )),
-            $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
+            $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info[$this->config['userIDClaim']])),
         ];
 
         $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this);
@@ -365,7 +368,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $info,
             $row ?: [],
             [
-                'tx_oidc' => $info['sub'],
+                'tx_oidc' => $info[$this->config['userIDClaim']],
                 'deleted' => 0,
                 'disable' => 0,
             ]
@@ -496,7 +499,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
-                'tx_oidc' => $info['sub'],
+                'tx_oidc' => $info[$this->config['userIDClaim']],
                 'password' => $this->generatePassword($mode),
             ]);
 
@@ -702,7 +705,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $mapping = [];
 
         $defaultMapping = [
-            'username'   => '<sub>',
+            'username'   => '<' . $this->config['userIDClaim'] . '>',
             'name'       => '<name>',
             'first_name' => '<Vorname>',
             'last_name'  => '<FamilienName>',
