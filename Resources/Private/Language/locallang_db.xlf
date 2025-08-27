@@ -27,7 +27,7 @@
 				<source>Name of the role that elevates the user to administrator: If none, the authentication service doesn't manage that capability.</source>
 			</trans-unit>
 			<trans-unit id="settings.maintainerRole">
-				<source>Name of the role that elevates the user to maintainer</source>
+				<source>Name of the role that elevates the user to maintainer: If none, the authentication service doesn't manage that capability.</source>
 			</trans-unit>
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
