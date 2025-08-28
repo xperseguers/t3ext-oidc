@@ -849,17 +849,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     protected function manageSystemMaintainers(int $uid, bool $isSystemMaintainer): void
     {
         $configurationManager = GeneralUtility::makeInstance(ConfigurationManager::class);
-        $validatedUserList = $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'];
+        $validatedUserList = $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'] ?? [];
 
         if (!$isSystemMaintainer && in_array($uid, $validatedUserList)) {
             // User must not be granted "System Maintainer" rights
             unset($validatedUserList[array_search($uid, $validatedUserList)]);
         }
-        if ($isSystemMaintainer && !in_array($uid, $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'])) {
+        if ($isSystemMaintainer && !in_array($uid, $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'] ?? [])) {
             // User must be granted "System Maintainer" rights
             $validatedUserList[] = $uid;
         }
-        if ($validatedUserList === $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers']) {
+        if ($validatedUserList === ($GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'] ?? [])) {
             return;
         }
 
