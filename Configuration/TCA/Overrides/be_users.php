@@ -6,7 +6,7 @@ $settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core
 $tempColumns = [
     'tx_oidc' => [
         'exclude' => true,
-        'label' => 'LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:fe_users.tx_oidc',
+        'label' => 'LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:be_users.tx_oidc',
         'config' => [
             'type' => 'input',
             'size' => 30,
@@ -15,5 +15,5 @@ $tempColumns = [
     ],
 ];
 
-\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('fe_users', $tempColumns);
-\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('fe_users', 'tx_oidc');
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('be_users', $tempColumns);
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('be_users', 'tx_oidc');

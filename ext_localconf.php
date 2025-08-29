@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Causal\Oidc\Hooks\DataHandlerOidc;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\Service\AuthenticationService;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -18,13 +19,29 @@ $settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oi
 
 // Service configuration
 $subTypes = '';
-if ($settings['enableFrontendAuthentication'] ?? '') {
-    $subTypesArr = [
-        'getUserFE',
-        'authUserFE',
-        'getGroupsFE',
-    ];
-    $subTypes = implode(',', $subTypesArr);
+if ($settings['enableAuthentication'] ?? '') {
+    $subTypesArr = [];
+    if ($settings['enableAuthentication'] === 'FE') {
+        $subTypesArr += [
+            'getUserFE',
+            'authUserFE',
+            'getGroupsFE',
+        ];
+    }
+    if ($settings['enableAuthentication'] === 'BE') {
+        $subTypesArr += [
+            'getUserBE',
+            'authUserBE',
+        ];
+
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
+            'provider' => \Causal\Oidc\LoginProvider\OidcLoginProvider::class,
+            'sorting' => (int)($settings['authenticationServicePriority'] ?? 82),
+            'iconIdentifier' => 'ext-oidc-icon',
+            'label' => 'LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:backend.login.link'
+        ];
+    }
+    $subTypes = implode(',', $subTypesArr ?? []);
 }
 
 $authenticationClassName = AuthenticationService::class;

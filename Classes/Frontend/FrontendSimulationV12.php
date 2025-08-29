@@ -27,7 +27,12 @@ class FrontendSimulationV12 implements FrontendSimulationInterface
             $site = $routeResult->getSite();
             if ($site instanceof Site) {
                 try {
-                    $pageArguments = $site->getRouter()->matchRequest($originalRequest, $routeResult);
+                    if ($routeResult->getTail() === 'typo3/login') {
+                        $pageArguments = GeneralUtility::makeInstance(PageArguments::class, $site->getRootPageId(), '0', []);
+                    } else {
+                        $pageArguments = $site->getRouter()->matchRequest($originalRequest, $routeResult);
+                    }
+
                     if ($pageArguments instanceof PageArguments) {
                         return GeneralUtility::makeInstance(
                             TypoScriptFrontendController::class,

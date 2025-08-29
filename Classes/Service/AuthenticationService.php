@@ -27,6 +27,7 @@ use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -34,6 +35,7 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Configuration\ConfigurationManager;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
@@ -42,6 +44,8 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\PropagateResponseException;
+use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -65,6 +69,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     /**
+     * -100 - User is not authenticated - User is disabled or deleted
+     */
+    private const STATUS_AUTHENTICATION_FAILURE_BREAK = -100;
+
+    /**
      * Global extension configuration
      *
      * @var array
@@ -77,6 +86,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     public function __construct()
     {
         $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
+    }
+
+    public function getConfig(): array
+    {
+        return $this->config;
     }
 
     /**
@@ -297,11 +311,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             return self::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
         }
 
+        if ($user['disable'] === 1 || $user['deleted'] === 1) {
+            return self::STATUS_AUTHENTICATION_FAILURE_BREAK;
+        }
+
         return self::STATUS_AUTHENTICATION_SUCCESS_BREAK;
     }
 
     /**
-     * Converts a resource owner into a TYPO3 Frontend user.
+     * Converts a resource owner into a TYPO3 user.
      *
      * @param array $info
      * @return array|bool
@@ -314,6 +332,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $mode = $this->authInfo['loginType'];
         $userTable = $this->db_user['table'];
         $userGroupTable = $mode === 'FE' ? 'fe_groups' : 'be_groups';
+        $isSystemMaintainer = false;
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($userTable);
@@ -321,7 +340,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         $userFetchConditions = [
             $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
-                GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
+                ($mode === 'FE' ? GeneralUtility::intExplode(',', $this->config['usersStoragePid']) : [0]),
                 Connection::PARAM_INT_ARRAY
             )),
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
@@ -337,28 +356,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->executeQuery()
             ->fetchAssociative();
 
-        $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
-        $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
-        $frontendUserMustExistLocally = (bool)$this->config['frontendUserMustExistLocally'];
-
-        if (!empty($row) && $row['deleted'] && !$undeleteUser) {
-            // User was manually deleted, it should not get automatically restored
-            $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
-
-            return false;
-        }
-        if (!empty($row) && $row['disable'] && !$reEnableUser) {
-            // User was manually disabled, it should not get automatically re-enabled
-            $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
-
-            return false;
-        }
-        if (empty($row) && $frontendUserMustExistLocally) {
-            // User does not exist locally, it should not be created on-the-fly
-            $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
-
-            return false;
-        }
+        $reEnableUser = (bool)$this->config['reEnableUsers'];
+        $undeleteUser = (bool)$this->config['undeleteUsers'];
+        $userMustExistLocally = (bool)$this->config['userMustExistLocally'];
 
         $data = $this->applyMapping(
             $userTable,
@@ -377,8 +377,33 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             unset($data['password']);
         }
 
+        if (session_id() === '') { // If no session exists, start a new one
+            session_start();
+        }
+
+        $_SESSION['oidc_user'] = $data;
+
+        if (!empty($row) && $row['deleted'] && !$undeleteUser) {
+            // User was manually deleted, it should not get automatically restored
+            $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
+
+            return false;
+        }
+        if (!empty($row) && $row['disable'] && !$reEnableUser) {
+            // User was manually disabled, it should not get automatically re-enabled
+            $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
+
+            return false;
+        }
+        if (empty($row) && $userMustExistLocally) {
+            // User does not exist locally, it should not be created on-the-fly
+            $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
+
+            return false;
+        }
+
         $newUserGroups = [];
-        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup']);
+        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup'], true);
 
         if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
@@ -410,8 +435,29 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        // Map OIDC roles to TYPO3 user groups
+        // Map OIDC roles to TYPO3 user groups or admin field
         if (!empty($info['Roles'])) {
+            $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
+
+            // If no admin role is configured, authentication service doesn't manage that capability nor system maintainers.
+            if ($mode === 'BE' && !empty($this->config['adminRole'])) {
+                $data['admin'] = 0;
+                if (in_array($this->config['adminRole'], $roles, true)) {
+                    $data['admin'] = 1;
+                    if (!empty($this->config['maintainerRole']) && in_array($this->config['maintainerRole'], $roles, true)) {
+                        $isSystemMaintainer = true;
+                    }
+                }
+            }
+
+            if (!empty($this->config['adminRole']) && ($adminRoleKey = array_search($this->config['adminRole'], $roles, true)) !== false) {
+                unset($roles[$adminRoleKey]);
+            }
+
+            if (!empty($this->config['maintainerRole']) && ($maintainerRoleKey = array_search($this->config['maintainerRole'], $roles, true)) !== false) {
+                unset($roles[$maintainerRoleKey]);
+            }
+
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
                 ->getQueryBuilderForTable($userGroupTable);
             $typo3Roles = $queryBuilder
@@ -423,7 +469,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->executeQuery()
                 ->fetchAllAssociative();
 
-            $roles = is_array($info['Roles']) ? $info['Roles'] : GeneralUtility::trimExplode(',', $info['Roles'], true);
             $roles = ',' . implode(',', $roles) . ',';
 
             foreach ($typo3Roles as $typo3Role) {
@@ -464,11 +509,18 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
 
-            $event = new ModifyUserEvent($user, $this, $info);
+            $event = new ModifyUserEvent($user, $this, $info, $isSystemMaintainer);
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $user = $event->getUser();
+            $isSystemMaintainer = $event->isSystemMaintainer();
+
+            // User without group or admin flag must not be able to log in.
+            if (($mode == 'FE' && empty($user['usergroup']))
+                || ($mode == 'BE' && empty($user['usergroup']) && $user['admin'] === 0) ) {
+                $user['disable'] = 1;
+            }
 
             if ($user != $row) {
                 $this->logger->debug('Updating existing user', [
@@ -484,27 +536,38 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                     ]
                 );
             }
-        } else {    // fe_users record does not already exist => create it
-            if (empty($newUserGroups)) {
+        } else {
+            // fe_users/be_users record does not already exist => create it
+            if (empty($newUserGroups) && $mode == 'FE') {
                 // Somehow the user is not mapped to any local user group, we should not create the record
-                $this->logger->info('User has no associated local TYPO3 user group, denying access', ['user' => $row]);
+                $this->logger->info('User has no associated local TYPO3 frontend user group, denying access', ['user' => $data]);
 
                 return false;
             }
-            $this->logger->info('New user detected, creating a TYPO3 user');
+
             $data = array_merge($data, [
-                'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
+                'pid' => ($mode === 'FE' ? GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0] : 0),
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $info['sub'],
                 'password' => $this->generatePassword($mode),
             ]);
 
-            $event = new ModifyUserEvent($data, $this, $info);
+            $event = new ModifyUserEvent($data, $this, $info, $isSystemMaintainer);
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
             $eventDispatcher->dispatch($event);
             $data = $event->getUser();
+            $isSystemMaintainer = $event->isSystemMaintainer();
+
+            if (empty($newUserGroups) && (!array_key_exists('admin', $data) || $data['admin'] === 0)) {
+                // Somehow the user is not mapped to any local user group and is not an admin, we should not create the record
+                $this->logger->info('User has no associated local TYPO3 backend user group and is not an admin, denying access', ['user' => $data]);
+
+                return false;
+            }
+
+            $this->logger->info('New user detected, creating a TYPO3 user');
 
             $tableConnection->insert(
                 $userTable,
@@ -513,6 +576,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $userUid = $tableConnection->lastInsertId();
             // Retrieve the created user from database to get all columns
             $user = $this->getUserByUidAndTable((int)$userUid, $userTable);
+        }
+
+        if ($mode == 'BE' && !empty($this->config['adminRole']) && !empty($this->config['maintainerRole'])) {
+            $this->manageSystemMaintainers($user['uid'], $isSystemMaintainer);
         }
 
         $this->logger->debug('Authentication user record processed', $user);
@@ -685,7 +752,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        $typo3[$field] = $mappedValue;
+        $typo3[$field] = $field === 'username' ? strtolower($mappedValue) : $mappedValue;
 
         return $typo3;
     }
@@ -699,8 +766,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function getMapping(string $table, ServerRequestInterface $request): array
     {
-        $mapping = [];
-
         $defaultMapping = [
             'username'   => '<sub>',
             'name'       => '<name>',
@@ -713,7 +778,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             'country'    => '<Land>',
         ];
 
-        if ($table === 'fe_users') {
+        if ($table === 'fe_users' || $table === 'be_users') {
             $feSim = $this->getFrontendSimulation();
             $GLOBALS['TSFE'] = $feSim->getTSFE($request);
             $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
@@ -723,7 +788,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        return $mapping ?: $defaultMapping;
+        return $mapping ?? $defaultMapping;
     }
 
     protected function getFrontendSimulation(): FrontendSimulationInterface
@@ -756,5 +821,55 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     protected function getRequest(): ServerRequestInterface
     {
         return $this->authInfo['request'] ?? $GLOBALS['TYPO3_REQUEST'] ?? ServerRequestFactory::fromGlobals();
+    }
+
+    /**
+     * @throws PropagateResponseException
+     */
+    public function initAuth($mode, $loginData, $authInfo, $pObj): void
+    {
+        parent::initAuth($mode, $loginData, $authInfo, $pObj);
+
+        if ($mode === 'getUserBE'
+            && array_key_exists('loginProvider', $authInfo['request']->getQueryParams())
+            && $authInfo['request']->getQueryParams()['loginProvider'] === (string) OidcLoginProvider::IDENTIFIER
+            && (!array_key_exists('tx_oidc', $authInfo['request']->getQueryParams())
+                || !array_key_exists('code', $authInfo['request']->getQueryParams()['tx_oidc'])
+                || empty($authInfo['request']->getQueryParams()['tx_oidc']['code']))
+        ) {
+            $this->logger->debug('Initiate backend authentication');
+
+            throw new PropagateResponseException(
+                GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthorizationResponseRedirect($authInfo['request']),
+                1754406694
+            );
+        }
+    }
+
+    protected function manageSystemMaintainers(int $uid, bool $isSystemMaintainer): void
+    {
+        $configurationManager = GeneralUtility::makeInstance(ConfigurationManager::class);
+        $validatedUserList = $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'] ?? [];
+
+        if (!$isSystemMaintainer && in_array($uid, $validatedUserList)) {
+            // User must not be granted "System Maintainer" rights
+            unset($validatedUserList[array_search($uid, $validatedUserList)]);
+        }
+        if ($isSystemMaintainer && !in_array($uid, $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'] ?? [])) {
+            // User must be granted "System Maintainer" rights
+            $validatedUserList[] = $uid;
+        }
+        if ($validatedUserList === ($GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'] ?? [])) {
+            return;
+        }
+
+        $configurationManager->setLocalConfigurationValuesByPathValuePairs(
+            ['SYS/systemMaintainers' => $validatedUserList]
+        );
+
+        $this->logger->debug('Updating existing System Maintainers', [
+            'old' => $GLOBALS['TYPO3_CONF_VARS']['SYS']['systemMaintainers'],
+            'new' => $validatedUserList,
+        ]);
     }
 }

@@ -1,14 +1,14 @@
-# cat=basic/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableFrontendAuthentication
-enableFrontendAuthentication = 0
+# cat=basic/enable/1; type=options[Disable=,Frontend=FE,Backend=BE]; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableAuthentication
+enableAuthentication =
 
-# cat=basic/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.reEnableFrontendUsers
-reEnableFrontendUsers = 0
+# cat=basic/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.reEnableUsers
+reEnableUsers = 0
 
-# cat=basic/enable/3; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.undeleteFrontendUsers
-undeleteFrontendUsers = 0
+# cat=basic/enable/3; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.undeleteUsers
+undeleteUsers = 0
 
-# cat=basic/enable/4; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.frontendUserMustExistLocally
-frontendUserMustExistLocally = 0
+# cat=basic/enable/4; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.userMustExistLocally
+userMustExistLocally = 0
 
 # cat=basic/enable/5; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.enableCodeVerifier
 enableCodeVerifier = 0
@@ -69,3 +69,9 @@ authenticationServiceQuality = 80
 
 # cat=advanced//6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.authenticationUrlRoute
 authenticationUrlRoute = oidc/authentication
+
+# cat=advanced//7; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.adminRole
+adminRole =
+
+# cat=advanced//8; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.maintainerRole
+maintainerRole =
