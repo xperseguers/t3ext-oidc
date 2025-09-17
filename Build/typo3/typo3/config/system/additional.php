@@ -1,4 +1,5 @@
 <?php
+
 (function () {
     // configure TYPO3
     $GLOBALS['TYPO3_CONF_VARS'] = array_replace_recursive($GLOBALS['TYPO3_CONF_VARS'], [
@@ -19,10 +20,9 @@
         ],
     ]);
 
-
     // SMTP mailserver
     if (getenv('TYPO3_SMTP_HOST')) {
-        $port = getenv('TYPO3_SMTP_PORT') ? (int) getenv('TYPO3_SMTP_PORT') : 25;
+        $port = getenv('TYPO3_SMTP_PORT') ? (int)getenv('TYPO3_SMTP_PORT') : 25;
         $server = sprintf('%s:%s', getenv('TYPO3_SMTP_HOST'), $port);
 
         $GLOBALS['TYPO3_CONF_VARS']['MAIL'] = array_replace($GLOBALS['TYPO3_CONF_VARS']['MAIL'], [
@@ -31,7 +31,7 @@
         ]);
 
         $properties = ['encrypt', 'username', 'password'];
-        foreach($properties as $property) {
+        foreach ($properties as $property) {
             $envVariableName = 'TYPO3_SMTP_' . strtoupper($property);
             $configurationKey = 'transport_smtp_' . strtolower($property);
 
@@ -41,7 +41,6 @@
             }
         }
     }
-
 
     // install tool
     if (getenv('TYPO3_INSTALL_TOOL_PASSWORD')) {

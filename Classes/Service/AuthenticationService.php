@@ -35,6 +35,7 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
@@ -46,7 +47,6 @@ use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
-use TYPO3\CMS\Core\Context\Context;
 use UnexpectedValueException;
 
 /**
@@ -652,7 +652,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // Constant by default
         $mappedValue = $value;
 
-        if (preg_match("`<([^$]*)>`", $value)) {    // OIDC attribute
+        if (preg_match('`<([^$]*)>`', $value)) {    // OIDC attribute
             $sections = !str_contains($value, '//')
                 ? [$value]
                 : GeneralUtility::trimExplode('//', $value, true);

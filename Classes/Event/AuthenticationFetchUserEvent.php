@@ -46,7 +46,8 @@ final class AuthenticationFetchUserEvent
         $this->authenticationService = $authenticationService;
     }
 
-    public function getResourceInfo(): array {
+    public function getResourceInfo(): array
+    {
         return $this->resourceInfo;
     }
 

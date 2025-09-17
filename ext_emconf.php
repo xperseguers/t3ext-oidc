@@ -1,4 +1,5 @@
 <?php
+
 $EM_CONF[$_EXTKEY] = [
     'title' => 'OpenID Connect Authentication',
     'description' => 'This extension uses OpenID Connect to authenticate users.',

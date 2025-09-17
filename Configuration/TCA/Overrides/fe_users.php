@@ -1,4 +1,5 @@
 <?php
+
 defined('TYPO3') or die();
 
 $settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('oidc') ?? [];
@@ -11,7 +12,7 @@ $tempColumns = [
             'type' => 'input',
             'size' => 30,
             'readOnly' => !($settings['frontendUserMustExistLocally'] ?? ''),
-        ]
+        ],
     ],
 ];
 

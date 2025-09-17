@@ -27,8 +27,7 @@ final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
     public function __construct(
         private GuzzleClientFactory $clientFactory,
         private RequestFactory $requestFactory,
-    ) {
-    }
+    ) {}
 
     public function create(array $settings): AbstractProvider
     {
@@ -37,7 +36,8 @@ final class GenericOAuthProviderFactory implements OAuthProviderFactoryInterface
             'requestFactory' => $this->requestFactory,
         ];
 
-        return new GenericProvider([
+        return new GenericProvider(
+            [
                 'clientId' => $settings['oidcClientKey'],
                 'clientSecret' => $settings['oidcClientSecret'],
                 'redirectUri' => $settings['oidcRedirectUri'],

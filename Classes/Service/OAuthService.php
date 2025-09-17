@@ -28,13 +28,13 @@ use League\OAuth2\Client\Grant\RefreshToken;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use League\OAuth2\Client\Token\AccessToken;
 
 /**
  * Class OAuthService.
@@ -51,7 +51,6 @@ class OAuthService
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
     ) {}
-
 
     /**
      * Sets the settings.
@@ -103,10 +102,11 @@ class OAuthService
      */
     public function getAccessToken(
         string $codeOrUsername,
-        #[\SensitiveParameter] ?string $password = null,
-        #[\SensitiveParameter] ?string $codeVerifier = null
-    ): AccessToken
-    {
+        #[\SensitiveParameter]
+        ?string $password = null,
+        #[\SensitiveParameter]
+        ?string $codeVerifier = null
+    ): AccessToken {
         if ($password === null) {
             $options = [
                 'code' => $codeOrUsername,
@@ -147,18 +147,18 @@ class OAuthService
     public function getAccessTokenWithRequestPathAuthentication(string $username, #[\SensitiveParameter] string $password): ?AccessToken
     {
         $url = $this->settings['oidcEndpointAuthorize'] . '?' . http_build_query([
-                'response_type' => 'code',
-                'client_id' => $this->settings['oidcClientKey'],
-                'scope' => $this->settings['oidcClientScopes'],
-                'redirect_uri' => $this->getRedirectUrl(),
-            ]);
+            'response_type' => 'code',
+            'client_id' => $this->settings['oidcClientKey'],
+            'scope' => $this->settings['oidcClientScopes'],
+            'redirect_uri' => $this->getRedirectUrl(),
+        ]);
 
         $result = GeneralUtility::makeInstance(RequestFactory::class)->request(
             'GET',
             $url,
             [
                 RequestOptions::AUTH => [$username, $password],
-                RequestOptions::ALLOW_REDIRECTS => false
+                RequestOptions::ALLOW_REDIRECTS => false,
             ]
         );
 
