@@ -72,3 +72,7 @@ authenticationServiceQuality = 80
 
 # cat=advanced//6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.authenticationUrlRoute
 authenticationUrlRoute = oidc/authentication
+
+# cat=advanced//7; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.userIDClaim
+userIDClaim = sub
+

@@ -83,6 +83,9 @@
 			<trans-unit id="settings.usersStoragePid">
 				<source>Storage Pid: Comma-separated list of page UIDs where fe_users are located. The first UID is used to store new users.</source>
 			</trans-unit>
+			<trans-unit id="settings.userIDClaim">
+				<source>Claim to use to reliably identify a user</source>
+			</trans-unit>
 			<trans-unit id="tt_content.oidc_login">
 				<source>OIDC Login</source>
 			</trans-unit>

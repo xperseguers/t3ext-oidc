@@ -110,6 +110,10 @@
 				<source>Storage Pid: Comma-separated list of page UIDs where fe_users are located. The first UID is used to store new users.</source>
 				<target>Ablage Pid: Komma-separierte Liste der Seiten UIDs, wo fe_users gespeichert werden. Die erste UID wird zur Speicherung neuer Benutzer verwendet.</target>
 			</trans-unit>
+			<trans-unit id="settings.userIDClaim">
+				<source>Claim to use to reliably identify a user</source>
+				<target>Anspruch auf Verwendung zur zuverlässigen Identifizierung eines Benutzers</target>
+			</trans-unit>
 			<trans-unit id="tt_content.oidc_login">
 				<source>OIDC Login</source>
 				<target>OIDC-Anmeldung</target>
