@@ -38,7 +38,8 @@
 		"phpunit/phpunit": "^10",
 		"typo3/testing-framework": "8.x-dev",
 		"typo3/minimal": "^13",
-		"typo3/cms-felogin": "^12.4 || ^13.4"
+		"typo3/cms-felogin": "^12.4 || ^13.4",
+		"friendsofphp/php-cs-fixer": "^3.88"
 	},
 	"autoload": {
 		"psr-4": {
