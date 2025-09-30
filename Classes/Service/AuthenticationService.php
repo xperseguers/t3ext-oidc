@@ -29,6 +29,7 @@ use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -218,58 +219,41 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Looks up a TYPO3 user from an access token.
      *
-     * @param OAuthService $service
+     * @param OAuthService $oidcService
      * @param AccessToken $accessToken
      * @return array|bool
      */
-    protected function getUserFromAccessToken(OAuthService $service, AccessToken $accessToken): bool|array
+    protected function getUserFromAccessToken(OAuthService $oidcService, AccessToken $accessToken): bool|array
     {
-        // Using the access token, we may look up details about the resource owner
-        if ($this->config['oidcEndpointUserInfo'] !== '') {
-            try {
-                $this->logger->debug('Retrieving resource owner');
-                $resourceOwner = $service->getResourceOwner($accessToken)->toArray();
-                $this->logger->debug('Resource owner retrieved', $resourceOwner);
-            } catch (IdentityProviderException $e) {
-                $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
-                return false;
-            }
-        } else {
-            $this->logger->debug('UserInfo Endpoint is not set, retrieve resource owner from JSON Web Token');
-            $jwt = $accessToken->getToken();
-            $jwtDecoded = base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $jwt)[1])));
-            $resourceOwner = json_decode($jwtDecoded, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->logger->error('Could not retrieve resource owner from JSON Web Token', ['Failed to parse JSON response: %s' => json_last_error_msg()]);
-                return false;
-            }
+        $this->logger->debug('Retrieving resource owner');
+        try {
+            $resourceOwnerObject = $oidcService->getResourceOwner($accessToken);
+            $this->logger->debug('Resource owner retrieved', ['resourceOwner' => $resourceOwnerObject]);
+        } catch (IdentityProviderException $e) {
+            $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
+            return false;
         }
 
-        if (empty($resourceOwner['sub'])) {
-            $this->logger->error('No "sub" found in resource owner, revoking access token');
+        if (!$resourceOwnerObject->getId()) {
+            $this->logger->error('No identifier (like sub) found in resource owner, revoking access token');
             try {
-                $service->revokeToken($accessToken);
+                $oidcService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
                 $this->logger->error('Could not revoke token', ['exception' => $e]);
                 return false;
             }
             throw new RuntimeException(
-                'Resource owner does not have a sub part: ' . json_encode($resourceOwner)
+                'Resource owner does not have a valid sub part: ' . json_encode($resourceOwnerObject->toArray())
                     . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
 
-        $event = new ModifyResourceOwnerEvent($resourceOwner, $this);
-        /** @var EventDispatcherInterface $eventDispatcher */
-        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
-        $eventDispatcher->dispatch($event);
-
-        $user = $this->convertResourceOwner($event->getResourceOwner());
+        $user = $this->convertResourceOwner($resourceOwnerObject);
 
         if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
             try {
-                $service->revokeToken($accessToken);
+                $oidcService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
                 $this->logger->error('Could not revoke token', ['exception' => $e]);
             }
@@ -303,13 +287,16 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Converts a resource owner into a TYPO3 Frontend user.
      *
-     * @param array $info
      * @return array|bool
      */
-    protected function convertResourceOwner(array $info): bool|array
+    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject): bool|array
     {
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+
+        $event = new ModifyResourceOwnerEvent($resourceOwnerObject->toArray(), $this);
+        $eventDispatcher->dispatch($event);
+        $info = $event->getResourceOwner();
 
         $mode = $this->authInfo['loginType'];
         $userTable = $this->db_user['table'];
@@ -324,7 +311,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
                 Connection::PARAM_INT_ARRAY
             )),
-            $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($info['sub'])),
+            $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($resourceOwnerObject->getId())),
         ];
 
         $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this);
@@ -365,7 +352,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $info,
             $row ?: [],
             [
-                'tx_oidc' => $info['sub'],
+                'tx_oidc' => $resourceOwnerObject->getId(),
                 'deleted' => 0,
                 'disable' => 0,
             ]
@@ -496,7 +483,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
-                'tx_oidc' => $info['sub'],
+                'tx_oidc' => $resourceOwnerObject->getId(),
                 'password' => $this->generatePassword($mode),
             ]);
 
