@@ -241,7 +241,7 @@ class OAuthService
         return $this->provider;
     }
 
-    public function getFreshAccessToken(): ?AccessToken
+    public function getFreshAccessToken(): ?AccessTokenInterface
     {
         $serializedToken = $this->settings['access_token'];
         $options = json_decode($serializedToken, true);
@@ -251,20 +251,20 @@ class OAuthService
         }
         $accessToken = new AccessToken($options);
 
-        if ($accessToken->hasExpired()) {
-            try {
-                $newAccessToken = $this->getProvider()->getAccessToken(new RefreshToken(), [
-                    'refresh_token' => $accessToken->getRefreshToken(),
-                ]);
-
-                // TODO
-            } catch (IdentityProviderException $e) {
-                // TODO: log problem
-                return null;
-            }
+        if (!$accessToken->hasExpired()) {
+            return $accessToken;
         }
 
-        return $accessToken;
+        try {
+            $newAccessToken = $this->getProvider()->getAccessToken(new RefreshToken(), [
+                'refresh_token' => $accessToken->getRefreshToken(),
+            ]);
+            $this->settings['access_token'] = json_encode($newAccessToken);
+            return $newAccessToken;
+        } catch (IdentityProviderException $e) {
+            // TODO: log problem
+            return null;
+        }
     }
 
     protected function getRedirectUrl(): string

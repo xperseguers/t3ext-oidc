@@ -33,6 +33,11 @@
             <directory>Unit/</directory>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">../Classes/</directory>
+        </include>
+    </source>
     <php>
         <ini name="display_errors" value="1"/>
         <env name="TYPO3_CONTEXT" value="Testing"/>
