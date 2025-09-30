@@ -239,8 +239,7 @@ class OAuthService
             $newAccessToken = $this->getProvider()->getAccessToken(new RefreshToken(), [
                 'refresh_token' => $accessToken->getRefreshToken(),
             ]);
-
-            // TODO
+            return $newAccessToken;
         } catch (IdentityProviderException $e) {
             // TODO: log problem
             return null;

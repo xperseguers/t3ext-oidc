@@ -8,6 +8,7 @@
 - Breaking: Dropped direct felogin-integration (via event).
   Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
+- Method `getFreshAccessToken()` now actually returns the fresh access token.
 
 
 ## Version 4.0.0
