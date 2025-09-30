@@ -4,6 +4,7 @@
 
 - Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
+- Method `getFreshAccessToken()` now actually returns the fresh access token.
 
 ## Version 4.0.0
 
