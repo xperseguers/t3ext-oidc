@@ -231,17 +231,19 @@ class OAuthService
         }
         $accessToken = new AccessToken($options);
 
-        if ($accessToken->hasExpired()) {
-            try {
-                $newAccessToken = $this->getProvider()->getAccessToken(new RefreshToken(), [
-                    'refresh_token' => $accessToken->getRefreshToken(),
-                ]);
+        if (!$accessToken->hasExpired()) {
+            return $accessToken;
+        }
 
-                // TODO
-            } catch (IdentityProviderException $e) {
-                // TODO: log problem
-                return null;
-            }
+        try {
+            $newAccessToken = $this->getProvider()->getAccessToken(new RefreshToken(), [
+                'refresh_token' => $accessToken->getRefreshToken(),
+            ]);
+
+            // TODO
+        } catch (IdentityProviderException $e) {
+            // TODO: log problem
+            return null;
         }
 
         return $accessToken;
