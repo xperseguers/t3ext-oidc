@@ -21,4 +21,15 @@ return [
             ],
         ],
     ],
+    'backend' => [
+        'oidccallback' => [
+            'target' => \Causal\Oidc\Middleware\OauthCallback::class,
+            'after' => [
+                'typo3/cms-core/request-token-middleware',
+            ],
+            'before' => [
+                'typo3/cms-backend/authentication',
+            ],
+        ],
+    ],
 ];

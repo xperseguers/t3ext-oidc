@@ -11,6 +11,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class OidcConfiguration
 {
+    public bool $enableBackendAuthentication = false;
     public bool $enableFrontendAuthentication = false;
     public int $authenticationServicePriority = 82;
     public int $authenticationServiceQuality = 80;
@@ -44,6 +45,7 @@ final class OidcConfiguration
     {
         $extConfig = $extConfig ?: $this->getExtensionConfiguration();
 
+        $this->enableBackendAuthentication = (bool)$extConfig['enableBackendAuthentication'];
         $this->enableFrontendAuthentication = (bool)$extConfig['enableFrontendAuthentication'];
         $this->authenticationServicePriority = (int)$extConfig['authenticationServicePriority'];
         $this->authenticationServiceQuality = (int)$extConfig['authenticationServiceQuality'];
