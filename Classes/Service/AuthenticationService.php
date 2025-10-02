@@ -29,6 +29,7 @@ use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Http\CookieService;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -37,6 +38,8 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Authentication\LoginType;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
@@ -45,6 +48,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -85,6 +89,38 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $request = $this->getRequest();
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
+
+        if (
+            $this->pObj->loginType === 'BE'
+            && ($request->getQueryParams()['loginProvider'] ?? '') == OidcLoginProvider::IDENTIFIER
+            && !isset($code)
+        ) {
+            $this->logger->debug('Initiate backend authentication');
+            $currentUrl = $request->getUri();
+
+            // V11 backwards compatibility
+            $loginType = LoginType::LOGIN;
+            if ($loginType instanceof \BackedEnum) {
+                $loginType = $loginType->value;
+            }
+
+            $loginUrl = \GuzzleHttp\Psr7\Uri::withQueryValue($currentUrl, 'login_status', $loginType);
+
+            $openIdConnectService = GeneralUtility::makeInstance(OpenIdConnectService::class);
+            $authContext = $openIdConnectService->buildAuthenticationContext(
+                $request,
+                [],
+                $loginUrl->__toString()
+            );
+            $response = $openIdConnectService->getAuthorizationRedirect(
+                $authContext,
+                $request->getAttribute('normalizedParams')->isHttps(),
+                $currentUrl->getPath(),
+            );
+
+            throw new PropagateResponseException($response, 1743415700019);
+        }
+
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
