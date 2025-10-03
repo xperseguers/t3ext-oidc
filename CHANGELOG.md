@@ -5,7 +5,10 @@
 - Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
 - Breaking: Introduced OidcConfiguration class to represent extension configuration.
   Default values of endpoints have been removed. Please validate your configuration during upgrade.
+- Breaking: Dropped direct felogin-integration (via event).
+  Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
+
 
 ## Version 4.0.0
 
