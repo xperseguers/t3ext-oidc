@@ -69,9 +69,4 @@
         'oidcRedirectUri' => getenv('TYPO3_OIDC_OIDC_REDIRECT_URI'),
         'enableCodeVerifier' => getenv('TYPO3_OIDC_ENABLE_CODE_VERIFIER'),
     ]);
-
-    $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'] = array_merge($GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'] ?? [], [
-        'tx_oidc[code]',
-        'logintype',
-    ]);
 })();
