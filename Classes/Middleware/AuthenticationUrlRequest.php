@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Middleware;
 
+use Causal\Oidc\Http\CookieService;
 use Causal\Oidc\Service\OpenIdConnectService;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
@@ -13,18 +14,16 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Throwable;
-use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Response;
 
 class AuthenticationUrlRequest implements MiddlewareInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    protected OpenIdConnectService $openIdConnectService;
-
-    public function __construct(OpenIdConnectService $openIdConnectService)
-    {
-        $this->openIdConnectService = $openIdConnectService;
+    public function __construct(
+        protected OpenIdConnectService $openIdConnectService,
+        protected CookieService $cookieService,
+    ) {
     }
 
     /**
@@ -38,8 +37,8 @@ class AuthenticationUrlRequest implements MiddlewareInterface, LoggerAwareInterf
         if ($request->getMethod() === 'GET' && $this->openIdConnectService->isAuthenticationRequest($request)) {
             try {
                 $authContext = $this->openIdConnectService->generateAuthenticationContext($request);
-                $uri = $authContext->getAuthorizationUrl();
-                return new RedirectResponse($uri);
+                $response = $this->openIdConnectService->getAuthorizationRedirect($authContext);
+                return $response;
             } catch (InvalidArgumentException|Throwable $e) {
                 $this->logger->alert('OIDC authentication provider error', ['exception' => $e]);
                 // config error or

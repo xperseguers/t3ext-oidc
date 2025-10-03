@@ -20,8 +20,8 @@ class OpenIdConnectServiceTest extends UnitTestCase
     {
         $oauthService = new OAuthService(self::createStub(EventDispatcher::class));
         $service = new OpenIdConnectService($oauthService, ['dummy']);
-        $service->setAuthenticationContext(new AuthenticationContext('', $loginUrl, '', '', 'https://example.com/redirect'));
-        self::assertSame($expected, (string)$service->getFinalLoginUrl('somecode'));
+        $authenticationContext = new AuthenticationContext('', $loginUrl, '', '', 'https://example.com/redirect');
+        self::assertSame($expected, (string)$service->getFinalLoginUrl($authenticationContext, 'somecode'));
     }
 
     public static function getFinalLoginUrlReturnsExpectedUrlDataProvider(): array
