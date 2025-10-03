@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Middleware;
 
 use Causal\Oidc\AuthenticationContext;
+use Causal\Oidc\Http\CookieService;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\OpenIdConnectService;
 use Psr\Http\Message\ResponseInterface;
@@ -13,7 +14,6 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use Symfony\Component\HttpFoundation\Cookie;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Response;
@@ -23,12 +23,9 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    protected const COOKIE_NAME = 'oidc_context';
-    protected const COOKIE_PREFIX = '';
-    protected const SECURE_PREFIX = '__Secure-';
-
     public function __construct(
         protected OpenIdConnectService $openIdConnectService,
+        protected CookieService $cookieService,
         protected OidcConfiguration $settings
     ) {}
 
@@ -95,20 +92,10 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
     protected function resolveAuthenticationContext(ServerRequestInterface $request): ?AuthenticationContext
     {
         $secure = $this->isHttps($request);
-        // resolves cookie name dependent on whether TLS is used in request and uses `__Secure-` prefix,
-        // see https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#cookie_prefixes
-        $securePrefix = $secure ? self::SECURE_PREFIX : '';
-        $cookiePrefix = $securePrefix . self::COOKIE_PREFIX;
-        $cookiePrefixLength = strlen($cookiePrefix);
-        $cookies = array_filter(
-            $request->getCookieParams(),
-            static fn($name) => is_string($name) && str_starts_with($name, $cookiePrefix),
-            ARRAY_FILTER_USE_KEY
-        );
-        foreach ($cookies as $name => $value) {
-            $name = substr($name, $cookiePrefixLength);
-            if ($name === self::COOKIE_NAME) {
-                return AuthenticationContext::fromJwt($value);
+        foreach ($request->getCookieParams() as $name => $value) {
+            $authenticationContext = $this->cookieService->resolveCookieToAuthenticationContext($secure, $name, $value);
+            if ($authenticationContext) {
+                return $authenticationContext;
             }
         }
         return null;
@@ -127,28 +114,13 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
         $secure = $this->isHttps($request);
         $normalizedParams = $request->getAttribute('normalizedParams');
         $path = $normalizedParams->getSitePath();
-        $securePrefix = $secure ? self::SECURE_PREFIX : '';
-        $cookiePrefix = $securePrefix . self::COOKIE_PREFIX;
 
-        $createCookie = static fn(string $name, string $value, int $expire): Cookie => new Cookie(
-            $name,
-            $value,
-            $expire,
-            $path,
-            null,
+        $cookie = $this->cookieService->getCookieForAuthenticationContext(
+            $authContext,
             $secure,
-            true,
-            false,
-            Cookie::SAMESITE_LAX
+            $path
         );
-
-        $cookies = [];
-        $cookies[] = $createCookie($cookiePrefix . self::COOKIE_NAME, $authContext->toHashSignedJwt(), 0);
-
-        foreach ($cookies as $cookie) {
-            $response = $response->withAddedHeader('Set-Cookie', (string)$cookie);
-        }
-        return $response;
+        return $response->withAddedHeader('Set-Cookie', (string)$cookie);
     }
 
     protected function isHttps(ServerRequestInterface $request): bool
