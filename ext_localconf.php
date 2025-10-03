@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Causal\Oidc\Hooks\DataHandlerOidc;
+use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\AuthenticationService;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -14,11 +14,11 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['proc
 
 $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'tx_oidc[code]';
 
-$settings = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
+$settings = GeneralUtility::makeInstance(OidcConfiguration::class);
 
 // Service configuration
 $subTypes = '';
-if ($settings['enableFrontendAuthentication'] ?? '') {
+if ($settings->enableFrontendAuthentication ?? '') {
     $subTypesArr = [
         'getUserFE',
         'authUserFE',
@@ -37,8 +37,8 @@ ExtensionManagementUtility::addService(
         'description' => 'Authentication service for OpenID Connect.',
         'subtype' => $subTypes,
         'available' => true,
-        'priority' => (int)($settings['authenticationServicePriority'] ?? 82),
-        'quality' => (int)($settings['authenticationServiceQuality'] ?? 80),
+        'priority' => $settings->authenticationServicePriority,
+        'quality' => $settings->authenticationServiceQuality,
         'os' => '',
         'exec' => '',
         'className' => $authenticationClassName,

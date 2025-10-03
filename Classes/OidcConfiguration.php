@@ -11,6 +11,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class OidcConfiguration
 {
+    public bool $enableFrontendAuthentication = false;
+    public int $authenticationServicePriority = 82;
+    public int $authenticationServiceQuality = 80;
     /** @var int[] */
     public array $usersStoragePids = [0];
     public string $usersDefaultGroup = '';
@@ -40,6 +43,9 @@ final class OidcConfiguration
     {
         $extConfig = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
 
+        $this->enableFrontendAuthentication = (bool)$extConfig['enableFrontendAuthentication'];
+        $this->authenticationServicePriority = (int)$extConfig['authenticationServicePriority'];
+        $this->authenticationServiceQuality = (int)$extConfig['authenticationServiceQuality'];
         $this->reEnableFrontendUsers = (bool)$extConfig['reEnableFrontendUsers'];
         $this->undeleteFrontendUsers = (bool)$extConfig['undeleteFrontendUsers'];
         $this->frontendUserMustExistLocally = (bool)$extConfig['frontendUserMustExistLocally'];
