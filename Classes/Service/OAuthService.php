@@ -18,8 +18,8 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\Event\GetAuthorizationUrlEvent;
-use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
+use Causal\Oidc\OidcConfiguration;
 use GuzzleHttp\RequestOptions;
 use League\OAuth2\Client\Grant\AuthorizationCode;
 use League\OAuth2\Client\Grant\ClientCredentials;
@@ -41,29 +41,12 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class OAuthService
 {
-    /**
-     * @var array
-     */
-    protected array $settings = [];
-
     protected ?AbstractProvider $provider = null;
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
+        protected OidcConfiguration $settings
     ) {}
-
-    /**
-     * Sets the settings.
-     *
-     * @param array $settings
-     * @return $this
-     */
-    public function setSettings(array $settings): self
-    {
-        $this->settings = $settings;
-
-        return $this;
-    }
 
     /**
      * Returns the authorization URL.
@@ -146,10 +129,10 @@ class OAuthService
      */
     public function getAccessTokenWithRequestPathAuthentication(string $username, #[\SensitiveParameter] string $password): ?AccessToken
     {
-        $url = $this->settings['oidcEndpointAuthorize'] . '?' . http_build_query([
+        $url = $this->settings->endpointAuthorize . '?' . http_build_query([
             'response_type' => 'code',
-            'client_id' => $this->settings['oidcClientKey'],
-            'scope' => $this->settings['oidcClientScopes'],
+            'client_id' => $this->settings->oidcClientKey,
+            'scope' => $this->settings->oidcClientScopes,
             'redirect_uri' => $this->getRedirectUrl(),
         ]);
 
@@ -199,17 +182,17 @@ class OAuthService
      */
     public function revokeToken(AccessToken $token): bool
     {
-        if (empty($this->settings['oidcEndpointRevoke'])) {
+        if (!$this->settings->endpointRevoke) {
             return false;
         }
 
         $provider = $this->getProvider();
         $request = $provider->getRequest(
             AbstractProvider::METHOD_POST,
-            $this->settings['oidcEndpointRevoke'],
+            $this->settings->endpointRevoke,
             [
                 'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode($this->settings['oidcClientKey'] . ':' . $this->settings['oidcClientSecret']),
+                    'Authorization' => 'Basic ' . base64_encode($this->settings->oidcClientKey . ':' . $this->settings->oidcClientSecret),
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
                 'body' => 'token=' . $token->getToken(),
@@ -225,25 +208,22 @@ class OAuthService
     protected function getProvider(): AbstractProvider
     {
         if ($this->provider === null) {
-            $factoryClass = $this->settings['oauthProviderFactory'] ?: GenericOAuthProviderFactory::class;
-            if (!is_a($factoryClass, OAuthProviderFactoryInterface::class, true)) {
+            if (!is_a($this->settings->oauthProviderFactory, OAuthProviderFactoryInterface::class, true)) {
                 throw new RuntimeException('OAuth provider factory class must implement the OAuthProviderFactoryInterface', 1652689564769);
             }
 
             $settings = $this->settings;
-            $settings['oidcRedirectUri'] = $this->getRedirectUrl();
+            $settings->oidcRedirectUri = $this->getRedirectUrl();
 
-            /** @var OAuthProviderFactoryInterface $factory */
-            $factory = GeneralUtility::makeInstance($factoryClass);
+            $factory = GeneralUtility::makeInstance($this->settings->oauthProviderFactory);
             $this->provider = $factory->create($settings);
         }
 
         return $this->provider;
     }
 
-    public function getFreshAccessToken(): ?AccessToken
+    public function getFreshAccessToken(string $serializedToken): ?AccessToken
     {
-        $serializedToken = $this->settings['access_token'];
         $options = json_decode($serializedToken, true);
         if (empty($serializedToken) || empty($options)) {
             // Invalid token
@@ -269,6 +249,6 @@ class OAuthService
 
     protected function getRedirectUrl(): string
     {
-        return $this->settings['oidcRedirectUri'] ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
+        return $this->settings->oidcRedirectUri ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
     }
 }

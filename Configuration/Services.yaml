@@ -26,6 +26,9 @@ services:
   Causal\Oidc\Factory\GenericOAuthProviderFactory:
     public: true
 
+  Causal\Oidc\OidcConfiguration:
+    public: true
+
   Causal\Oidc\EventListener\ProcessRequestTokenListener:
     tags:
       - name: event.listener

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Causal\Oidc\Service;
 
 use Causal\Oidc\AuthenticationContext;
+use Causal\Oidc\OidcConfiguration;
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -19,20 +19,12 @@ class OpenIdConnectService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    protected OAuthService $OAuthService;
-
     protected ?AuthenticationContext $authContext = null;
 
-    /**
-     * Global extension configuration
-     */
-    protected array $config;
-
-    public function __construct(OAuthService $OAuthService, array $config = [])
-    {
-        $this->OAuthService = $OAuthService;
-        $this->config = $config ?: GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
-    }
+    public function __construct(
+        protected OAuthService $OAuthService,
+        protected OidcConfiguration $config
+    ) {}
 
     public function isAuthenticationRequest(ServerRequestInterface $request): bool
     {
@@ -71,10 +63,10 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
     {
-        if (empty($this->config['oidcClientKey'])
-            || empty($this->config['oidcClientSecret'])
-            || empty($this->config['oidcEndpointAuthorize'])
-            || empty($this->config['oidcEndpointToken'])
+        if (!$this->config->oidcClientKey
+            || !$this->config->oidcClientSecret
+            || !$this->config->endpointAuthorize
+            || !$this->config->endpointToken
         ) {
             throw new InvalidArgumentException('Missing extension configuration', 1715775147);
         }
@@ -94,13 +86,11 @@ class OpenIdConnectService implements LoggerAwareInterface
 
         $requestId = $this->getUniqueId();
         $codeVerifier = null;
-        if ($this->config['enableCodeVerifier']) {
+        if ($this->config->enableCodeVerifier) {
             $codeVerifier = $this->generateCodeVerifier();
             $codeChallenge = $this->convertVerifierToChallenge($codeVerifier);
             $authorizationUrlOptions = array_merge($authorizationUrlOptions, $this->getCodeChallengeOptions($codeChallenge));
         }
-
-        $this->OAuthService->setSettings($this->config);
 
         $authorizationUrl = $this->OAuthService->getAuthorizationUrl($request, $authorizationUrlOptions);
         $state = $this->OAuthService->getState();
@@ -193,6 +183,6 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     protected function getAuthenticationUrlRoutePath(SiteLanguage $language): string
     {
-        return $language->getBase()->getPath() . ($this->config['authenticationUrlRoute'] ?? 'oidc/authentication');
+        return $language->getBase()->getPath() . $this->config->authenticationUrlRoute;
     }
 }

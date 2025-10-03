@@ -27,6 +27,7 @@ use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
+use Causal\Oidc\OidcConfiguration;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -35,7 +36,6 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
@@ -65,20 +65,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
-    /**
-     * Global extension configuration
-     *
-     * @var array
-     */
-    protected array $config;
-
-    /**
-     * AuthenticationService constructor.
-     */
-    public function __construct()
-    {
-        $this->config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
-    }
+    public function __construct(
+        protected OidcConfiguration $config
+    ) {}
 
     /**
      * Finds a user.
@@ -97,14 +86,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $code = $params['code'] ?? null;
         if ($code !== null) {
             $codeVerifier = null;
-            if ($this->config['enableCodeVerifier']) {
+            if ($this->config->enableCodeVerifier) {
                 $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
                 if ($authContext) {
                     $codeVerifier = $authContext->codeVerifier;
                 }
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
-        } elseif ($this->config['enablePasswordCredentials'] ?? true) {
+        } elseif ($this->config->enablePasswordCredentials) {
             $event = new AuthenticationPreUserEvent($this->login, $this);
             $eventDispatcher->dispatch($event);
             if (!$event->shouldProcess) {
@@ -149,7 +138,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->logger->debug('Initializing OpenID Connect service');
 
         $service = GeneralUtility::makeInstance(OAuthService::class);
-        $service->setSettings($this->config);
 
         // Try to get an access token using the authorization code grant
         try {
@@ -187,11 +175,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         /** @var OAuthService $service */
         $service = GeneralUtility::makeInstance(OAuthService::class);
-        $service->setSettings($this->config);
 
         $accessToken = '';
         try {
-            if ($this->config['oidcUseRequestPathAuthentication']) {
+            if ($this->config->useRequestPathAuthentication) {
                 $this->logger->debug('Retrieving an access token using request path authentication');
                 $accessToken = $service->getAccessTokenWithRequestPathAuthentication($username, $password);
             } else {
@@ -251,7 +238,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         $user = $this->convertResourceOwner($resourceOwnerObject);
 
-        if ($this->config['oidcRevokeAccessTokenAfterLogin']) {
+        if ($this->config->revokeAccessTokenAfterLogin) {
             try {
                 $oidcService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
@@ -307,10 +294,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $queryBuilder->getRestrictions()->removeAll();
 
         $userFetchConditions = [
-            $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter(
-                GeneralUtility::intExplode(',', $this->config['usersStoragePid']),
-                Connection::PARAM_INT_ARRAY
-            )),
+            $queryBuilder->expr()->in(
+                'pid',
+                $queryBuilder->createNamedParameter($this->config->usersStoragePids, Connection::PARAM_INT_ARRAY)
+            ),
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($resourceOwnerObject->getId())),
         ];
 
@@ -324,23 +311,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->executeQuery()
             ->fetchAssociative();
 
-        $reEnableUser = (bool)$this->config['reEnableFrontendUsers'];
-        $undeleteUser = (bool)$this->config['undeleteFrontendUsers'];
-        $frontendUserMustExistLocally = (bool)$this->config['frontendUserMustExistLocally'];
-
-        if (!empty($row) && $row['deleted'] && !$undeleteUser) {
+        if (!empty($row) && $row['deleted'] && !$this->config->undeleteFrontendUsers) {
             // User was manually deleted, it should not get automatically restored
             $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
 
             return false;
         }
-        if (!empty($row) && $row['disable'] && !$reEnableUser) {
+        if (!empty($row) && $row['disable'] && !$this->config->reEnableFrontendUsers) {
             // User was manually disabled, it should not get automatically re-enabled
             $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
 
             return false;
         }
-        if (empty($row) && $frontendUserMustExistLocally) {
+        if (empty($row) && $this->config->frontendUserMustExistLocally) {
             // User does not exist locally, it should not be created on-the-fly
             $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
 
@@ -365,7 +348,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         $newUserGroups = [];
-        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config['usersDefaultGroup']);
+        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->usersDefaultGroup);
 
         if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
@@ -480,7 +463,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
             $this->logger->info('New user detected, creating a TYPO3 user');
             $data = array_merge($data, [
-                'pid' => GeneralUtility::intExplode(',', $this->config['usersStoragePid'], true)[0],
+                'pid' => $this->config->usersStoragePids[0],
                 'usergroup' => implode(',', $newUserGroups),
                 'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
                 'tx_oidc' => $resourceOwnerObject->getId(),
