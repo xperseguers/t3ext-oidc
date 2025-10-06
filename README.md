@@ -13,15 +13,6 @@ Examples of such identity provider software or services are:
 - Keycloak
 - Authentik
 
-## Pre-configuration for Swiss Alpine Club
-
-The extension is preconfigured to work with the
-[WSO2 Identity Server](https://wso2.com/identity-and-access-management/) from
-the Swiss Alpine Club, but may be used with any OpenID Connect identity server as well.
-
-If you are a Swiss Alpine Club section, be sure to get in touch with Bern in
-order to get your dedicated private key and secret.
-
 ## Direct OIDC Login
 
 If OpenID Connect is your only means of frontend login, you can use the included
