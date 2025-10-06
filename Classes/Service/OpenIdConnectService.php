@@ -121,7 +121,7 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     public function getFinalLoginUrl(string $code): Uri
     {
-        $loginUrl = new Uri($this->authContext->getLoginUrl());
+        $loginUrl = new Uri($this->authContext->loginUrl);
         $finalLoginUrlParameters = [
             'logintype' => 'login',
             'tx_oidc' => ['code' => $code],

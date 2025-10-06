@@ -11,34 +11,13 @@ class AuthenticationContext
     use JwtTrait;
 
     public function __construct(
-        protected string $state,
-        protected string $loginUrl,
-        protected string $authorizationUrl,
-        protected string $requestId,
-        protected string $redirectUrl = '',
-        public ?string $codeVerifier = null,
-    ) {
-    }
-
-    public function getAuthorizationUrl(): string
-    {
-        return $this->authorizationUrl;
-    }
-
-    public function getLoginUrl(): string
-    {
-        return $this->loginUrl;
-    }
-
-    public function getState(): string
-    {
-        return $this->state;
-    }
-
-    public function getRequestId(): string
-    {
-        return $this->requestId;
-    }
+        public readonly string $state,
+        public readonly string $loginUrl,
+        public readonly string $authorizationUrl,
+        public readonly string $requestId,
+        public readonly string $redirectUrl = '',
+        public readonly ?string $codeVerifier = null,
+    ) {}
 
     public static function fromJwt(string $cookieValue): self
     {

@@ -65,16 +65,16 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
         if (!$state) {
             return (new Response())->withStatus(400, 'Invalid state');
         }
-        if ($state !== $authContext->getState()) {
+        if ($state !== $authContext->state) {
             if (!$this->settings->disableCSRFProtection) {
                 $this->logger->error('Invalid returning state detected', [
-                    'expected' => $authContext->getState(),
+                    'expected' => $authContext->state,
                     'actual' => $state,
                 ]);
                 return (new Response())->withStatus(400, 'Invalid state');
             }
             $this->logger->info('State mismatch. Bypassing CSRF attack mitigation protection according to the extension configuration', [
-                'expected' => $authContext->getState(),
+                'expected' => $authContext->state,
                 'actual' => $state,
             ]);
         }
