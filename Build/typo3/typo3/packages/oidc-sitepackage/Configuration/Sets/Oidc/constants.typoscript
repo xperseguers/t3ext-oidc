@@ -1,1 +1,1 @@
-@import 'EXT:oidc/Configuration/TypoScript/felogin/constants.typoscript'
+plugin.tx_felogin_login.view.templateRootPath = EXT:oidc-sitepackage/Resources/Private/Felogin/Templates/
