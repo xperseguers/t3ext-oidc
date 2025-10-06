@@ -27,6 +27,9 @@ services:
       - TYPO3_DB_DBNAME=app
 
       - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v12.t3ext-oidc.test/login/redirect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://v12.t3ext-oidc.test/"]
+      interval: 3s
 
   db-v12:
     image: mariadb:10.11.10
@@ -38,7 +41,7 @@ services:
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s
-      interval: 10s
+      interval: 3s
       timeout: 5s
       retries: 3
 
@@ -69,6 +72,9 @@ services:
       - TYPO3_DB_DBNAME=app
 
       - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v13.t3ext-oidc.test/login/redirect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://v13.t3ext-oidc.test/"]
+      interval: 3s
 
   db-v13:
     image: mariadb:10.11.10
@@ -80,7 +86,7 @@ services:
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 10s
-      interval: 10s
+      interval: 3s
       timeout: 5s
       retries: 3
 
@@ -92,6 +98,8 @@ services:
       default:
         aliases:
           - oidc.t3ext-oidc.test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
     environment:
       ASPNETCORE_HTTP_PORTS: 80
       ASPNETCORE_URLS: http://+:80
@@ -169,15 +177,27 @@ services:
       - ./oidc-server-mock:/tmp/config:ro
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.50.0-noble
-    volumes:
-      - ./playwright/e2e:/e2e
+    build:
+      context: playwright
     environment:
       - DISPLAY=vnc:1
     working_dir: /e2e
+    depends_on:
+      v12:
+        condition: service_healthy
+      v13:
+        condition: service_healthy
+      oidc-server-mock:
+        condition: service_healthy
+      vnc:
+        condition: service_healthy
 
   vnc:
     image: consol/ubuntu-xfce-vnc
     environment:
       - VNC_PW=password
     command: /bin/bash -c "xhost + && tail -f /dev/null"
+    healthcheck:
+      test: bash -c 'echo > /dev/tcp/localhost/5901'
+      start_period: 10s
+      interval: 3s
