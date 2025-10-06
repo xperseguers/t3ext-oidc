@@ -1,2 +1,0 @@
-
-plugin.tx_felogin_login.view.templateRootPath = EXT:oidc/Resources/Private/Templates/
