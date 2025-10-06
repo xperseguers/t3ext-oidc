@@ -9,12 +9,18 @@ test('Login via login form', async ({ page }) => {
   await page.getByLabel('Password').fill('pwd');
   await page.getByRole('button', {name: 'Login'}).click()
   await expect(page).toHaveURL(new RegExp('https://v13.t3ext-oidc.test/'));
+  await expect(page.getByText('You are now logged in as \'1\'')).toBeVisible();
+
+  await page.goto('https://v13.t3ext-oidc.test/en/');
   await expect(page.getByText('Username 1')).toBeVisible();
 
   await page.getByRole('button', {name: 'Logout'}).click();
   await expect(page.getByText('You have logged out.')).toBeVisible();
 
   await page.getByRole('link', { name: 'Login with OpenID Connect' }).click();
+  await expect(page.getByText('You are now logged in as \'1\'')).toBeVisible();
+
+  await page.goto('https://v13.t3ext-oidc.test/en/');
   await expect(page.getByText('Username 1')).toBeVisible();
 
   await page.getByRole('button', {name: 'Logout'}).click();
