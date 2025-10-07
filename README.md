@@ -13,15 +13,6 @@ Examples of such identity provider software or services are:
 - Keycloak
 - Authentik
 
-## Pre-configuration for Swiss Alpine Club
-
-The extension is preconfigured to work with the
-[WSO2 Identity Server](https://wso2.com/identity-and-access-management/) from
-the Swiss Alpine Club, but may be used with any OpenID Connect identity server as well.
-
-If you are a Swiss Alpine Club section, be sure to get in touch with Bern in
-order to get your dedicated private key and secret.
-
 ## Direct OIDC Login
 
 If OpenID Connect is your only means of frontend login, you can use the included
@@ -181,6 +172,20 @@ final class OAuth2ProviderFactory implements OAuthProviderFactoryInterface
         return new Azure($options);
     }
 }
+```
+
+## Run acceptance tests
+The `Build` folder contains a docker compose test environment for this oidc extension. It contains:
+* TYPO3 v12 instance with ext-oidc installed
+* TYPO3 v13 instance with ext-oidc installed
+* mock oidc server
+* Playwright test runner to run acceptance tests
+* VNC Server to watch the playwright tests
+
+To build the test environment and run the playwright tests run the following command:
+```bash
+cd Build
+docker compose up --build --exit-code-from playwright && echo "Success" || echo "Fail"
 ```
 
 ## Credits

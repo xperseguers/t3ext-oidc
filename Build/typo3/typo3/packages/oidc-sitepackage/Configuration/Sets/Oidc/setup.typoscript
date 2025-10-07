@@ -1,5 +1,3 @@
-@import 'EXT:oidc/Configuration/TypoScript/felogin/setup.typoscript'
-
 plugin.tx_oidc_login.defaultRedirectPid = 1
 
 page = PAGE
