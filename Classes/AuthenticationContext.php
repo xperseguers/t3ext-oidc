@@ -15,7 +15,7 @@ class AuthenticationContext
         public readonly string $loginUrl,
         public readonly string $authorizationUrl,
         public readonly string $requestId,
-        public readonly string $redirectUrl = '',
+        public readonly bool $secureContext,
         public readonly ?string $codeVerifier = null,
     ) {}
 

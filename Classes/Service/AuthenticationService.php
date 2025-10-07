@@ -66,7 +66,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     public function __construct(
-        protected OidcConfiguration $config
+        protected OidcConfiguration $config,
+        protected AuthenticationContextService $authenticationContextService,
     ) {}
 
     /**
@@ -87,7 +88,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
-                $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
+                $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
                 if ($authContext) {
                     $codeVerifier = $authContext->codeVerifier;
                 }

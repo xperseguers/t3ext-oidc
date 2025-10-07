@@ -18,6 +18,8 @@ declare(strict_types=1);
 namespace Causal\Oidc\Controller;
 
 use Causal\Oidc\Service\OpenIdConnectService;
+use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
@@ -75,19 +77,19 @@ class LoginController
             $this->redirect($redirectUrl);
         }
 
-        $authorizationUrl = $this->determineAuthorizationUrl($pluginConfiguration['authorizationUrlOptions.'] ?? []);
-        $this->redirect($authorizationUrl);
+        $authorizationRedirect = $this->getAuthorizationRedirect($this->request, $pluginConfiguration['authorizationUrlOptions.'] ?? []);
+        throw new PropagateResponseException($authorizationRedirect);
     }
 
-    protected function determineAuthorizationUrl(array $authorizationUrlOptions): string
+    protected function getAuthorizationRedirect(ServerRequestInterface $request, array $authorizationUrlOptions): RedirectResponse
     {
         $oidcService = GeneralUtility::makeInstance(OpenIdConnectService::class);
-        $authContext = $oidcService->generateAuthenticationContext($this->request, $authorizationUrlOptions);
-
-        // The redirect will be handled by this plugin
-        $authContext->redirectUrl = '';
-
-        return $authContext->authorizationUrl;
+        $authContext = $oidcService->buildAuthenticationContext(
+            $this->request,
+            $authorizationUrlOptions,
+            Uri::withQueryValue($request->getUri(), 'logintype', 'login')->__toString(),
+        );
+        return $oidcService->getAuthorizationRedirect($authContext);
     }
 
     protected function determineRedirectUrl()
