@@ -92,7 +92,6 @@ class OpenIdConnectServiceTest extends UnitTestCase
     {
         $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
         $extensionConfiguration->method('get')->willReturn([
-            'enableFrontendAuthentication' => '',
             'enableFrontendAuthentication' => 0,
             'reEnableFrontendUsers' => 0,
             'undeleteFrontendUsers' => 0,

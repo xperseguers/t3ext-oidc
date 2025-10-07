@@ -99,7 +99,6 @@ final class OAuthServiceTest extends TestCase
     {
         $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
         $extensionConfiguration->method('get')->willReturn([
-            'enableFrontendAuthentication' => '',
             'enableFrontendAuthentication' => 0,
             'reEnableFrontendUsers' => 0,
             'undeleteFrontendUsers' => 0,
