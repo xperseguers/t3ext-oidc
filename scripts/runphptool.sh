@@ -3,7 +3,11 @@
 if [[ -x $(which "podman-compose") ]]; then
     composecommand="podman-compose"
 else
-    composecommand="podman compose"
+    if [[ -x $(which "podman") ]]; then
+        composecommand="podman compose"
+    else
+        composecommand="docker compose"
+    fi
 fi
 
 mkdir -p $TOOL_DIR

@@ -17,22 +17,19 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Event;
 
+use League\OAuth2\Client\Token\AccessToken;
 use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 
 final class ModifyResourceOwnerEvent
 {
-    /**
-     * @var array resource owner data
-     */
-    protected array $resourceOwner;
-
-    protected AbstractAuthenticationService $authenticationService;
-
-    public function __construct(array $resourceOwner, AbstractAuthenticationService $authenticationService)
-    {
-        $this->resourceOwner = $resourceOwner;
-        $this->authenticationService = $authenticationService;
-    }
+    public function __construct(
+        /**
+         * @var array resource owner data
+         */
+        protected array $resourceOwner,
+        protected AbstractAuthenticationService $authenticationService,
+        protected AccessToken $accessToken,
+    ) {}
 
     public function getResourceOwner(): array
     {
@@ -47,5 +44,10 @@ final class ModifyResourceOwnerEvent
     public function getAuthenticationService(): AbstractAuthenticationService
     {
         return $this->authenticationService;
+    }
+
+    public function getAccessToken(): AccessToken
+    {
+        return $this->accessToken;
     }
 }

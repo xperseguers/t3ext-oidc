@@ -1,12 +1,35 @@
 plugin.tx_oidc_login.defaultRedirectPid = 1
 
 page = PAGE
+page {
+  10 = TEXT
+  10 {
+    value = Link to login page
+    wrap = <div>|</div>
+    typolink {
+      parameter = 3
+    }
+  }
 
-page.10 = CONTENT
-page.10 {
+  20 = TEXT
+  20 {
+    value = Link to login page with redirect_url
+    wrap = <div>|</div>
+    typolink {
+      parameter = 3
+      additionalParams = &redirect_url=/en/login-redirect-target/
+    }
+  }
+
+  30 = TEXT
+  30.value = <hr />
+
+  40 = CONTENT
+  40 {
     table = tt_content
     select {
-        orderBy = sorting
-        where = {#colPos}=0
+      orderBy = sorting
+      where = {#colPos}=0
     }
+  }
 }

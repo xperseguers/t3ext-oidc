@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Middleware;
 
-use Causal\Oidc\AuthenticationContext;
-use Causal\Oidc\Http\CookieService;
 use Causal\Oidc\OidcConfiguration;
+use Causal\Oidc\Service\AuthenticationContextService;
 use Causal\Oidc\Service\OpenIdConnectService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,7 +13,6 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
-use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Response;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -25,7 +23,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
 
     public function __construct(
         protected OpenIdConnectService $openIdConnectService,
-        protected CookieService $cookieService,
+        protected AuthenticationContextService $authenticationContextService,
         protected OidcConfiguration $settings
     ) {}
 
@@ -41,23 +39,19 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
             return $handler->handle($request);
         }
 
-        $authContext = $this->resolveAuthenticationContext($request);
-        if ($authContext) {
-            $this->openIdConnectService->setAuthenticationContext($authContext);
-            $this->logger->debug('Authentication context is available', ['data' => $authContext]);
-        }
-
         $queryParams = $request->getQueryParams();
         $code = $queryParams['code'] ?? '';
         if (!$code) {
-            $response = $handler->handle($request);
-            return $this->enrichResponseWithCookie($request, $response);
+            return $handler->handle($request);
         }
+
+        // A code was supplied, we start the OIDC handling
+        $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
         if (!$authContext) {
             return (new Response())->withStatus(400, 'Missing OIDC authentication context');
         }
 
-        // A code was supplied, we start the OIDC handling
+        $this->logger->debug('Authentication context is available', ['data' => $authContext]);
 
         $this->logger->debug('Initiating the silent authentication');
 
@@ -65,67 +59,24 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
         if (!$state) {
             return (new Response())->withStatus(400, 'Invalid state');
         }
-        if ($state !== $authContext->getState()) {
+        if ($state !== $authContext->state) {
             if (!$this->settings->disableCSRFProtection) {
                 $this->logger->error('Invalid returning state detected', [
-                    'expected' => $authContext->getState(),
+                    'expected' => $authContext->state,
                     'actual' => $state,
                 ]);
                 return (new Response())->withStatus(400, 'Invalid state');
             }
             $this->logger->info('State mismatch. Bypassing CSRF attack mitigation protection according to the extension configuration', [
-                'expected' => $authContext->getState(),
+                'expected' => $authContext->state,
                 'actual' => $state,
             ]);
         }
 
-        $loginUrl = $this->openIdConnectService->getFinalLoginUrl($code);
+        $loginUrl = $this->openIdConnectService->getFinalLoginUrl($authContext, $code);
 
         $this->logger->info('Redirecting to login URL', ['url' => (string)$loginUrl]);
 
         return new RedirectResponse(GeneralUtility::locationHeaderUrl((string)$loginUrl), 303);
-    }
-
-    /**
-     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::resolveNoncePool
-     */
-    protected function resolveAuthenticationContext(ServerRequestInterface $request): ?AuthenticationContext
-    {
-        $secure = $this->isHttps($request);
-        foreach ($request->getCookieParams() as $name => $value) {
-            $authenticationContext = $this->cookieService->resolveCookieToAuthenticationContext($secure, $name, $value);
-            if ($authenticationContext) {
-                return $authenticationContext;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @see \TYPO3\CMS\Core\Middleware\RequestTokenMiddleware::enrichResponseWithCookie
-     */
-    protected function enrichResponseWithCookie(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-    {
-        $authContext = $this->openIdConnectService->getAuthenticationContext();
-        if (!$authContext) {
-            return $response;
-        }
-
-        $secure = $this->isHttps($request);
-        $normalizedParams = $request->getAttribute('normalizedParams');
-        $path = $normalizedParams->getSitePath();
-
-        $cookie = $this->cookieService->getCookieForAuthenticationContext(
-            $authContext,
-            $secure,
-            $path
-        );
-        return $response->withAddedHeader('Set-Cookie', (string)$cookie);
-    }
-
-    protected function isHttps(ServerRequestInterface $request): bool
-    {
-        $normalizedParams = $request->getAttribute('normalizedParams');
-        return $normalizedParams instanceof NormalizedParams && $normalizedParams->isHttps();
     }
 }

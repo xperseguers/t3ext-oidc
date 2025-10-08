@@ -6,6 +6,7 @@ namespace Causal\Oidc\Tests\Unit\Service;
 
 use Causal\Oidc\AuthenticationContext;
 use Causal\Oidc\OidcConfiguration;
+use Causal\Oidc\Service\AuthenticationContextService;
 use Causal\Oidc\Service\OAuthService;
 use Causal\Oidc\Service\OpenIdConnectService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,55 +28,30 @@ class OpenIdConnectServiceTest extends UnitTestCase
 
         $service = new OpenIdConnectService(
             $this->createOAuthService(),
+            new AuthenticationContextService(),
             new OidcConfiguration(),
         );
-        $service->setAuthenticationContext(new AuthenticationContext('', $loginUrl, '', '', 'https://example.com/redirect'));
-        self::assertSame($expected, (string)$service->getFinalLoginUrl('somecode'));
+
+        $authenticationContext = new AuthenticationContext('', $loginUrl, '', '', false);
+        self::assertSame($expected, (string)$service->getFinalLoginUrl($authenticationContext, 'somecode'));
     }
 
     public static function getFinalLoginUrlReturnsExpectedUrlDataProvider(): array
     {
         return [
             'default' => [
-                'loginUrl' => 'https://example.com/login',
-                'expected' => 'https://example.com/login?logintype=login&tx_oidc%5Bcode%5D=somecode&redirect_url=https%3A%2F%2Fexample.com%2Fredirect',
+                'loginUrl' => 'https://example.com/login?logintype=login',
+                'expected' => 'https://example.com/login?logintype=login&tx_oidc%5Bcode%5D=somecode',
             ],
             'preserves params' => [
-                'loginUrl' => 'https://example.com/login?otherparam=foo',
-                'expected' => 'https://example.com/login?otherparam=foo&logintype=login&tx_oidc%5Bcode%5D=somecode&redirect_url=https%3A%2F%2Fexample.com%2Fredirect',
+                'loginUrl' => 'https://example.com/login?logintype=login&otherparam=foo',
+                'expected' => 'https://example.com/login?logintype=login&otherparam=foo&tx_oidc%5Bcode%5D=somecode',
             ],
             'preserves redirect_url' => [
-                'loginUrl' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother',
-                'expected' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother&logintype=login&tx_oidc%5Bcode%5D=somecode',
+                'loginUrl' => 'https://example.com/login?logintype=login&redirect_url=http%3A%2F%2Fexample.com%2Fother',
+                'expected' => 'https://example.com/login?logintype=login&redirect_url=http%3A%2F%2Fexample.com%2Fother&tx_oidc%5Bcode%5D=somecode',
             ],
         ];
-    }
-
-    public static function loginUrlProvider(): array
-    {
-        return [
-            'removes logintype' => [
-                'loginUrl' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother&logintype=logout',
-                'expected' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother',
-            ],
-            'removes cHash' => [
-                'loginUrl' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother&cHash=1232',
-                'expected' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother',
-            ],
-            'removes oidc code' => [
-                'loginUrl' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother&tx_oidc[code]=1232',
-                'expected' => 'https://example.com/login?redirect_url=http%3A%2F%2Fexample.com%2Fother',
-            ],
-        ];
-    }
-
-    #[Test]
-    #[DataProvider('loginUrlProvider')]
-    public function cleanLoginUrl(string $loginUrl, string $expected): void
-    {
-        $service = $this->getAccessibleMock(OpenIdConnectService::class, null, [], '', false);
-        $cleanedUrl = $service->_call('getLoginUrlForContext', $loginUrl);
-        self::assertSame($expected, (string)$cleanedUrl);
     }
 
     private function createOAuthService(): OAuthService
@@ -92,7 +68,6 @@ class OpenIdConnectServiceTest extends UnitTestCase
     {
         $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
         $extensionConfiguration->method('get')->willReturn([
-            'enableFrontendAuthentication' => '',
             'enableFrontendAuthentication' => 0,
             'reEnableFrontendUsers' => 0,
             'undeleteFrontendUsers' => 0,

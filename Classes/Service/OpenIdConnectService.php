@@ -11,6 +11,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use TYPO3\CMS\Core\Http\NormalizedParams;
+use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -19,10 +21,9 @@ class OpenIdConnectService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    protected ?AuthenticationContext $authContext = null;
-
     public function __construct(
         protected OAuthService $OAuthService,
+        protected AuthenticationContextService $authenticationContextService,
         protected OidcConfiguration $config
     ) {}
 
@@ -61,6 +62,22 @@ class OpenIdConnectService implements LoggerAwareInterface
         return null;
     }
 
+    /**
+     * Generate an authentication context for a given frontend request
+     * The login URL has to be provided as login_url query parameter in the
+     * given request.
+     * A redirect URL may be provided either as part of the login URL or as
+     * a separate redirect_url query parameter. If the login URL contains a
+     * redirect URL already, the separate redirect_url query parameter will
+     * not get evaluated.
+     * If the login URL does not contain a redirect_url query parameter and
+     * a separate redirect_url is provided within the requet, the redirect
+     * URL will be added to the login URL. There will be no cHash though.
+     *
+     * The login URL and the optional redirect URL need to be signed with a
+     * validation hash, provided as the validation_hash parameter of the
+     * given request.
+     */
     public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
     {
         if (!$this->config->oidcClientKey
@@ -72,18 +89,41 @@ class OpenIdConnectService implements LoggerAwareInterface
         }
 
         $loginUrl = $request->getQueryParams()['login_url'] ?? '';
+        if (!GeneralUtility::isValidUrl($loginUrl)) {
+            throw new InvalidArgumentException('Missing or invalid login_url: ' . $loginUrl, 1759845557572);
+        }
         $redirectUrl = $request->getQueryParams()['redirect_url'] ?? '';
         $hash = $request->getQueryParams()['validation_hash'] ?? '';
-        // TYPO3 v13
+
         if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
+            // TYPO3 v13
             $calculatedHash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($loginUrl . $redirectUrl, 'oidc');
         } else {
+            // TYPO3 v12
             $calculatedHash = GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc');
         }
-        if (($loginUrl || $redirectUrl) && $calculatedHash !== $hash) {
+        if ($calculatedHash !== $hash) {
             throw new InvalidArgumentException('Invalid query string', 1719003567);
         }
 
+        // Add logintype to login URL
+        $loginUrlParams = ['logintype' => 'login'];
+        if ($redirectUrl != '' && !str_contains($loginUrl, 'redirect_url=')) {
+            $loginUrlParams['redirect_url'] = $redirectUrl;
+        }
+        $loginUrl = \GuzzleHttp\Psr7\Uri::withQueryValues(new Uri($loginUrl), $loginUrlParams)->__toString();
+
+        $authContext = $this->buildAuthenticationContext($request, $authorizationUrlOptions, $loginUrl, $redirectUrl);
+        $this->logger->debug('Generated new Authentication Context', ['authContext' => $authContext]);
+
+        return $authContext;
+    }
+
+    public function buildAuthenticationContext(
+        ServerRequestInterface $request,
+        array $authorizationUrlOptions = [],
+        string $loginUrl = '',
+    ): AuthenticationContext {
         $requestId = $this->getUniqueId();
         $codeVerifier = null;
         if ($this->config->enableCodeVerifier) {
@@ -95,56 +135,33 @@ class OpenIdConnectService implements LoggerAwareInterface
         $authorizationUrl = $this->OAuthService->getAuthorizationUrl($request, $authorizationUrlOptions);
         $state = $this->OAuthService->getState();
 
-        $this->authContext = new AuthenticationContext(
+        $normalizedParams = $request->getAttribute('normalizedParams');
+        $isHttps = $normalizedParams instanceof NormalizedParams && $normalizedParams->isHttps();
+
+        return new AuthenticationContext(
             $state,
-            (string)$this->getLoginUrlForContext($loginUrl),
+            $loginUrl,
             $authorizationUrl,
             $requestId,
-            $redirectUrl,
+            $isHttps,
             $codeVerifier
         );
-
-        $this->logger->debug('Generated new Authentication Context', ['authContext' => $this->authContext]);
-
-        return $this->authContext;
     }
 
-    public function setAuthenticationContext(AuthenticationContext $authContext): void
+    public function getAuthorizationRedirect(AuthenticationContext $authContext)
     {
-        $this->authContext = $authContext;
+        $url = new Uri($authContext->authorizationUrl);
+        $cookie = $this->authenticationContextService->getCookieForAuthenticationContext($authContext);
+        $response = GeneralUtility::makeInstance(RedirectResponse::class, $url)
+            ->withAddedHeader('Set-Cookie', (string)$cookie);
+
+        return $response;
     }
 
-    public function getAuthenticationContext(): ?AuthenticationContext
+    public function getFinalLoginUrl(AuthenticationContext $authenticationContext, string $code): UriInterface
     {
-        return $this->authContext;
-    }
-
-    public function getFinalLoginUrl(string $code): Uri
-    {
-        $loginUrlParams = [
-            'logintype' => 'login',
-            'tx_oidc' => ['code' => $code],
-        ];
-        if ($this->authContext->redirectUrl && !str_contains($this->authContext->getLoginUrl(), 'redirect_url=')) {
-            $loginUrlParams['redirect_url'] = $this->authContext->redirectUrl;
-        }
-        $loginUrl = new Uri($this->authContext->getLoginUrl());
-
-        $query = $loginUrl->getQuery() . GeneralUtility::implodeArrayForUrl('', $loginUrlParams);
-
-        return $loginUrl->withQuery(ltrim($query, '&'));
-    }
-
-    protected function getLoginUrlForContext(string $loginUrl): Uri
-    {
-        $loginUrl = new Uri($loginUrl);
-
-        // filter query string
-        $queryParts = array_filter(explode('&', $loginUrl->getQuery()), function ($param) {
-            return !str_starts_with($param, 'logintype') && !str_starts_with($param, 'tx_oidc%5Bcode%5D') && !str_starts_with($param, 'cHash');
-        });
-
-        return $loginUrl->withQuery(implode('&', $queryParts));
+        $loginUrl = new Uri($authenticationContext->loginUrl);
+        return \GuzzleHttp\Psr7\Uri::withQueryValue($loginUrl, 'tx_oidc[code]', $code);
     }
 
     /**

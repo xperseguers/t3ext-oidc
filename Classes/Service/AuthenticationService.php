@@ -66,7 +66,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     public function __construct(
-        protected OidcConfiguration $config
+        protected OidcConfiguration $config,
+        protected AuthenticationContextService $authenticationContextService,
     ) {}
 
     /**
@@ -87,7 +88,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
-                $authContext = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationContext();
+                $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
                 if ($authContext) {
                     $codeVerifier = $authContext->codeVerifier;
                 }
@@ -236,7 +237,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             );
         }
 
-        $user = $this->convertResourceOwner($resourceOwnerObject);
+        $user = $this->convertResourceOwner($resourceOwnerObject, $accessToken);
 
         if ($this->config->revokeAccessTokenAfterLogin) {
             try {
@@ -276,12 +277,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      *
      * @return array|bool
      */
-    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject): bool|array
+    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): bool|array
     {
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
 
-        $event = new ModifyResourceOwnerEvent($resourceOwnerObject->toArray(), $this);
+        $event = new ModifyResourceOwnerEvent($resourceOwnerObject->toArray(), $this, $accessToken);
         $eventDispatcher->dispatch($event);
         $info = $event->getResourceOwner();
 

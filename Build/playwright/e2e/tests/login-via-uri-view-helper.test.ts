@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Login via login form', async ({ page }) => {
+test('Login via OidcLinkViewHelper', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Login with OpenID Connect' }).click();
   await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.test/'));
