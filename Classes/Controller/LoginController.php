@@ -75,19 +75,8 @@ class LoginController
             $this->redirect($redirectUrl);
         }
 
-        $authorizationUrl = $this->determineAuthorizationUrl($pluginConfiguration['authorizationUrlOptions.'] ?? []);
+        $authorizationUrl = (string)GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationRequestUrl();
         $this->redirect($authorizationUrl);
-    }
-
-    protected function determineAuthorizationUrl(array $authorizationUrlOptions): string
-    {
-        $oidcService = GeneralUtility::makeInstance(OpenIdConnectService::class);
-        $authContext = $oidcService->generateAuthenticationContext($this->request, $authorizationUrlOptions);
-
-        // The redirect will be handled by this plugin
-        $authContext->redirectUrl = '';
-
-        return $authContext->getAuthorizationUrl();
     }
 
     protected function determineRedirectUrl()
