@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 4.0.1
+
+- Fix redirect_url handling for Login-Plugin
+
 ## Version 4.0.0
 
 - Breaking: Existing fe_users are not looked up by their username anymore.
