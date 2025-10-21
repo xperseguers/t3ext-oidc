@@ -41,17 +41,10 @@ class OpenIdConnectService implements LoggerAwareInterface
             $loginUrl = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
             $redirectUrl = $request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '';
 
-            // TYPO3 v13
-            if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
-                $hash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($loginUrl . $redirectUrl, 'oidc');
-            } else {
-                $hash = GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc');
-            }
-
             $query = GeneralUtility::implodeArrayForUrl('', [
                 'login_url' => $loginUrl,
                 'redirect_url' => $redirectUrl,
-                'validation_hash' => $hash,
+                'validation_hash' => $this->calculateUrlHash($loginUrl . $redirectUrl),
             ]);
 
             $language = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
@@ -95,14 +88,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         $redirectUrl = $request->getQueryParams()['redirect_url'] ?? '';
         $hash = $request->getQueryParams()['validation_hash'] ?? '';
 
-        if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
-            // TYPO3 v13
-            $calculatedHash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($loginUrl . $redirectUrl, 'oidc');
-        } else {
-            // TYPO3 v12
-            $calculatedHash = GeneralUtility::hmac($loginUrl . $redirectUrl, 'oidc');
-        }
-        if ($calculatedHash !== $hash) {
+        if ($this->calculateUrlHash($loginUrl . $redirectUrl) !== $hash) {
             throw new InvalidArgumentException('Invalid query string', 1719003567);
         }
 
@@ -113,7 +99,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         }
         $loginUrl = \GuzzleHttp\Psr7\Uri::withQueryValues(new Uri($loginUrl), $loginUrlParams)->__toString();
 
-        $authContext = $this->buildAuthenticationContext($request, $authorizationUrlOptions, $loginUrl, $redirectUrl);
+        $authContext = $this->buildAuthenticationContext($request, $authorizationUrlOptions, $loginUrl);
         $this->logger->debug('Generated new Authentication Context', ['authContext' => $authContext]);
 
         return $authContext;
@@ -152,10 +138,8 @@ class OpenIdConnectService implements LoggerAwareInterface
     {
         $url = new Uri($authContext->authorizationUrl);
         $cookie = $this->authenticationContextService->getCookieForAuthenticationContext($authContext);
-        $response = GeneralUtility::makeInstance(RedirectResponse::class, $url)
+        return GeneralUtility::makeInstance(RedirectResponse::class, $url)
             ->withAddedHeader('Set-Cookie', (string)$cookie);
-
-        return $response;
     }
 
     public function getFinalLoginUrl(AuthenticationContext $authenticationContext, string $code): UriInterface
@@ -201,5 +185,17 @@ class OpenIdConnectService implements LoggerAwareInterface
     protected function getAuthenticationUrlRoutePath(SiteLanguage $language): string
     {
         return $language->getBase()->getPath() . $this->config->authenticationUrlRoute;
+    }
+
+    protected function calculateUrlHash(string $value): string
+    {
+        if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
+            // TYPO3 v13
+            $calculatedHash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($value, 'oidc');
+        } else {
+            // TYPO3 v12
+            $calculatedHash = GeneralUtility::hmac($value, 'oidc');
+        }
+        return $calculatedHash;
     }
 }
