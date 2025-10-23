@@ -17,6 +17,9 @@
 			<trans-unit id="settings.authenticationUrlRoute">
 				<source>Route for retrieving the authentication URL of the Identity Provider</source>
 			</trans-unit>
+			<trans-unit id="settings.enableBackendAuthentication">
+				<source>Backend Authentication: Enable OpenID Connect authentication for the backend.</source>
+			</trans-unit>
 			<trans-unit id="settings.enableCodeVerifier">
 				<source>Enable PKCE: Enable PKCE flow. Code challenge and code verifier will be sent along.</source>
 			</trans-unit>
