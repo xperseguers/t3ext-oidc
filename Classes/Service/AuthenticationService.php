@@ -25,8 +25,6 @@ use Causal\Oidc\Event\AuthenticationProcessMappingEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
-use Causal\Oidc\Frontend\FrontendSimulationV12;
-use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\OidcConfiguration;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
@@ -45,7 +43,6 @@ use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use UnexpectedValueException;
@@ -699,13 +696,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getFrontendSimulation(): FrontendSimulationInterface
     {
-        $typo3Version = (new Typo3Version())->getMajorVersion();
-        if ($typo3Version === 13) {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV13::class);
-        } else {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV12::class);
-        }
-        return $feSim;
+        return GeneralUtility::makeInstance(FrontendSimulationInterface::class);
     }
 
     /**

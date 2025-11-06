@@ -6,6 +6,7 @@ namespace Causal\Oidc\Frontend;
 
 use InvalidArgumentException;
 use Psr\Http\Message\ServerRequestInterface;
+use Symfony\Component\DependencyInjection\Attribute\Exclude;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
@@ -17,6 +18,15 @@ use TYPO3\CMS\Core\Utility\RootlineUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
+/**
+ * Provide {@see FrontendSimulationInterface} implementation compatible for TYPO3 v12.
+ *
+ * Note that `#[Exclude]` is used intentionally to avoid automatic early compiling into the
+ * dependency injection container leading to missing class and other issues for not related
+ * TYPO3 version. TYPO3 version aware configuration is handled and re_enabled within the
+ * `EXT:oidc/Configuration/Services.php` file.
+ */
+#[Exclude]
 class FrontendSimulationV12 implements FrontendSimulationInterface
 {
     public function getTSFE(ServerRequestInterface $originalRequest): TypoScriptFrontendController
@@ -60,7 +70,6 @@ class FrontendSimulationV12 implements FrontendSimulationInterface
         /** @var Context $context */
         $context = GeneralUtility::makeInstance(Context::class);
         $context->unsetAspect('typoscript');
-        $context->unsetAspect('frontend.preview');
         unset($GLOBALS['TSFE']);
     }
 }
