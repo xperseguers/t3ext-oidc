@@ -42,9 +42,9 @@ INSERT INTO pages SET
     sorting = 1
 ;
 
-INSERT INTO `tt_content` (`uid`, `pid`, `CType`, `list_type`, `header`)
+INSERT INTO `tt_content` (`uid`, `pid`, `CType`, `header`)
 VALUES
-	('2', '3', 'list', 'oidc_login', 'Login');
+	('2', '3', 'oidc_login', 'Login');
 ;
 
 INSERT INTO pages SET

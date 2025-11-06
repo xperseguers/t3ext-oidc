@@ -1,3 +1,16 @@
+# Setting oidc plugin TypoScript
+plugin.tx_oidc_login = USER_INT
+plugin.tx_oidc_login {
+  userFunc = Causal\Oidc\Controller\LoginController->login
+  defaultRedirectPid =
+  # Additional URL parameters for the authorization URL of the identity server
+  authorizationUrlOptions {
+    # login_theme = dark
+  }
+}
+
+# Setting oidc plugin TypoScript
+tt_content.oidc_login =< plugin.tx_oidc_login
 
 # format is "TYPO3 column" = <OIDC field>
 plugin.tx_oidc.mapping {

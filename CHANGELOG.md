@@ -7,6 +7,7 @@
   Default values of endpoints have been removed. Please validate your configuration during upgrade.
 - Breaking: Dropped direct felogin-integration (via event).
   Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
+- Breaking: Move OIDC Login Plugin from "list_type" to real content type.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
 
