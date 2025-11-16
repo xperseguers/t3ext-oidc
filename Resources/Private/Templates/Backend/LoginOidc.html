@@ -1,0 +1,24 @@
+<f:layout name="Login" />
+
+<f:section name="loginFormFields">
+    <div class="form-group t3js-login-username-section" id="t3-login-username-section">
+        <f:if condition="{loginError}">
+            <div class="t3js-login-error" id="t3-login-error">
+                <div class="alert alert-danger">
+                    <strong><f:translate key="login.error.headline" extensionName="oidc" /></strong>
+                    <p><f:translate key="login.error.message" extensionName="oidc" /></p>
+                </div>
+            </div>
+        </f:if>
+
+        OIDC Login
+        <input type="hidden" id="login-provider" name="login-provider" value="oidc"/>
+    </div>
+</f:section>
+<f:section name="ResetPassword">
+    <div class="forgot-password">
+        <div class="text-right">
+            <f:be.link route="password_forget" parameters="{loginProvider: loginProviderIdentifier}">{f:translate(key: 'login.password_forget')}</f:be.link>
+        </div>
+    </div>
+</f:section>

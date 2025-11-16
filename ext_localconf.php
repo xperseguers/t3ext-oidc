@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Causal\Oidc\Hooks\DataHandlerOidc;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\AuthenticationService;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -17,15 +18,17 @@ $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'tx_oid
 $settings = GeneralUtility::makeInstance(OidcConfiguration::class);
 
 // Service configuration
-$subTypes = '';
-if ($settings->enableFrontendAuthentication ?? '') {
-    $subTypesArr = [
+$subTypes = array_merge(
+    ($settings->enableFrontendAuthentication) ? [
         'getUserFE',
         'authUserFE',
         'getGroupsFE',
-    ];
-    $subTypes = implode(',', $subTypesArr);
-}
+    ] : [],
+    ($settings->enableBackendAuthentication) ? [
+        'getUserBE',
+        'authUserBE',
+    ] : [],
+);
 
 $authenticationClassName = AuthenticationService::class;
 ExtensionManagementUtility::addService(
@@ -35,7 +38,7 @@ ExtensionManagementUtility::addService(
     [
         'title' => 'Authentication service',
         'description' => 'Authentication service for OpenID Connect.',
-        'subtype' => $subTypes,
+        'subtype' => implode(',', $subTypes),
         'available' => true,
         'priority' => $settings->authenticationServicePriority,
         'quality' => $settings->authenticationServiceQuality,
@@ -49,4 +52,13 @@ ExtensionManagementUtility::addService(
 $pharFileName = ExtensionManagementUtility::extPath('oidc') . 'Libraries/league-oauth2-client.phar';
 if (is_file($pharFileName)) {
     @include 'phar://' . $pharFileName . '/vendor/autoload.php';
+}
+
+if ($settings->enableBackendAuthentication) {
+    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
+        'provider' => OidcLoginProvider::class,
+        'sorting' => 50,
+        'iconIdentifier' => 'actions-key',
+        'label' => 'OIDC',
+    ];
 }
