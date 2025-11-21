@@ -41,6 +41,9 @@
 			<trans-unit id="settings.oidcClientScopes">
 				<source>Client Scopes:</source>
 			</trans-unit>
+			<trans-unit id="settings.oidcClientScopeSeparator">
+				<source>Client Scope Separator (empty = space):</source>
+			</trans-unit>
 			<trans-unit id="settings.oidcClientSecret">
 				<source>Client Secret:</source>
 			</trans-unit>

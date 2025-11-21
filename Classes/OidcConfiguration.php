@@ -30,6 +30,7 @@ final class OidcConfiguration
     public string $oidcClientKey = '';
     public string $oidcClientSecret = '';
     public string $oidcClientScopes = 'openid';
+    public string $oidcClientScopeSeparator = ' ';
     public string $oidcRedirectUri = '';
     public string $endpointAuthorize = '';
     public string $endpointToken = '';
@@ -58,6 +59,7 @@ final class OidcConfiguration
         $this->oidcClientKey = $extConfig['oidcClientKey'];
         $this->oidcClientSecret = $extConfig['oidcClientSecret'];
         $this->oidcClientScopes = $extConfig['oidcClientScopes'];
+        $this->oidcClientScopeSeparator = $extConfig['oidcClientScopeSeparator'] == '' ? ' ' : $extConfig['oidcClientScopeSeparator'];
         $this->endpointAuthorize = $extConfig['oidcEndpointAuthorize'];
         $this->endpointToken = $extConfig['oidcEndpointToken'];
         $this->endpointUserInfo = $extConfig['oidcEndpointUserInfo'];

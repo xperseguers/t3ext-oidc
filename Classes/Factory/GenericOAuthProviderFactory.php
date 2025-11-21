@@ -42,6 +42,7 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
                 'responseResourceOwnerId' => 'sub',
                 'accessTokenResourceOwnerId' => 'sub',
                 'scopes' => GeneralUtility::trimExplode(',', $settings->oidcClientScopes, true),
+                'scopeSeparator' => $settings->oidcClientScopeSeparator,
             ],
             $collaborators
         );
