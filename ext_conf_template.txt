@@ -35,7 +35,7 @@ oidcClientSecret =
 oidcClientScopes = openid
 
 # cat=basic//6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientScopeSeparator
-oidcClientScopeSeparator = ,
+oidcClientScopeSeparator =
 
 # cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointAuthorize
 oidcEndpointAuthorize =
