@@ -7,16 +7,12 @@ namespace Causal\Oidc\Tests\Unit\Service;
 use Causal\Oidc\AuthenticationContext;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\AuthenticationContextService;
-use Causal\Oidc\Service\OAuthService;
 use Causal\Oidc\Service\OpenIdConnectService;
+use Causal\Oidc\Tests\Unit\AbstractUnitTest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use Psr\EventDispatcher\EventDispatcherInterface;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
-class OpenIdConnectServiceTest extends UnitTestCase
+class OpenIdConnectServiceTest extends AbstractUnitTest
 {
     protected bool $resetSingletonInstances = true;
 
@@ -52,49 +48,5 @@ class OpenIdConnectServiceTest extends UnitTestCase
                 'expected' => 'https://example.com/login?logintype=login&redirect_url=http%3A%2F%2Fexample.com%2Fother&tx_oidc%5Bcode%5D=somecode',
             ],
         ];
-    }
-
-    private function createOAuthService(): OAuthService
-    {
-        $this->setupOidcConfiguration();
-
-        return new OAuthService(
-            self::createStub(EventDispatcherInterface::class),
-            new OidcConfiguration(),
-        );
-    }
-
-    private function setupOidcConfiguration(): void
-    {
-        $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
-        $extensionConfiguration->method('get')->willReturn([
-            'enableFrontendAuthentication' => 0,
-            'reEnableFrontendUsers' => 0,
-            'undeleteFrontendUsers' => 0,
-            'frontendUserMustExistLocally' => 0,
-            'enableCodeVerifier' => 0,
-            'enablePasswordCredentials' => 0,
-            'usersStoragePid' => 0,
-            'usersDefaultGroup' => '',
-            'oidcRedirectUri' => '',
-            'oidcClientKey' => '',
-            'oidcClientSecret' => '',
-            'oidcClientScopes' => 'openid',
-            'oidcEndpointAuthorize' => '',
-            'oidcEndpointToken' => '',
-            'oidcEndpointUserInfo' => '',
-            'oidcEndpointLogout' => '',
-            'oidcEndpointRevoke' => '',
-            'oidcAuthorizeLanguageParameter' => 'language',
-            'oidcUseRequestPathAuthentication' => 0,
-            'oidcRevokeAccessTokenAfterLogin' => 0,
-            'oidcDisableCSRFProtection' => 0,
-            'oauthProviderFactory' => '',
-            'authenticationServicePriority' => 82,
-            'authenticationServiceQuality' => 80,
-            'authenticationUrlRoute' => 'oidc/authentication',
-        ]);
-
-        GeneralUtility::addInstance(ExtensionConfiguration::class, $extensionConfiguration);
     }
 }

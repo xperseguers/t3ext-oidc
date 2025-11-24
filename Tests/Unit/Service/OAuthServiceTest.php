@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Tests\Unit\Service;
 
-use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\OAuthService;
+use Causal\Oidc\Tests\Unit\AbstractUnitTest;
 use DateTimeImmutable;
 use League\OAuth2\Client\Grant\RefreshToken;
 use League\OAuth2\Client\Provider\AbstractProvider;
@@ -13,25 +13,28 @@ use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use ReflectionProperty;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 #[CoversClass(OAuthService::class)]
-final class OAuthServiceTest extends TestCase
+final class OAuthServiceTest extends AbstractUnitTest
 {
     protected bool $resetSingletonInstances = true;
+
+    protected OAuthService $subject;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setupOidcConfiguration();
+        $this->subject = $this->createOAuthService();
+    }
 
     #[Test]
     public function getFreshAccessTokenReturnsExistingAccessTokenIfNotExpired(): void
     {
         $accessToken = $this->createAccessTokenWithExpire((new DateTimeImmutable())->modify('+30 seconds'));
 
-        $subject = $this->createSubject();
-
-        $result = $subject->getFreshAccessToken(json_encode($accessToken));
+        $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
 
         self::assertSame(
             json_encode($accessToken),
@@ -56,11 +59,9 @@ final class OAuthServiceTest extends TestCase
             )
             ->willReturn($newAccessToken);
 
-        $subject = $this->createSubject();
+        $this->setProperty($this->subject, 'provider', $provider);
 
-        $this->setProperty($subject, 'provider', $provider);
-
-        $result = $subject->getFreshAccessToken(json_encode($accessToken));
+        $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
 
         self::assertSame(
             $newAccessToken,
@@ -71,9 +72,7 @@ final class OAuthServiceTest extends TestCase
     #[Test]
     public function getFreshAccessTokenReturnsNullIfAccessTokenIsInvalid(): void
     {
-        $subject = $this->createSubject();
-
-        $result = $subject->getFreshAccessToken('');
+        $result = $this->subject->getFreshAccessToken('');
 
         self::assertNull($result);
     }
@@ -86,52 +85,11 @@ final class OAuthServiceTest extends TestCase
         $provider = self::createStub(AbstractProvider::class);
         $provider->method('getAccessToken')->willThrowException(new IdentityProviderException('message', 10, 'response'));
 
-        $subject = $this->createSubject();
+        $this->setProperty($this->subject, 'provider', $provider);
 
-        $this->setProperty($subject, 'provider', $provider);
-
-        $result = $subject->getFreshAccessToken(json_encode($accessToken));
+        $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
 
         self::assertNull($result);
-    }
-
-    private function createSubject(): OAuthService
-    {
-        $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
-        $extensionConfiguration->method('get')->willReturn([
-            'enableFrontendAuthentication' => 0,
-            'reEnableFrontendUsers' => 0,
-            'undeleteFrontendUsers' => 0,
-            'frontendUserMustExistLocally' => 0,
-            'enableCodeVerifier' => 0,
-            'enablePasswordCredentials' => 0,
-            'usersStoragePid' => 0,
-            'usersDefaultGroup' => '',
-            'oidcRedirectUri' => '',
-            'oidcClientKey' => '',
-            'oidcClientSecret' => '',
-            'oidcClientScopes' => 'openid',
-            'oidcEndpointAuthorize' => '',
-            'oidcEndpointToken' => '',
-            'oidcEndpointUserInfo' => '',
-            'oidcEndpointLogout' => '',
-            'oidcEndpointRevoke' => '',
-            'oidcAuthorizeLanguageParameter' => 'language',
-            'oidcUseRequestPathAuthentication' => 0,
-            'oidcRevokeAccessTokenAfterLogin' => 0,
-            'oidcDisableCSRFProtection' => 0,
-            'oauthProviderFactory' => '',
-            'authenticationServicePriority' => 82,
-            'authenticationServiceQuality' => 80,
-            'authenticationUrlRoute' => 'oidc/authentication',
-        ]);
-
-        GeneralUtility::addInstance(ExtensionConfiguration::class, $extensionConfiguration);
-
-        return new OAuthService(
-            self::createStub(EventDispatcherInterface::class),
-            new OidcConfiguration(),
-        );
     }
 
     private function createAccessTokenWithExpire(DateTimeImmutable $expires): AccessToken
