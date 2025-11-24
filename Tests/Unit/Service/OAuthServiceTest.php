@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\Tests\Unit\Service;
 
 use Causal\Oidc\Service\OAuthService;
-use Causal\Oidc\Tests\Unit\AbstractUnitTest;
+use Causal\Oidc\Tests\Unit\AbstractUnitTestBase;
 use DateTimeImmutable;
 use League\OAuth2\Client\Grant\RefreshToken;
 use League\OAuth2\Client\Provider\AbstractProvider;
@@ -16,7 +16,7 @@ use PHPUnit\Framework\Attributes\Test;
 use ReflectionProperty;
 
 #[CoversClass(OAuthService::class)]
-final class OAuthServiceTest extends AbstractUnitTest
+final class OAuthServiceTest extends AbstractUnitTestBase
 {
     protected bool $resetSingletonInstances = true;
 
@@ -25,7 +25,6 @@ final class OAuthServiceTest extends AbstractUnitTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setupOidcConfiguration();
         $this->subject = $this->createOAuthService();
     }
 

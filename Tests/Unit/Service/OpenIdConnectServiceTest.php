@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Causal\Oidc\Tests\Unit\Service;
 
 use Causal\Oidc\AuthenticationContext;
-use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\AuthenticationContextService;
 use Causal\Oidc\Service\OpenIdConnectService;
-use Causal\Oidc\Tests\Unit\AbstractUnitTest;
+use Causal\Oidc\Tests\Unit\AbstractUnitTestBase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
-class OpenIdConnectServiceTest extends AbstractUnitTest
+class OpenIdConnectServiceTest extends AbstractUnitTestBase
 {
     protected bool $resetSingletonInstances = true;
 
@@ -20,12 +19,10 @@ class OpenIdConnectServiceTest extends AbstractUnitTest
     #[DataProvider('getFinalLoginUrlReturnsExpectedUrlDataProvider')]
     public function getFinalLoginUrlReturnsExpectedUrl(string $loginUrl, string $expected): void
     {
-        $this->setupOidcConfiguration();
-
         $service = new OpenIdConnectService(
             $this->createOAuthService(),
             new AuthenticationContextService(),
-            new OidcConfiguration(),
+            $this->setupOidcConfiguration(),
         );
 
         $authenticationContext = new AuthenticationContext('', $loginUrl, '', '', false);

@@ -40,9 +40,9 @@ final class OidcConfiguration
     public bool $revokeAccessTokenAfterLogin = false;
     public bool $enablePasswordCredentials = false;
 
-    public function __construct()
+    public function __construct(array $extConfig = [])
     {
-        $extConfig = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc') ?? [];
+        $extConfig = $extConfig ?: $this->getExtensionConfiguration();
 
         $this->enableFrontendAuthentication = (bool)$extConfig['enableFrontendAuthentication'];
         $this->authenticationServicePriority = (int)$extConfig['authenticationServicePriority'];
@@ -70,5 +70,14 @@ final class OidcConfiguration
         $this->oidcRedirectUri = $extConfig['oidcRedirectUri'];
         $this->revokeAccessTokenAfterLogin = (bool)$extConfig['oidcRevokeAccessTokenAfterLogin'];
         $this->enablePasswordCredentials = (bool)$extConfig['enablePasswordCredentials'];
+    }
+
+    protected function getExtensionConfiguration(): array
+    {
+        $config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc');
+        if ($config) {
+            return $config;
+        }
+        throw new \UnexpectedValueException('OIDC extension configuration not found', 1763986824);
     }
 }

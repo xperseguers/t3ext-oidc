@@ -7,16 +7,21 @@ namespace Causal\Oidc\Tests\Unit;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\OAuthService;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
-class AbstractUnitTest extends UnitTestCase
+class AbstractUnitTestBase extends UnitTestCase
 {
-    protected function setupOidcConfiguration(): void
+    protected function createOAuthService(): OAuthService
     {
-        $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
-        $extensionConfiguration->method('get')->willReturn([
+        return new OAuthService(
+            self::createStub(EventDispatcherInterface::class),
+            $this->setupOidcConfiguration()
+        );
+    }
+
+    protected function setupOidcConfiguration(): OidcConfiguration
+    {
+        return new OidcConfiguration([
             'enableFrontendAuthentication' => 0,
             'reEnableFrontendUsers' => 0,
             'undeleteFrontendUsers' => 0,
@@ -44,15 +49,5 @@ class AbstractUnitTest extends UnitTestCase
             'authenticationServiceQuality' => 80,
             'authenticationUrlRoute' => 'oidc/authentication',
         ]);
-
-        GeneralUtility::addInstance(ExtensionConfiguration::class, $extensionConfiguration);
-    }
-
-    protected function createOAuthService(): OAuthService
-    {
-        return new OAuthService(
-            self::createStub(EventDispatcherInterface::class),
-            new OidcConfiguration(),
-        );
     }
 }
