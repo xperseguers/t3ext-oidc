@@ -13,17 +13,6 @@ Examples of such identity provider software or services are:
 - Keycloak
 - Authentik
 
-## Breaking Change
-
-With **Version 5.x** the default scope separator is changed from comma (`,`) to the space-character (` `)
-to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
-
-If your OpenID Server required a comma-separated list of scopes you have to change extension configuration `oidcClientScopeSeparator`
-
-```
-oidcClientScopeSeparator = ,
-```
-
 ## Direct OIDC Login
 
 If OpenID Connect is your only means of frontend login, you can use the included

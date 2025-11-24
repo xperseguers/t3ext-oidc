@@ -8,6 +8,9 @@
 - Breaking: Dropped direct felogin-integration (via event).
   Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
 - Breaking: Move OIDC Login Plugin from "list_type" to real content type.
+- Breaking: The default scope separator is changed from comma (`,`) to the space-character (` `)
+  to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
+  Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
 
