@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 4.0.3
+
+- Allow for firebase/php-jwt v7
+
 ## Version 4.0.2
 
 - Fixed TYPO3 v13 compatibility issue with FrontendSimulationV13 class
