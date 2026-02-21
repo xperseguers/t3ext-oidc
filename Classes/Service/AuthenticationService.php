@@ -305,29 +305,31 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this, $resourceOwnerObject);
         $eventDispatcher->dispatch($event);
 
-        $row = $queryBuilder
+        $userLookupResult = $queryBuilder
             ->select('*')
             ->from($userTable)
             ->where(...$event->getConditions())
-            ->executeQuery()
-            ->fetchAssociative();
+            ->executeQuery();
 
-        if (!empty($row) && $row['deleted'] && !$this->config->undeleteFrontendUsers) {
-            // User was manually deleted, it should not get automatically restored
-            $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
-
-            return false;
+        $row = $userLookupResult->fetchAssociative();
+        if ($row && $userLookupResult->fetchAssociative()) {
+            $this->logger->critical('Found more than one matching user. Using first result with uid: ' . $row['uid']);
         }
-        if (!empty($row) && $row['disable'] && !$this->config->reEnableFrontendUsers) {
-            // User was manually disabled, it should not get automatically re-enabled
-            $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
+        $userLookupResult->free();
 
-            return false;
-        }
-        if (empty($row) && $this->config->frontendUserMustExistLocally) {
+        if (!$row && $this->config->frontendUserMustExistLocally) {
             // User does not exist locally, it should not be created on-the-fly
             $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
-
+            return false;
+        }
+        if (($row['deleted'] ?? false) && !$this->config->undeleteFrontendUsers) {
+            // User was manually deleted, it should not get automatically restored
+            $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
+            return false;
+        }
+        if (($row['disable'] ?? false) && !$this->config->reEnableFrontendUsers) {
+            // User was manually disabled, it should not get automatically re-enabled
+            $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
             return false;
         }
 
@@ -430,7 +432,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable($userTable);
 
-        if (!empty($row)) { // fe_users record already exists => update it
+        if ($row) { // fe_users record already exists => update it
             $this->logger->info('Detected a returning user');
             $data['usergroup'] = implode(',', $newUserGroups);
             $user = array_merge($row, $data);
