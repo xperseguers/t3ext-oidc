@@ -309,6 +309,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->select('*')
             ->from($userTable)
             ->where(...$event->getConditions())
+            ->orderBy('deleted')
+            ->addOrderBy('disabled')
+            ->addOrderBy('crdate', 'DESC')
             ->executeQuery();
 
         $row = $userLookupResult->fetchAssociative();
