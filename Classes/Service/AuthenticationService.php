@@ -302,7 +302,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($resourceOwnerObject->getId())),
         ];
 
-        $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this);
+        $event = new AuthenticationFetchUserEvent($info, $userFetchConditions, $queryBuilder, $this, $resourceOwnerObject);
         $eventDispatcher->dispatch($event);
 
         $row = $queryBuilder
