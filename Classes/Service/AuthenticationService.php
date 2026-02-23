@@ -310,7 +310,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             ->from($userTable)
             ->where(...$event->getConditions())
             ->orderBy('deleted')
-            ->addOrderBy('disabled')
+            ->addOrderBy('disable')
             ->addOrderBy('crdate', 'DESC')
             ->executeQuery();
 
