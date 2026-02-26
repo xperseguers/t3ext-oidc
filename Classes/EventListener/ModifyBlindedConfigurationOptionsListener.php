@@ -13,9 +13,9 @@ final class ModifyBlindedConfigurationOptionsListener
         $options = $event->getBlindedConfigurationOptions();
         if ($event->getProviderIdentifier() === 'confVars') {
             $options['TYPO3_CONF_VARS']['EXTENSIONS']['oidc']['oidcClientKey']
-                = substr($options['TYPO3_CONF_VARS']['EXTENSIONS']['oidc']['oidcClientKey'], 0, 3) . '******';
+                = substr($GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc']['oidcClientKey'], 0, 3) . '******';
             $options['TYPO3_CONF_VARS']['EXTENSIONS']['oidc']['oidcClientSecret']
-                = substr($options['TYPO3_CONF_VARS']['EXTENSIONS']['oidc']['oidcClientSecret'], 0, 3) . '******';
+                = substr($GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['oidc']['oidcClientSecret'], 0, 3) . '******';
         }
 
         $event->setBlindedConfigurationOptions($options);
