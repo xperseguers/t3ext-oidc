@@ -24,9 +24,6 @@ use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\AuthenticationProcessMappingEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
-use Causal\Oidc\Frontend\FrontendSimulationInterface;
-use Causal\Oidc\Frontend\FrontendSimulationV12;
-use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\OidcConfiguration;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
@@ -36,7 +33,10 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Configuration\Loader\Exception\YamlParseException;
+use TYPO3\CMS\Core\Configuration\Loader\YamlFileLoader;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
@@ -45,7 +45,6 @@ use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use UnexpectedValueException;
@@ -341,6 +340,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $info,
             $row ?: [],
             [
+                'username' => $resourceOwnerObject->getId(),
                 'tx_oidc' => $resourceOwnerObject->getId(),
                 'deleted' => 0,
                 'disable' => 0,
@@ -556,51 +556,28 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function applyMapping(string $table, array $oidc, array $typo3User, array $baseData = [], bool $reportErrors = false): array
     {
-        $request = $this->getRequest();
         $out = array_merge($typo3User, $baseData);
-        $typoScriptKeys = [];
-        $mapping = $this->getMapping($table, $request);
 
-        // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
+        if (!is_null($site = $this->getRequest()->getAttribute('site'))) {
+            $configPath = '/sites/' . $site->getIdentifier() . '/oidc.yaml';
+        }
+
+        $mapping = $this->getMapping($table, $configPath ?? null);
+
+        // Process every field (except "usergroup" and "parentGroup") which is not a YAML definition
         foreach ($mapping as $field => $value) {
-            if (!str_ends_with($field, '.')) {
-                if ($field !== 'usergroup' && $field !== 'parentGroup') {
-                    try {
-                        $out = $this->mergeSimple($oidc, $out, $field, $value);
-                    } catch (UnexpectedValueException $uve) {
-                        if ($reportErrors) {
-                            $out['__errors'][] = $uve->getMessage();
-                        }
+            if ($field !== 'usergroup' && $field !== 'parentGroup') {
+                try {
+                    $out = $this->mergeSimple($oidc, $out, $field, $value);
+                } catch (UnexpectedValueException $uve) {
+                    if ($reportErrors) {
+                        $out['__errors'][] = $uve->getMessage();
                     }
                 }
-            } else {
-                $typoScriptKeys[] = $field;
             }
         }
 
-        if (count($typoScriptKeys) > 0) {
-            // there is no TSFE yet at this early stage in the middleware chain
-            $feSim = $this->getFrontendSimulation();
-            $GLOBALS['TSFE'] = $feSim->getTSFE($request);
-
-            /** @var $contentObj ContentObjectRenderer */
-            $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class, $GLOBALS['TSFE']);
-            $contentObj->setRequest($request);
-            $contentObj->start($oidc);
-
-            // Process every TypoScript definition
-            foreach ($typoScriptKeys as $typoScriptKey) {
-                // Remove the trailing period to get corresponding field name
-                $field = substr($typoScriptKey, 0, -1);
-                $value = $out[$field] ?? '';
-                $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
-                $out = $this->mergeSimple([$field => $value], $out, $field, $value);
-            }
-
-            $feSim->cleanupTSFE();
-        }
-
-        $event = new AuthenticationProcessMappingEvent($request, $table, $typo3User, $oidc, $out);
+        $event = new AuthenticationProcessMappingEvent($this->getRequest(), $table, $typo3User, $oidc, $out);
 
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
@@ -670,47 +647,21 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * Returns the mapping configuration for OIDC fields.
      *
      * @param string $table
-     * @param ServerRequestInterface $request
+     * @param string|null $configPath
      * @return array
      */
-    protected function getMapping(string $table, ServerRequestInterface $request): array
+    protected function getMapping(string $table, ?string $configPath = null): array
     {
-        $mapping = [];
-
-        $defaultMapping = [
-            'username'   => '<sub>',
-            'name'       => '<name>',
-            'first_name' => '<Vorname>',
-            'last_name'  => '<FamilienName>',
-            'address'    => '<Strasse>',
-            'title'      => '<Anredecode>',
-            'zip'        => '<PLZ>',
-            'city'       => '<Ort>',
-            'country'    => '<Land>',
-        ];
-
-        if ($table === 'fe_users') {
-            $feSim = $this->getFrontendSimulation();
-            $GLOBALS['TSFE'] = $feSim->getTSFE($request);
-            $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
-            $feSim->cleanupTSFE();
-            if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'])) {
-                $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'];
+        try {
+            $config = GeneralUtility::makeInstance(YamlFileLoader::class)
+                ->load(Environment::getConfigPath() . ($configPath ?? '/system/oidc.yaml'));
+            return $config['providers']['default']['mapping'][$table] ?? [];
+        } catch (YamlParseException $e) {
+            if (empty($configPath)) {
+                return [];
             }
+            return $this->getMapping($table);
         }
-
-        return $mapping ?: $defaultMapping;
-    }
-
-    protected function getFrontendSimulation(): FrontendSimulationInterface
-    {
-        $typo3Version = (new Typo3Version())->getMajorVersion();
-        if ($typo3Version === 13) {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV13::class);
-        } else {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV12::class);
-        }
-        return $feSim;
     }
 
     /**
