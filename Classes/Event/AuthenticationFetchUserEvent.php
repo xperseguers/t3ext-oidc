@@ -18,12 +18,15 @@ declare(strict_types=1);
 namespace Causal\Oidc\Event;
 
 use Doctrine\DBAL\Query\Expression\CompositeExpression;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 
 final class AuthenticationFetchUserEvent
 {
     protected array $resourceInfo;
+
+    protected ResourceOwnerInterface $resourceOwner;
 
     /**
      * @var array<string|CompositeExpression>
@@ -38,17 +41,24 @@ final class AuthenticationFetchUserEvent
         array $resourceInfo,
         array $conditions,
         QueryBuilder $queryBuilder,
-        AbstractAuthenticationService $authenticationService
+        AbstractAuthenticationService $authenticationService,
+        ResourceOwnerInterface $resourceOwner,
     ) {
         $this->resourceInfo = $resourceInfo;
         $this->conditions = $conditions;
         $this->queryBuilder = $queryBuilder;
         $this->authenticationService = $authenticationService;
+        $this->resourceOwner = $resourceOwner;
     }
 
     public function getResourceInfo(): array
     {
         return $this->resourceInfo;
+    }
+
+    public function getResourceOwner(): ResourceOwnerInterface
+    {
+        return $this->resourceOwner;
     }
 
     /**

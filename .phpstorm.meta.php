@@ -122,7 +122,9 @@ namespace PHPSTORM_META {
         'moduleData' => \TYPO3\CMS\Backend\Module\ModuleData::class,
     ]));
 
-    override(\TYPO3\CMS\Core\Routing\SiteMatcher::matchRequest(), type(
+    override(
+        \TYPO3\CMS\Core\Routing\SiteMatcher::matchRequest(),
+        type(
             \TYPO3\CMS\Core\Routing\SiteRouteResult::class,
             \TYPO3\CMS\Core\Routing\RouteResultInterface::class,
         )
@@ -142,6 +144,6 @@ namespace PHPSTORM_META {
     ]));
 
     override(\TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(0), map([
-        '' => '@'
+        '' => '@',
     ]));
 }
