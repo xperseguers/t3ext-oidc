@@ -59,7 +59,7 @@ final class OidcConfiguration
         $this->oidcClientKey = $extConfig['oidcClientKey'];
         $this->oidcClientSecret = $extConfig['oidcClientSecret'];
         $this->oidcClientScopes = $extConfig['oidcClientScopes'];
-        $this->oidcClientScopeSeparator = $extConfig['oidcClientScopeSeparator'] === '' ? ' ' : $extConfig['oidcClientScopeSeparator'];
+        $this->oidcClientScopeSeparator = empty($extConfig['oidcClientScopeSeparator']) ? ' ' : $extConfig['oidcClientScopeSeparator'];
         $this->endpointAuthorize = $extConfig['oidcEndpointAuthorize'];
         $this->endpointToken = $extConfig['oidcEndpointToken'];
         $this->endpointUserInfo = $extConfig['oidcEndpointUserInfo'];
