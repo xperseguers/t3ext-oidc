@@ -657,7 +657,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 ->load(Environment::getConfigPath() . ($configPath ?? '/system/oidc.yaml'));
             return $config['providers']['default']['mapping'][$table] ?? [];
         } catch (YamlParseException $e) {
-            if (empty($configPath)) {
+            if (!$configPath) {
                 return [];
             }
             return $this->getMapping($table);
