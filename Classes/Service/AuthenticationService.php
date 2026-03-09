@@ -40,7 +40,6 @@ use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Configuration\Loader\Exception\YamlParseException;
 use TYPO3\CMS\Core\Configuration\Loader\YamlFileLoader;
 use TYPO3\CMS\Core\Context\Context;
-use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
@@ -579,14 +578,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     {
         $out = array_merge($typo3User, $baseData);
 
-        if (!is_null($site = $this->getRequest()->getAttribute('site'))) {
-            $configPath = '/sites/' . $site->getIdentifier() . '/oidc.yaml';
-        }
-
-        $mapping = $this->getMapping($table, $configPath ?? null);
-
         // Process every field (except "usergroup" and "parentGroup") which is not a YAML definition
-        foreach ($mapping as $field => $value) {
+        foreach ($this->getMapping($table) as $field => $value) {
             if ($field !== 'usergroup' && $field !== 'parentGroup') {
                 try {
                     $out = $this->mergeSimple($oidc, $out, $field, $value);
@@ -668,21 +661,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      * Returns the mapping configuration for OID¶C fields.
      *
      * @param string $table
-     * @param string|null $configPath
      * @return array
      */
-    protected function getMapping(string $table, ?string $configPath = null): array
+    protected function getMapping(string $table): array
     {
-        try {
-            $config = GeneralUtility::makeInstance(YamlFileLoader::class)
-                ->load(Environment::getConfigPath() . ($configPath ?? '/system/oidc.yaml'));
-            return $config['providers']['default']['mapping'][$table] ?? [];
-        } catch (YamlParseException $e) {
-            if (!$configPath) {
-                return [];
-            }
-            return $this->getMapping($table);
-        }
+        return $this->config->providers['default']['mapping'][$table] ?? [];
     }
 
     /**
