@@ -73,8 +73,8 @@ class OpenIdConnectService implements LoggerAwareInterface
      */
     public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
     {
-        if (!$this->config->oidcClientKey
-            || !$this->config->oidcClientSecret
+        if (!$this->config->clientKey
+            || !$this->config->clientSecret
             || !$this->config->endpointAuthorize
             || !$this->config->endpointToken
         ) {

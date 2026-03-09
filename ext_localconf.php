@@ -15,50 +15,54 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['proc
 
 $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'tx_oidc[code]';
 
-$settings = GeneralUtility::makeInstance(OidcConfiguration::class);
+try {
+    $settings = GeneralUtility::makeInstance(OidcConfiguration::class);
 
-// Service configuration
-$subTypes = array_merge(
-    ($settings->enableFrontendAuthentication) ? [
-        'getUserFE',
-        'authUserFE',
-        'getGroupsFE',
-    ] : [],
-    ($settings->enableBackendAuthentication) ? [
-        'getUserBE',
-        'authUserBE',
-    ] : [],
-);
+    // Service configuration
+    $subTypes = array_merge(
+        ($settings->enableFrontendAuthentication) ? [
+            'getUserFE',
+            'authUserFE',
+            'getGroupsFE',
+        ] : [],
+        ($settings->enableBackendAuthentication) ? [
+            'getUserBE',
+            'authUserBE',
+        ] : [],
+    );
 
-$authenticationClassName = AuthenticationService::class;
-ExtensionManagementUtility::addService(
-    'oidc',
-    'auth' /* sv type */,
-    $authenticationClassName /* sv key */,
-    [
-        'title' => 'Authentication service',
-        'description' => 'Authentication service for OpenID Connect.',
-        'subtype' => implode(',', $subTypes),
-        'available' => true,
-        'priority' => $settings->authenticationServicePriority,
-        'quality' => $settings->authenticationServiceQuality,
-        'os' => '',
-        'exec' => '',
-        'className' => $authenticationClassName,
-    ]
-);
+    $authenticationClassName = AuthenticationService::class;
+    ExtensionManagementUtility::addService(
+        'oidc',
+        'auth' /* sv type */,
+        $authenticationClassName /* sv key */,
+        [
+            'title' => 'Authentication service',
+            'description' => 'Authentication service for OpenID Connect.',
+            'subtype' => implode(',', $subTypes),
+            'available' => true,
+            'priority' => $settings->authenticationServicePriority,
+            'quality' => $settings->authenticationServiceQuality,
+            'os' => '',
+            'exec' => '',
+            'className' => $authenticationClassName,
+        ]
+    );
 
-// Require 3rd-party libraries, in case TYPO3 does not run in composer mode
-$pharFileName = ExtensionManagementUtility::extPath('oidc') . 'Libraries/league-oauth2-client.phar';
-if (is_file($pharFileName)) {
-    @include 'phar://' . $pharFileName . '/vendor/autoload.php';
-}
+    // Require 3rd-party libraries, in case TYPO3 does not run in composer mode
+    $pharFileName = ExtensionManagementUtility::extPath('oidc') . 'Libraries/league-oauth2-client.phar';
+    if (is_file($pharFileName)) {
+        @include 'phar://' . $pharFileName . '/vendor/autoload.php';
+    }
 
-if ($settings->enableBackendAuthentication) {
-    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
-        'provider' => OidcLoginProvider::class,
-        'sorting' => 50,
-        'iconIdentifier' => 'actions-key',
-        'label' => 'OIDC',
-    ];
+    if ($settings->enableBackendAuthentication) {
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
+            'provider' => OidcLoginProvider::class,
+            'sorting' => 50,
+            'iconIdentifier' => 'actions-key',
+            'label' => 'OIDC',
+        ];
+    }
+} catch (\Exception) {
+    // Do nothing
 }
