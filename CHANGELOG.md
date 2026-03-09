@@ -7,6 +7,7 @@
 - Added TYPO3 14 LTS support
 - Breaking: Dropped support for TYPO3 12 LTS and PHP < 8.4
 - The redirect/callback URI generation has been centralized and does not use global TYPO3 state anymore
+- Breaking: Configure user claim mapping without TypoScript.
 
 ## Version 5.0.0 (2026-08-10)
 
