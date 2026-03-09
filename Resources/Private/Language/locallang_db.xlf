@@ -32,43 +32,43 @@
 			<trans-unit id="settings.oauthProviderFactory">
 				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcAuthorizeLanguageParameter">
+			<trans-unit id="settings.authorizeLanguageParameter">
 				<source>Authorize request language parameter name</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientKey">
+			<trans-unit id="settings.clientKey">
 				<source>Client Key</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientScopes">
+			<trans-unit id="settings.clientScopes">
 				<source>Client Scopes:</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientScopeSeparator">
+			<trans-unit id="settings.clientScopeSeparator">
 				<source>Client Scope Separator (empty = ' ' [space]):</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientSecret">
+			<trans-unit id="settings.clientSecret">
 				<source>Client Secret:</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcDisableCSRFProtection">
+			<trans-unit id="settings.disableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointAuthorize">
+			<trans-unit id="settings.endpointAuthorize">
 				<source>Endpoint URI for authorization</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointLogout">
+			<trans-unit id="settings.endpointLogout">
 				<source>Endpoint URI for logout</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointRevoke">
+			<trans-unit id="settings.endpointRevoke">
 				<source>Endpoint URI for revoking the token</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointToken">
+			<trans-unit id="settings.endpointToken">
 				<source>Endpoint URI for retrieving a token</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointUserInfo">
+			<trans-unit id="settings.endpointUserInfo">
 				<source>Endpoint URI for fetching user information</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcRedirectUri">
+			<trans-unit id="settings.redirectUri">
 				<source>Redirect URI: The authentication server callback will point to this URI.</source>
 			</trans-unit>
-			<trans-unit id="settings.oidcUseRequestPathAuthentication">
+			<trans-unit id="settings.useRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 			</trans-unit>
 			<trans-unit id="settings.reEnableFrontendUsers">
