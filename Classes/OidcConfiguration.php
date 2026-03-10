@@ -110,6 +110,13 @@ final class OidcConfiguration
         $yamlConfig = GeneralUtility::makeInstance(YamlFileLoader::class)
             ->load(Environment::getConfigPath() . self::CONFIG_PATH);
 
+        if (!array_key_exists('providers', $yamlConfig)) {
+            throw new ExtensionConfigurationExtensionNotConfiguredException(
+                'OIDC extension configuration does not contain any providers.',
+                1773166983
+            );
+        }
+
         $errors = [];
         foreach ($yamlConfig['providers'] as $name => $provider) {
             if (!array_key_exists('mapping', $provider)
