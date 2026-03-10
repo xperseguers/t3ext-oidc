@@ -42,51 +42,51 @@
 				<source>OAuth Provider Factory: Fully qualified class name (empty for generic provider).</source>
 				<target>OAuth Provider Factory: Voll qualifizierter Klassenname (leer für generic provider)</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcAuthorizeLanguageParameter">
+			<trans-unit id="settings.authorizeLanguageParameter">
 				<source>Authorize request language parameter name</source>
 				<target>Name des Sprachparameters für die Autorisierungsanfrage</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientKey">
+			<trans-unit id="settings.clientKey">
 				<source>Client Key</source>
 				<target>Client ID</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientScopes">
+			<trans-unit id="settings.clientScopes">
 				<source>Client Scopes:</source>
 				<target>Client Scopes:</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcClientSecret">
+			<trans-unit id="settings.clientSecret">
 				<source>Client Secret:</source>
 				<target>Client-Secret:</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcDisableCSRFProtection">
+			<trans-unit id="settings.disableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 				<target>Deaktivieren Sie die Abschwächung von CSRF-Angriffen: ACHTUNG! Dies ist ein Sicherheitsschutz, der den Rückgabewert mit dem erwarteten Wert abgleicht. Deaktivieren Sie diesen Schutz auf Ihr eigenes Risiko.</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointAuthorize">
+			<trans-unit id="settings.endpointAuthorize">
 				<source>Endpoint URI for authorization</source>
 				<target>Endpunkt-URI für Autorisierung</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointLogout">
+			<trans-unit id="settings.endpointLogout">
 				<source>Endpoint URI for logout</source>
 				<target>Endpunkt-URI für Logout</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointRevoke">
+			<trans-unit id="settings.endpointRevoke">
 				<source>Endpoint URI for revoking the token</source>
 				<target>Endpunkt-URI für das Widerrufen des Tokens</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointToken">
+			<trans-unit id="settings.endpointToken">
 				<source>Endpoint URI for retrieving a token</source>
 				<target>Endpunkt-URI zum Abrufen eines Tokens</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcEndpointUserInfo">
+			<trans-unit id="settings.endpointUserInfo">
 				<source>Endpoint URI for fetching user information</source>
 				<target>Endpunkt-URI für das Abrufen von Benutzerinformationen</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcRedirectUri">
+			<trans-unit id="settings.redirectUri">
 				<source>Redirect URI: The authentication server callback will point to this URI.</source>
 				<target>Redirect URI: Der Callback des Authentifizierungsservers wird auf diese URI verweisen.</target>
 			</trans-unit>
-			<trans-unit id="settings.oidcUseRequestPathAuthentication">
+			<trans-unit id="settings.useRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
 				<target>Anfragepfad-Authentifizierung verwenden: Wenn dieser Wert angekreuzt ist, wird die Request Path Authentication anstelle der standardmäßigen Password Grant verwendet.</target>
 			</trans-unit>

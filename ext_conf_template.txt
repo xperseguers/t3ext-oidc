@@ -22,47 +22,47 @@ usersStoragePid = 0
 # cat=basic//2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.usersDefaultGroup
 usersDefaultGroup =
 
-# cat=basic//2a; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcRedirectUri
-oidcRedirectUri =
+# cat=basic//2a; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.redirectUri
+redirectUri =
 
-# cat=basic//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientKey
-oidcClientKey =
+# cat=basic//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.clientKey
+clientKey =
 
-# cat=basic//4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientSecret
-oidcClientSecret =
+# cat=basic//4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.clientSecret
+clientSecret =
 
-# cat=basic//5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientScopes
-oidcClientScopes = openid
+# cat=basic//5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.clientScopes
+clientScopes = openid
 
-# cat=basic//6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcClientScopeSeparator
-oidcClientScopeSeparator =
+# cat=basic//6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.clientScopeSeparator
+clientScopeSeparator =
 
-# cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointAuthorize
-oidcEndpointAuthorize =
+# cat=advanced/links/1; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.endpointAuthorize
+endpointAuthorize =
 
-# cat=advanced/links/2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointToken
-oidcEndpointToken =
+# cat=advanced/links/2; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.endpointToken
+endpointToken =
 
-# cat=advanced/links/3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointUserInfo
-oidcEndpointUserInfo =
+# cat=advanced/links/3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.endpointUserInfo
+endpointUserInfo =
 
-# cat=advanced/links/4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointLogout
-oidcEndpointLogout =
+# cat=advanced/links/4; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.endpointLogout
+endpointLogout =
 
-# cat=advanced/links/5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcEndpointRevoke
-oidcEndpointRevoke =
+# cat=advanced/links/5; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.endpointRevoke
+endpointRevoke =
 
-# cat=advanced/links/6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcAuthorizeLanguageParameter
-oidcAuthorizeLanguageParameter = language
+# cat=advanced/links/6; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.authorizeLanguageParameter
+authorizeLanguageParameter = language
 
-# cat=advanced/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcUseRequestPathAuthentication
-oidcUseRequestPathAuthentication = 0
+# cat=advanced/enable/1; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.useRequestPathAuthentication
+useRequestPathAuthentication = 0
 
 # cat=advanced/enable/2; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.revokeAccessTokenAfterLogin
-oidcRevokeAccessTokenAfterLogin = 0
+revokeAccessTokenAfterLogin = 0
 
-# cat=advanced/enable/3; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oidcDisableCSRFProtection
-oidcDisableCSRFProtection = 0
+# cat=advanced/enable/3; type=boolean; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.disableCSRFProtection
+disableCSRFProtection = 0
 
 # cat=advanced//3; type=string; label=LLL:EXT:oidc/Resources/Private/Language/locallang_db.xlf:settings.oauthProviderFactory
 oauthProviderFactory =

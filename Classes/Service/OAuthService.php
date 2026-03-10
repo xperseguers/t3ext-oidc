@@ -131,8 +131,8 @@ class OAuthService
     {
         $url = $this->settings->endpointAuthorize . '?' . http_build_query([
             'response_type' => 'code',
-            'client_id' => $this->settings->oidcClientKey,
-            'scope' => $this->settings->oidcClientScopes,
+            'client_id' => $this->settings->clientKey,
+            'scope' => $this->settings->clientScopes,
             'redirect_uri' => $this->getRedirectUrl(),
         ]);
 
@@ -192,7 +192,7 @@ class OAuthService
             $this->settings->endpointRevoke,
             [
                 'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode($this->settings->oidcClientKey . ':' . $this->settings->oidcClientSecret),
+                    'Authorization' => 'Basic ' . base64_encode($this->settings->clientKey . ':' . $this->settings->clientSecret),
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
                 'body' => 'token=' . $token->getToken(),
@@ -213,7 +213,7 @@ class OAuthService
             }
 
             $settings = $this->settings;
-            $settings->oidcRedirectUri = $this->getRedirectUrl();
+            $settings->redirectUri = $this->getRedirectUrl();
 
             $factory = GeneralUtility::makeInstance($this->settings->oauthProviderFactory);
             $this->provider = $factory->create($settings);
@@ -250,6 +250,6 @@ class OAuthService
 
     protected function getRedirectUrl(): string
     {
-        return $this->settings->oidcRedirectUri ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
+        return $this->settings->redirectUri ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
     }
 }

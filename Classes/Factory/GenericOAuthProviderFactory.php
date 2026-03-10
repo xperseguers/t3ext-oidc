@@ -33,16 +33,16 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
 
         return new GenericOpenIdProvider(
             [
-                'clientId' => $settings->oidcClientKey,
-                'clientSecret' => $settings->oidcClientSecret,
-                'redirectUri' => $settings->oidcRedirectUri,
+                'clientId' => $settings->clientKey,
+                'clientSecret' => $settings->clientSecret,
+                'redirectUri' => $settings->redirectUri,
                 'urlAuthorize' => $settings->endpointAuthorize,
                 'urlAccessToken' => $settings->endpointToken,
                 'urlResourceOwnerDetails' => $settings->endpointUserInfo,
                 'responseResourceOwnerId' => 'sub',
                 'accessTokenResourceOwnerId' => 'sub',
-                'scopes' => GeneralUtility::trimExplode(',', $settings->oidcClientScopes, true),
-                'scopeSeparator' => $settings->oidcClientScopeSeparator,
+                'scopes' => GeneralUtility::trimExplode(',', $settings->clientScopes, true),
+                'scopeSeparator' => $settings->clientScopeSeparator,
             ],
             $collaborators
         );
