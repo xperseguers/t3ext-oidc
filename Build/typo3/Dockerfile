@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7-labs
-FROM php:8.3-apache AS webserver
+FROM docker.io/php:8.5-apache AS webserver
 
 # Install common tools
 # gettext-base provides envsubst, used for fixture import to db
@@ -106,7 +106,7 @@ EXPOSE 443
 
 
 
-FROM composer:2.7.2 AS php-composer
+FROM docker.io/composer:2.9 AS php-composer
 
 
 

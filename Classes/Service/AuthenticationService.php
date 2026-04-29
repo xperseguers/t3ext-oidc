@@ -25,8 +25,8 @@ use Causal\Oidc\Event\AuthenticationProcessMappingEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
-use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
+use Causal\Oidc\Frontend\FrontendSimulationV14;
 use Causal\Oidc\OidcConfiguration;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
@@ -58,12 +58,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * 200 - authenticated and no more checking needed
      */
-    private const STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
+    private const int STATUS_AUTHENTICATION_SUCCESS_BREAK = 200;
 
     /**
      * 100 - just go on. User is not authenticated but there's still no reason to stop
      */
-    private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
+    private const int STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     public function __construct(
         protected OidcConfiguration $config,
@@ -89,9 +89,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
                 $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
-                if ($authContext) {
-                    $codeVerifier = $authContext->codeVerifier;
-                }
+                $codeVerifier = $authContext?->codeVerifier;
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } elseif ($this->config->enablePasswordCredentials) {
@@ -273,9 +271,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     }
 
     /**
-     * Converts a resource owner into a TYPO3 Frontend user.
-     *
-     * @return array|bool
+     * Converts a resource owner into a TYPO3 Frontend user
      */
     protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): bool|array
     {
@@ -547,21 +543,26 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Merges info from OIDC to TYPO3 using a mapping configuration.
      *
-     * @param string $table
+     * @param string $table Can only be 'fe_users' currently
      * @param array $oidc Data retrieved from identity provider
      * @param array $typo3User Existing user found in database
      * @param array $baseData Data to replace in existing user
      * @param bool $reportErrors
-     * @return array
+     * @return array<string,scalar>
      */
     protected function applyMapping(string $table, array $oidc, array $typo3User, array $baseData = [], bool $reportErrors = false): array
     {
         $request = $this->getRequest();
         $out = array_merge($typo3User, $baseData);
-        $typoScriptKeys = [];
-        $mapping = $this->getMapping($table, $request);
+
+        $feSim = $this->getFrontendSimulation();
+        $contentObj = $feSim->getCObj($request);
+        $contentObj->start($oidc);
+        $typoScriptSetup = $contentObj->getRequest()->getAttribute('frontend.typoscript')->getSetupArray();
+        $mapping = $this->getFeMapping($typoScriptSetup);
 
         // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
+        $typoScriptKeys = [];
         foreach ($mapping as $field => $value) {
             if (!str_ends_with($field, '.')) {
                 if ($field !== 'usergroup' && $field !== 'parentGroup') {
@@ -578,27 +579,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        if (count($typoScriptKeys) > 0) {
-            // there is no TSFE yet at this early stage in the middleware chain
-            $feSim = $this->getFrontendSimulation();
-            $GLOBALS['TSFE'] = $feSim->getTSFE($request);
-
-            /** @var $contentObj ContentObjectRenderer */
-            $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class, $GLOBALS['TSFE']);
-            $contentObj->setRequest($request);
-            $contentObj->start($oidc);
-
-            // Process every TypoScript definition
-            foreach ($typoScriptKeys as $typoScriptKey) {
-                // Remove the trailing period to get corresponding field name
-                $field = substr($typoScriptKey, 0, -1);
-                $value = $out[$field] ?? '';
-                $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
-                $out = $this->mergeSimple([$field => $value], $out, $field, $value);
-            }
-
-            $feSim->cleanupTSFE();
+        // Process every TypoScript definition
+        foreach ($typoScriptKeys as $typoScriptKey) {
+            // Remove the trailing period to get corresponding field name
+            $field = substr($typoScriptKey, 0, -1);
+            $value = $out[$field] ?? '';
+            $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
+            $out = $this->mergeSimple([$field => $value], $out, $field, $value);
         }
+        $feSim->cleanupTSFE();
 
         $event = new AuthenticationProcessMappingEvent($request, $table, $typo3User, $oidc, $out);
 
@@ -667,16 +656,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     }
 
     /**
-     * Returns the mapping configuration for OIDC fields.
-     *
-     * @param string $table
-     * @param ServerRequestInterface $request
-     * @return array
+     * Returns the mapping configuration for OIDC fields for fe_users
      */
-    protected function getMapping(string $table, ServerRequestInterface $request): array
+    protected function getFeMapping(array $typoScriptSetup): array
     {
-        $mapping = [];
-
         $defaultMapping = [
             'username'   => '<sub>',
             'name'       => '<name>',
@@ -689,14 +672,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             'country'    => '<Land>',
         ];
 
-        if ($table === 'fe_users') {
-            $feSim = $this->getFrontendSimulation();
-            $GLOBALS['TSFE'] = $feSim->getTSFE($request);
-            $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
-            $feSim->cleanupTSFE();
-            if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'])) {
-                $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'];
-            }
+        $mapping = [];
+        if (!empty($typoScriptSetup['plugin.']['tx_oidc.']['mapping.']['fe_users.'])) {
+            $mapping = $typoScriptSetup['plugin.']['tx_oidc.']['mapping.']['fe_users.'];
         }
 
         return $mapping ?: $defaultMapping;
@@ -704,11 +682,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     protected function getFrontendSimulation(): FrontendSimulationInterface
     {
-        $typo3Version = (new Typo3Version())->getMajorVersion();
+        $typo3Version = new Typo3Version()->getMajorVersion();
         if ($typo3Version === 13) {
             $feSim = GeneralUtility::makeInstance(FrontendSimulationV13::class);
         } else {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV12::class);
+            $feSim = GeneralUtility::makeInstance(FrontendSimulationV14::class);
         }
         return $feSim;
     }

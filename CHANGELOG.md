@@ -2,7 +2,8 @@
 
 ## Version 5.x.x
 
-- Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
+- Added TYPO3 14 LTS support
+- Breaking: Dropped support for TYPO3 11 and 12 LTS and PHP < 8.4
 - Breaking: Introduced OidcConfiguration class to represent extension configuration.
   Default values of endpoints have been removed. Please validate your configuration during upgrade.
 - Breaking: Dropped direct felogin-integration (via event).
@@ -13,7 +14,6 @@
   Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
-
 
 ## Version 4.0.0
 

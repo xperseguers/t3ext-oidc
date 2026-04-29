@@ -42,7 +42,7 @@ class AuthenticationUrlRequest implements MiddlewareInterface, LoggerAwareInterf
                 $this->logger->alert('OIDC authentication provider error', ['exception' => $e]);
                 // config error or
                 // whatever the provider did wrong (can be connection errors)
-                return (new Response())->withStatus(500)->withHeader('x-reason', 'Authentication provider error');
+                return new Response()->withStatus(500)->withHeader('x-reason', 'Authentication provider error');
             }
         }
         return $handler->handle($request);
