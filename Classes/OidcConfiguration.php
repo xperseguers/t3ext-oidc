@@ -7,6 +7,7 @@ namespace Causal\Oidc;
 use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 final class OidcConfiguration
@@ -39,6 +40,19 @@ final class OidcConfiguration
     public string $endpointLogout = '';
     public bool $revokeAccessTokenAfterLogin = false;
     public bool $enablePasswordCredentials = false;
+    public string $oidcDiscoveryUrl = '';
+
+    /**
+     * OIDC Discovery document mapping:
+     * discovery key => property name
+     */
+    private const DISCOVERY_MAP = [
+        'authorization_endpoint' => 'endpointAuthorize',
+        'token_endpoint'         => 'endpointToken',
+        'userinfo_endpoint'      => 'endpointUserInfo',
+        'end_session_endpoint'   => 'endpointLogout',
+        'revocation_endpoint'    => 'endpointRevoke',
+    ];
 
     public function __construct(array $extConfig = [])
     {
@@ -70,6 +84,93 @@ final class OidcConfiguration
         $this->oidcRedirectUri = $extConfig['oidcRedirectUri'];
         $this->revokeAccessTokenAfterLogin = (bool)$extConfig['oidcRevokeAccessTokenAfterLogin'];
         $this->enablePasswordCredentials = (bool)($extConfig['enablePasswordCredentials'] ?? $this->enablePasswordCredentials);
+        $this->oidcDiscoveryUrl = trim((string)($extConfig['oidcDiscoveryUrl'] ?? ''));
+
+        $this->applyDiscovery();
+    }
+
+    /**
+     * If oidcDiscoveryUrl is set and any endpoint is empty,
+     * fetch the OIDC discovery document and fill in the blanks.
+     * Manually configured endpoints always take precedence.
+     */
+    private function applyDiscovery(): void
+    {
+        if ($this->oidcDiscoveryUrl === '') {
+            return;
+        }
+
+        $needsDiscovery = false;
+        foreach (self::DISCOVERY_MAP as $property) {
+            if ($this->{$property} === '') {
+                $needsDiscovery = true;
+                break;
+            }
+        }
+
+        if (!$needsDiscovery) {
+            return;
+        }
+
+        try {
+            $document = $this->fetchDiscoveryDocument($this->oidcDiscoveryUrl);
+
+            foreach (self::DISCOVERY_MAP as $discoveryKey => $property) {
+                if ($this->{$property} === '' && !empty($document[$discoveryKey])) {
+                    $this->{$property} = $document[$discoveryKey];
+                }
+            }
+        } catch (\Throwable) {
+            // Discovery failure is non-fatal; manually configured endpoints
+            // (if any) remain untouched.
+        }
+    }
+
+    /**
+     * Fetch and parse an OIDC discovery document.
+     *
+     * @return array<string, mixed>
+     * @throws \RuntimeException
+     */
+    private function fetchDiscoveryDocument(string $discoveryUrl): array
+    {
+        $discoveryUrl = $this->normalizeDiscoveryUrl($discoveryUrl);
+
+        $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
+        $response = $requestFactory->request(
+            $discoveryUrl,
+            'GET',
+            ['headers' => ['Accept' => 'application/json']]
+        );
+
+        $data = json_decode((string)$response->getBody(), true);
+
+        if (!is_array($data) || empty($data['authorization_endpoint'])) {
+            throw new \RuntimeException(
+                'Invalid OIDC Discovery response from ' . $discoveryUrl,
+                1744200001
+            );
+        }
+
+        return $data;
+    }
+
+    /**
+     * Normalize discovery URL:
+     * - Bare domain → prepend https://
+     * - Missing /.well-known/ path → append it
+     */
+    private function normalizeDiscoveryUrl(string $url): string
+    {
+        if (!str_starts_with($url, 'http')) {
+            $url = 'https://' . $url;
+        }
+
+        if (!str_contains($url, '.well-known')) {
+            $url = rtrim($url, '/') . '/.well-known/openid-configuration';
+        }
+
+        return $url;
     }
 
     protected function getExtensionConfiguration(): array

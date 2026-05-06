@@ -187,20 +187,34 @@ class OAuthService
         }
 
         $provider = $this->getProvider();
+
+        $headers = [
+            'Content-Type' => 'application/x-www-form-urlencoded',
+        ];
+
+        // Only use Basic Auth for confidential clients (with clientSecret)
+        if ($this->settings->oidcClientSecret !== '') {
+            $headers['Authorization'] = 'Basic ' . base64_encode(
+                $this->settings->oidcClientKey . ':' . $this->settings->oidcClientSecret
+            );
+        }
+
+        $body = 'token=' . $token->getToken();
+        // Public clients must identify via client_id in body
+        if ($this->settings->oidcClientSecret === '') {
+            $body .= '&client_id=' . urlencode($this->settings->oidcClientKey);
+        }
+
         $request = $provider->getRequest(
             AbstractProvider::METHOD_POST,
             $this->settings->endpointRevoke,
             [
-                'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode($this->settings->oidcClientKey . ':' . $this->settings->oidcClientSecret),
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-                'body' => 'token=' . $token->getToken(),
+                'headers' => $headers,
+                'body' => $body,
             ]
         );
 
         $response = $provider->getParsedResponse($request);
-        // TODO error handling?
 
         return true;
     }
