@@ -56,10 +56,10 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
     }
 
     /**
-     * Fill remaining config endpoints (logout, revoke) from the
-     * provider's discovery document. League providers only handle
-     * authorize, token, and userinfo URLs — logout and revoke are
-     * TYPO3-specific and stored in OidcConfiguration.
+     * Fill config endpoints from the provider's discovery document.
+     * This keeps OidcConfiguration in sync so that other services
+     * (e.g. OpenIdConnectService validation) can read the resolved
+     * URLs without querying the provider directly.
      */
     private function applyDiscoveryToSettings(
         GenericOpenIdDiscoveryProvider $provider,
@@ -71,6 +71,9 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
         }
 
         $extraEndpoints = [
+            'authorization_endpoint' => 'endpointAuthorize',
+            'token_endpoint' => 'endpointToken',
+            'userinfo_endpoint' => 'endpointUserInfo',
             'end_session_endpoint' => 'endpointLogout',
             'revocation_endpoint' => 'endpointRevoke',
         ];
