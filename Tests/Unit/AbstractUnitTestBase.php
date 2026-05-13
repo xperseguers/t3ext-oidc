@@ -48,6 +48,7 @@ class AbstractUnitTestBase extends UnitTestCase
             'authenticationServicePriority' => 82,
             'authenticationServiceQuality' => 80,
             'authenticationUrlRoute' => 'oidc/authentication',
+            'oidcDiscoveryUrl' => '',
         ]);
     }
 }
