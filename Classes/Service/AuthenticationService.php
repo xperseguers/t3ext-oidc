@@ -385,7 +385,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         $newUserGroups = [];
-        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->usersDefaultGroup);
+        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->usersDefaultGroup, true);
 
         if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
