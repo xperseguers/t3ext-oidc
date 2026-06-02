@@ -66,7 +66,7 @@
 				<source>Endpoint URI for fetching user information</source>
 			</trans-unit>
 			<trans-unit id="settings.oidcRedirectUri">
-				<source>Redirect URI: The authentication server callback will point to this URI.</source>
+				<source>Redirect/callback URI: The authentication server's configured callback for this client must point to this URI. If empty, the current site URL will be used.</source>
 			</trans-unit>
 			<trans-unit id="settings.oidcUseRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>
