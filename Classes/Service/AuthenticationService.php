@@ -27,6 +27,7 @@ use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
+use Causal\Oidc\Frontend\FrontendSimulationV14;
 use Causal\Oidc\OidcConfiguration;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
@@ -580,11 +581,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         if (count($typoScriptKeys) > 0) {
             // there is no TSFE yet at this early stage in the middleware chain
-            $feSim = $this->getFrontendSimulation();
-            $GLOBALS['TSFE'] = $feSim->getTSFE($request);
-
-            /** @var $contentObj ContentObjectRenderer */
-            $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class, $GLOBALS['TSFE']);
+            $feSim = null;
+            $feSimV14 = null;
+            if ((new Typo3Version())->getMajorVersion() >= 14) {
+                $feSimV14 = GeneralUtility::makeInstance(FrontendSimulationV14::class);
+                $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class);
+            } else {
+                $feSim = $this->getFrontendSimulation();
+                $GLOBALS['TSFE'] = $feSim->getTSFE($request);
+                /** @var $contentObj ContentObjectRenderer */
+                $contentObj = GeneralUtility::makeInstance(ContentObjectRenderer::class, $GLOBALS['TSFE']);
+            }
             $contentObj->setRequest($request);
             $contentObj->start($oidc);
 
@@ -597,7 +604,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 $out = $this->mergeSimple([$field => $value], $out, $field, $value);
             }
 
-            $feSim->cleanupTSFE();
+            $feSim?->cleanupTSFE();
+            $feSimV14?->cleanup();
         }
 
         $event = new AuthenticationProcessMappingEvent($request, $table, $typo3User, $oidc, $out);
@@ -690,10 +698,16 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         ];
 
         if ($table === 'fe_users') {
-            $feSim = $this->getFrontendSimulation();
-            $GLOBALS['TSFE'] = $feSim->getTSFE($request);
-            $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
-            $feSim->cleanupTSFE();
+            if ((new Typo3Version())->getMajorVersion() >= 14) {
+                $feSimV14 = GeneralUtility::makeInstance(FrontendSimulationV14::class);
+                $setup = $feSimV14->getTypoScriptSetup($request);
+                $feSimV14->cleanup();
+            } else {
+                $feSim = $this->getFrontendSimulation();
+                $GLOBALS['TSFE'] = $feSim->getTSFE($request);
+                $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
+                $feSim->cleanupTSFE();
+            }
             if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'])) {
                 $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'];
             }

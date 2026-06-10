@@ -20,6 +20,7 @@ namespace Causal\Oidc\Controller;
 use Causal\Oidc\Service\OpenIdConnectService;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Attribute\AsAllowedCallable;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
@@ -63,6 +64,7 @@ class LoginController
      * @param array|null $pluginConfiguration
      * @throws PropagateResponseException
      */
+    #[AsAllowedCallable]
     public function login(string $_, ?array $pluginConfiguration): void
     {
         if (is_array($pluginConfiguration)) {
