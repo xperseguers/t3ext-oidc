@@ -13,6 +13,7 @@
   Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 - Feature: Support backend login.
+- Feature: Added Site Set
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
 
 ## Version 4.0.0
