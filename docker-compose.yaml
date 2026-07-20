@@ -1,6 +1,6 @@
 services:
   tools:
-    image: docker.io/thecodingmachine/php:8.4-v5-cli
+    image: docker.io/thecodingmachine/php:${PHP_VERSION:-8.5}-v5-cli
     volumes:
       - composer-cache:/tmp/composer
       - ./:/var/www/
@@ -11,6 +11,7 @@ services:
       - /var/www/.Build/web/typo3temp/var/tests/
     environment:
       PHP_EXTENSION_INTL: 1
+      PHP_EXTENSION_GD: 1
       PHP_CS_FIXER_FUTURE_MODE: 1
       COMPOSER_HOME: /tmp/composer
       COMPOSER_ALLOW_SUPERUSER: 1
