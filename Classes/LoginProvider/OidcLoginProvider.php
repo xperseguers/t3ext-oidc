@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Causal\Oidc\LoginProvider;
 
 use TYPO3\CMS\Backend\Controller\LoginController;

@@ -29,6 +29,7 @@ use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\OidcConfiguration;
+use Doctrine\DBAL\ArrayParameterType;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -120,9 +121,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
                 $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
-                if ($authContext) {
-                    $codeVerifier = $authContext->codeVerifier;
-                }
+                $codeVerifier = $authContext?->codeVerifier;
             }
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } elseif ($this->config->enablePasswordCredentials) {
@@ -328,7 +327,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $userFetchConditions = [
             $queryBuilder->expr()->in(
                 'pid',
-                $queryBuilder->createNamedParameter($this->config->usersStoragePids, Connection::PARAM_INT_ARRAY)
+                $queryBuilder->createNamedParameter($this->config->usersStoragePids, ArrayParameterType::INTEGER)
             ),
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($resourceOwnerObject->getId())),
         ];
