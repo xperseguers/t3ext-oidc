@@ -45,7 +45,7 @@ final class OidcConfiguration
     {
         $extConfig = $extConfig ?: $this->getExtensionConfiguration();
 
-        $this->enableBackendAuthentication = (bool)$extConfig['enableBackendAuthentication'];
+        $this->enableBackendAuthentication = (bool)($extConfig['enableBackendAuthentication'] ?? $this->enableBackendAuthentication);
         $this->enableFrontendAuthentication = (bool)$extConfig['enableFrontendAuthentication'];
         $this->authenticationServicePriority = (int)$extConfig['authenticationServicePriority'];
         $this->authenticationServiceQuality = (int)$extConfig['authenticationServiceQuality'];
