@@ -8,7 +8,6 @@ use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Configuration\Loader\YamlFileLoader;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -26,8 +25,8 @@ final class OidcConfiguration
     public string $clientScopes = 'openid';
     public string $clientSecret = '';
     public bool $disableCSRFProtection = false;
-    public bool $enableCodeVerifier = false;
     public bool $enableBackendAuthentication = false;
+    public bool $enableCodeVerifier = false;
     public bool $enableFrontendAuthentication = false;
     public bool $enablePasswordCredentials = false;
     public string $endpointAuthorize = '';
@@ -64,33 +63,35 @@ final class OidcConfiguration
                 trigger_error("Using configuration `$oldProperty` is deprecated and is replaced by `$property`, please update your OIDC configuration", E_USER_DEPRECATED);
             }
 
-            if (property_exists($this, $property)) {
-                if (is_string($value)) {
-                    $value = trim($value);
-                }
+            if (!property_exists($this, $property)) {
+                continue;
+            }
 
-                switch ($property) {
-                    case 'clientScopeSeparator':
-                        $this->clientScopeSeparator = $value === '' ? ' ' : $value;
-                        break;
-                    case 'oauthProviderFactory':
-                        if ($value && !class_exists($value)) {
-                            throw new \UnexpectedValueException(
-                                'OIDC extension `oauthProviderFactory` class not found',
-                                1773075262
-                            );
-                        }
-                        if ($value) {
-                            $this->oauthProviderFactory = $value;
-                        }
-                        break;
-                    case 'usersStoragePids':
-                        $this->usersStoragePids = GeneralUtility::intExplode(',', $value, true) ?: [0];
-                        break;
-                    default:
-                        settype($value, gettype($this->$property));
-                        $this->$property = $value;
-                }
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+
+            switch ($property) {
+                case 'clientScopeSeparator':
+                    $this->clientScopeSeparator = $value === '' ? ' ' : $value;
+                    break;
+                case 'oauthProviderFactory':
+                    if ($value && !class_exists($value)) {
+                        throw new \UnexpectedValueException(
+                            'OIDC extension `oauthProviderFactory` class not found',
+                            1773075262
+                        );
+                    }
+                    if ($value) {
+                        $this->oauthProviderFactory = $value;
+                    }
+                    break;
+                case 'usersStoragePids':
+                    $this->usersStoragePids = GeneralUtility::intExplode(',', $value, true) ?: [0];
+                    break;
+                default:
+                    settype($value, gettype($this->$property));
+                    $this->$property = $value;
             }
         }
     }
@@ -101,15 +102,6 @@ final class OidcConfiguration
      */
     protected function getExtensionConfiguration(): array
     {
-        /** @var array<string, string> $config */
-        if (!$config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc')) {
-            throw new ExtensionConfigurationExtensionNotConfiguredException(
-                'OIDC extension is not yet configured. Please use '
-                . 'the Admin Tools / Settings / Extension Configuration module for this.',
-                1763986824
-            );
-        }
-
         $yamlConfig = GeneralUtility::makeInstance(YamlFileLoader::class)
             ->load(Environment::getConfigPath() . self::CONFIG_PATH);
 
@@ -137,7 +129,7 @@ final class OidcConfiguration
             );
         }
 
-        return $config + $yamlConfig;
+        return $yamlConfig;
     }
 
     protected function isValideMappingForTable($mapping, $table): bool
