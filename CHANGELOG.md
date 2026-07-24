@@ -1,9 +1,13 @@
 # OpenID Connect integration for TYPO3 - changelog
 
-## Version 5.x.x
+## Version 6.x.x
 
 - Added TYPO3 14 LTS support
-- Breaking: Dropped support for TYPO3 11 and 12 LTS and PHP < 8.4
+- Breaking: Dropped support for TYPO3 12 LTS and PHP < 8.4
+
+## Version 5.x.x
+
+- Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
 - Breaking: Introduced OidcConfiguration class to represent extension configuration.
   Default values of endpoints have been removed. Please validate your configuration during upgrade.
 - Breaking: Dropped direct felogin-integration (via event).

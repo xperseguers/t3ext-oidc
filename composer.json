@@ -77,12 +77,12 @@
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-master": "5.x-dev"
+			"dev-master": "6.x-dev"
 		},
 		"typo3/cms": {
 			"web-dir": ".Build/web",
 			"extension-key": "oidc",
-			"version": "5.0.0"
+			"version": "6.0.0"
 		}
 	},
 	"config": {
