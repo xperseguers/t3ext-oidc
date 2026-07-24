@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'frontend' => [
         'oidccallback' => [
@@ -18,6 +20,17 @@ return [
             ],
             'before' => [
                 'typo3/cms-frontend/authentication',
+            ],
+        ],
+    ],
+    'backend' => [
+        'oidccallback' => [
+            'target' => \Causal\Oidc\Middleware\OauthCallback::class,
+            'after' => [
+                'typo3/cms-core/request-token-middleware',
+            ],
+            'before' => [
+                'typo3/cms-backend/authentication',
             ],
         ],
     ],

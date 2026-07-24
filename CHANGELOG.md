@@ -13,6 +13,8 @@
   to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
   Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
+- Feature: Support backend login.
+- Feature: Added Site Set
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
 
 ## Version 4.0.0

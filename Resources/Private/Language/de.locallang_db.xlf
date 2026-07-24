@@ -83,8 +83,8 @@
 				<target>Endpunkt-URI für das Abrufen von Benutzerinformationen</target>
 			</trans-unit>
 			<trans-unit id="settings.oidcRedirectUri">
-				<source>Redirect URI: The authentication server callback will point to this URI.</source>
-				<target>Redirect URI: Der Callback des Authentifizierungsservers wird auf diese URI verweisen.</target>
+				<source>Redirect/callback URI: The authentication server's configured callback for this client must point to this URI. If empty, the current site URL will be used.</source>
+				<target>Redirect/callback URI: Die Callback-Konfiguration des Clients am Authentifizierungsserver muss auf diese URI verweisen. Falls leer, wird die URL der aktuellen Site verwendet.</target>
 			</trans-unit>
 			<trans-unit id="settings.oidcUseRequestPathAuthentication">
 				<source>Use Request Path Authentication: When ticked, this value will use Request Path Authentication instead of standard Password Grant.</source>

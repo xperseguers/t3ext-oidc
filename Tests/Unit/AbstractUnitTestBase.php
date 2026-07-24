@@ -22,6 +22,7 @@ class AbstractUnitTestBase extends UnitTestCase
     protected function setupOidcConfiguration(): OidcConfiguration
     {
         return new OidcConfiguration([
+            'enableBackendAuthentication' => 0,
             'enableFrontendAuthentication' => 0,
             'reEnableFrontendUsers' => 0,
             'undeleteFrontendUsers' => 0,

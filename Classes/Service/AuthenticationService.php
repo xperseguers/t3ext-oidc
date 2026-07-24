@@ -27,7 +27,9 @@ use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\Frontend\FrontendSimulationV14;
+use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\OidcConfiguration;
+use Doctrine\DBAL\ArrayParameterType;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -36,6 +38,7 @@ use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
+use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
@@ -44,6 +47,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\EndTimeRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
+use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
 use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -85,6 +89,34 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $request = $this->getRequest();
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
+
+        if (
+            $this->pObj->loginType === 'BE'
+            && ($request->getQueryParams()['loginProvider'] ?? '') == OidcLoginProvider::IDENTIFIER
+            && !isset($code)
+        ) {
+            $this->logger->debug('Initiate backend authentication');
+            $currentUrl = $request->getUri();
+
+            // V12 backwards compatibility
+            $loginType = LoginType::LOGIN;
+            if ($loginType instanceof \BackedEnum) {
+                $loginType = $loginType->value;
+            }
+
+            $loginUrl = \GuzzleHttp\Psr7\Uri::withQueryValue($currentUrl, 'login_status', $loginType);
+
+            $openIdConnectService = GeneralUtility::makeInstance(OpenIdConnectService::class);
+            $authContext = $openIdConnectService->buildAuthenticationContext(
+                $request,
+                [],
+                $loginUrl->__toString()
+            );
+            $response = $openIdConnectService->getAuthorizationRedirect($authContext);
+
+            throw new PropagateResponseException($response, 1743415700019);
+        }
+
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
@@ -293,7 +325,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $userFetchConditions = [
             $queryBuilder->expr()->in(
                 'pid',
-                $queryBuilder->createNamedParameter($this->config->usersStoragePids, Connection::PARAM_INT_ARRAY)
+                $queryBuilder->createNamedParameter($this->config->usersStoragePids, ArrayParameterType::INTEGER)
             ),
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($resourceOwnerObject->getId())),
         ];
@@ -350,7 +382,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         $newUserGroups = [];
-        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->usersDefaultGroup);
+        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->usersDefaultGroup, true);
 
         if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
