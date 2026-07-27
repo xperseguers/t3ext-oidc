@@ -36,10 +36,19 @@ https://tools.ietf.org/html/rfc7636 for details.
 
 ## Configuration
 
-### Mapping Frontend User Fields
+### Mapping for both Backend and Frontend User Fields
 
-- Configuration is done through TypoScript within
-  `plugin.tx_oidc.mapping.fe_users`
+Configuration is done through a YAML file located in the TYPO3 system config directory : `config/system/oidc.yaml`
+
+  ```
+  providers:
+    default:
+      mapping:
+        fe_users:
+          name: '<name> // <family_name> <given_name> // <email>'
+          ...
+  ```
+
 - OIDC attributes will be recognized by the specific characters `<>`:
 
   ```
@@ -50,14 +59,6 @@ https://tools.ietf.org/html/rfc7636 for details.
 
   ```
   name = <family_name>, <given_name>
-  ```
-
-- Support for [stdWrap](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html) in
-  field definition, e.g.,
-
-  ```
-  name = <name>
-  name.wrap = |-OIDC
   ```
 
 - Support for [TypoScript "split"](https://docs.typo3.org/m/typo3/reference-typoscript/master/en-us/Functions/Stdwrap.html#data)

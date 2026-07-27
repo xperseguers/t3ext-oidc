@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Causal\Oidc;
 
-use Causal\Oidc\Factory\GenericOAuthProviderFactory;
-use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
-use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
+use Causal\Oidc\Exception\ExtensionNotConfiguredException;
+use Causal\Oidc\Model\Provider;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Configuration\Loader\YamlFileLoader;
 use TYPO3\CMS\Core\Core\Environment;
@@ -19,128 +18,71 @@ final class OidcConfiguration
     public int $authenticationServicePriority = 82;
     public int $authenticationServiceQuality = 80;
     public string $authenticationUrlRoute = 'oidc/authentication';
-    public string $authorizeLanguageParameter = 'language';
-    public string $clientKey = '';
-    public string $clientScopeSeparator = ' ';
-    public string $clientScopes = 'openid';
-    public string $clientSecret = '';
-    public bool $disableCSRFProtection = false;
-    public bool $enableBackendAuthentication = false;
-    public bool $enableCodeVerifier = false;
-    public bool $enableFrontendAuthentication = false;
-    public bool $enablePasswordCredentials = false;
-    public string $endpointAuthorize = '';
-    public string $endpointLogout = '';
-    public string $endpointRevoke = '';
-    public string $endpointToken = '';
-    public string $endpointUserInfo = '';
-    public bool $frontendUserMustExistLocally = false;
-    /** @var class-string<OAuthProviderFactoryInterface> */
-    public string $oauthProviderFactory = GenericOAuthProviderFactory::class;
+    /** @var array<Provider> */
     public array $providers = [];
-    public bool $reEnableFrontendUsers = false;
-    public string $redirectUri = '';
-    public bool $revokeAccessTokenAfterLogin = false;
-    public bool $undeleteFrontendUsers = false;
-    public bool $useRequestPathAuthentication = false;
-    public string $usersDefaultGroup = '';
-    /** @var int[] */
-    public array $usersStoragePids = [0];
 
     /**
      * @param array<string, string> $extConfig
      * @throws ExtensionConfigurationPathDoesNotExistException
-     * @throws ExtensionConfigurationExtensionNotConfiguredException
+     * @throws ExtensionNotConfiguredException
      */
-    public function __construct(array $extConfig = [])
+    public function __construct(?array $yamlConfig = null)
     {
-        $extConfig = $extConfig ?: $this->getExtensionConfiguration();
-
-        foreach ($extConfig as $property => $value) {
-            if (preg_match("/^oidc\w+$/", $property)) {
-                $oldProperty = $property;
-                $property = lcfirst(substr($oldProperty, 4));
-                trigger_error("Using configuration `$oldProperty` is deprecated and is replaced by `$property`, please update your OIDC configuration", E_USER_DEPRECATED);
-            }
-
-            if (!property_exists($this, $property)) {
-                continue;
-            }
-
-            if (is_string($value)) {
-                $value = trim($value);
-            }
-
-            switch ($property) {
-                case 'clientScopeSeparator':
-                    $this->clientScopeSeparator = $value === '' ? ' ' : $value;
-                    break;
-                case 'oauthProviderFactory':
-                    if ($value && !class_exists($value)) {
-                        throw new \UnexpectedValueException(
-                            'OIDC extension `oauthProviderFactory` class not found',
-                            1773075262
-                        );
-                    }
-                    if ($value) {
-                        $this->oauthProviderFactory = $value;
-                    }
-                    break;
-                case 'usersStoragePids':
-                    $this->usersStoragePids = GeneralUtility::intExplode(',', $value, true) ?: [0];
-                    break;
-                default:
-                    settype($value, gettype($this->$property));
-                    $this->$property = $value;
-            }
-        }
-    }
-
-    /**
-     * @throws ExtensionConfigurationPathDoesNotExistException
-     * @throws ExtensionConfigurationExtensionNotConfiguredException
-     */
-    protected function getExtensionConfiguration(): array
-    {
-        $yamlConfig = GeneralUtility::makeInstance(YamlFileLoader::class)
+        /** @var array{authenticationServicePriority: int, authenticationServiceQuality: int, authenticationUrlRoute: string, providers: array<string, Provider>} $yamlConfig */
+        $yamlConfig ??= GeneralUtility::makeInstance(YamlFileLoader::class)
             ->load(Environment::getConfigPath() . self::CONFIG_PATH);
 
-        if (!array_key_exists('providers', $yamlConfig)) {
-            throw new ExtensionConfigurationExtensionNotConfiguredException(
+        if (isset($yamlConfig['authenticationServicePriority'])) {
+            settype($yamlConfig['authenticationServicePriority'], gettype($this->authenticationServicePriority));
+            $this->authenticationServicePriority = $yamlConfig['authenticationServicePriority'];
+        }
+
+        if (isset($yamlConfig['authenticationServiceQuality'])) {
+            settype($yamlConfig['authenticationServiceQuality'], gettype($this->authenticationServiceQuality));
+            $this->authenticationServiceQuality = $yamlConfig['authenticationServiceQuality'];
+        }
+
+        if (isset($yamlConfig['authenticationUrlRoute'])) {
+            settype($yamlConfig['authenticationUrlRoute'], gettype($this->authenticationUrlRoute));
+            $this->authenticationUrlRoute = $yamlConfig['authenticationUrlRoute'];
+        }
+
+        if (!count($yamlConfig['providers'])) {
+            throw new ExtensionNotConfiguredException(
                 'OIDC extension configuration does not contain any providers.',
                 1773166983
             );
         }
 
-        $errors = [];
-        foreach ($yamlConfig['providers'] as $name => $provider) {
-            if (!array_key_exists('mapping', $provider)
-                || (!$this->isValideMappingForTable($provider['mapping'], 'fe_users')
-                    && !$this->isValideMappingForTable($provider['mapping'], 'be_users'))
-            ) {
-                $errors[] = ' - Provider `' . $name . '` has no table mapping defined';
+        try {
+            foreach ($yamlConfig['providers'] as $name => $provider) {
+                $this->providers[] = new Provider($name, $provider);
             }
-        }
-
-        if ($errors) {
-            throw new ExtensionConfigurationExtensionNotConfiguredException(
-                'OIDC extension configuration is incomplete. Please, fix it:' . PHP_EOL . implode(PHP_EOL, $errors),
-                1773075165
+        } catch (\Exception $e) {
+            throw new ExtensionNotConfiguredException(
+                'OIDC extension configuration is incomplete. Please, fix it: ' . $e->getMessage(),
+                1773075165,
+                $e
             );
         }
-
-        return $yamlConfig;
     }
 
-    protected function isValideMappingForTable($mapping, $table): bool
+    public function hasProviderForBackendAuthentication(): bool
     {
-        if (array_key_exists($table, $mapping) && is_array($mapping[$table])) {
-            foreach ($mapping[$table] as $value) {
-                if (!$value) {
-                    return false;
-                }
+        foreach ($this->providers as $provider) {
+            if ($provider->isEnableBackendAuthentication()) {
+                return true;
             }
-            return true;
+        }
+        return false;
+    }
+
+    public function hasProviderForFrontendAuthentication(): bool
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider->isEnableFrontendAuthentication()) {
+                return true;
+            }
         }
         return false;
     }

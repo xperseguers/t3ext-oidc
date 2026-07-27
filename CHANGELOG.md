@@ -17,16 +17,6 @@
 - Method `getFreshAccessToken()` now actually returns the fresh access token.
 - Breaking: Configure user claim mapping without TypoScript.
 
-  Mapping is now done via a YAML file: `config/system/oidc.yaml`
-  ```
-  providers:
-    default:
-      mapping:
-        fe_users:
-          name: '<name> // <family_name> <given_name> // <email>'
-          ...
-  ```
-
 ## Version 4.0.0
 
 - Breaking: Existing fe_users are not looked up by their username anymore.

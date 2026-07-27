@@ -36,9 +36,3 @@ services:
       - name: event.listener
         identifier: 'causal/oidc-get-authorization-url-set-language'
         event: Causal\Oidc\Event\GetAuthorizationUrlEvent
-
-  Causal\Oidc\EventListener\ModifyBlindedConfigurationOptionsListener:
-    tags:
-      - name: event.listener
-        identifier: 'causal/blind-configuration-options'
-

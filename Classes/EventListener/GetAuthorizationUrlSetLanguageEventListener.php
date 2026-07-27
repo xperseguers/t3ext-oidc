@@ -21,8 +21,8 @@ class GetAuthorizationUrlSetLanguageEventListener
         $request = $event->request;
         if ($request && ApplicationType::fromRequest($request)->isFrontend()) {
             /** @var SiteLanguage $siteLanguage */
-            $siteLanguage = $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage());
-            $language = $siteLanguage->getLocale()->getLanguageCode();
+            $siteLanguage = $request->getAttribute('language', $request->getAttribute('site')?->getDefaultLanguage());
+            $language = $siteLanguage?->getLocale()->getLanguageCode() ?? $language;
         }
         $event->options[$languageOption] = $language;
     }
