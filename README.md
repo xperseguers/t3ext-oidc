@@ -56,6 +56,8 @@ If enabled, the extension provides a login provider for backend of the TYPO3 ins
 
 ## Configuration
 
+Configuration is done through a YAML file located in the TYPO3 system config directory : `config/system/oidc.yaml`
+
 The extension requires at least a configuration for how user information from the IdP
 is mapped to TYPO3 user records fe_users/be_users.
 
@@ -73,13 +75,6 @@ is mapped to TYPO3 user records fe_users/be_users.
 
   ```typo3_typoscript
   name = <family_name>, <given_name>
-  ```
-
-- Support for [stdWrap](https://docs.typo3.org/permalink/t3tsref:stdwrap) in field definition, e.g.,
-
-  ```typo3_typoscript
-  name = <name>
-  name.wrap = |-OIDC
   ```
 
 - Support for [TypoScript data fallback](https://docs.typo3.org/permalink/t3tsref:data-type-gettext)
