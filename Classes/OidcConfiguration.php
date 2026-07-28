@@ -82,35 +82,35 @@ final class OidcConfiguration
 
         try {
             foreach ($yamlConfig['providers'] as $name => $provider) {
-                $this->providers[] = new Provider($name, $provider);
-                // Only one is currently support
-                break;
+                $this->providers[$name] = new Provider($name, $provider);
             }
 
-            $this->enableBackendAuthentication = $this->providers[0]->isEnableBackendAuthentication();
-            $this->enableFrontendAuthentication = $this->providers[0]->isEnableFrontendAuthentication();
-            $this->reEnableFrontendUsers = $this->providers[0]->isReEnableFrontendUsers();
-            $this->undeleteFrontendUsers = $this->providers[0]->isUndeleteFrontendUsers();
-            $this->frontendUserMustExistLocally = $this->providers[0]->isFrontendUserMustExistLocally();
-            $this->disableCSRFProtection = $this->providers[0]->isDisableCSRFProtection();
-            $this->enableCodeVerifier = $this->providers[0]->isEnableCodeVerifier();
-            $this->authorizeLanguageParameter = $this->providers[0]->getAuthorizeLanguageParameter();
-            $this->useRequestPathAuthentication = $this->providers[0]->isUseRequestPathAuthentication();
-            $this->oauthProviderFactory = $this->providers[0]->getOauthProviderFactory();
-            $this->clientKey = $this->providers[0]->getClientKey();
-            $this->clientSecret = $this->providers[0]->getClientSecret();
-            $this->clientScopes = $this->providers[0]->getClientScopes();
-            $this->clientScopeSeparator = $this->providers[0]->getClientScopeSeparator();
-            $this->endpointAuthorize = $this->providers[0]->getEndpointAuthorize();
-            $this->endpointToken = $this->providers[0]->getEndpointToken();
-            $this->endpointUserInfo = $this->providers[0]->getEndpointUserInfo();
-            $this->endpointRevoke = $this->providers[0]->getEndpointRevoke();
-            $this->endpointLogout = $this->providers[0]->getEndpointLogout();
-            $this->usersStoragePids = $this->providers[0]->getUsersStoragePids();
-            $this->usersDefaultGroup = $this->providers[0]->getUsersDefaultGroup();
-            $this->redirectUri = $this->providers[0]->getRedirectUri();
-            $this->revokeAccessTokenAfterLogin = $this->providers[0]->isRevokeAccessTokenAfterLogin();
-            $this->enablePasswordCredentials = $this->providers[0]->isEnablePasswordCredentials();
+            // We only support one provider for now
+            $provider = current($this->providers);
+            $this->enableBackendAuthentication = $provider->isEnableBackendAuthentication();
+            $this->enableFrontendAuthentication = $provider->isEnableFrontendAuthentication();
+            $this->reEnableFrontendUsers = $provider->isReEnableFrontendUsers();
+            $this->undeleteFrontendUsers = $provider->isUndeleteFrontendUsers();
+            $this->frontendUserMustExistLocally = $provider->isFrontendUserMustExistLocally();
+            $this->disableCSRFProtection = $provider->isDisableCSRFProtection();
+            $this->enableCodeVerifier = $provider->isEnableCodeVerifier();
+            $this->authorizeLanguageParameter = $provider->getAuthorizeLanguageParameter();
+            $this->useRequestPathAuthentication = $provider->isUseRequestPathAuthentication();
+            $this->oauthProviderFactory = $provider->getOauthProviderFactory();
+            $this->clientKey = $provider->getClientKey();
+            $this->clientSecret = $provider->getClientSecret();
+            $this->clientScopes = $provider->getClientScopes();
+            $this->clientScopeSeparator = $provider->getClientScopeSeparator();
+            $this->endpointAuthorize = $provider->getEndpointAuthorize();
+            $this->endpointToken = $provider->getEndpointToken();
+            $this->endpointUserInfo = $provider->getEndpointUserInfo();
+            $this->endpointRevoke = $provider->getEndpointRevoke();
+            $this->endpointLogout = $provider->getEndpointLogout();
+            $this->usersStoragePids = $provider->getUsersStoragePids();
+            $this->usersDefaultGroup = $provider->getUsersDefaultGroup();
+            $this->redirectUri = $provider->getRedirectUri();
+            $this->revokeAccessTokenAfterLogin = $provider->isRevokeAccessTokenAfterLogin();
+            $this->enablePasswordCredentials = $provider->isEnablePasswordCredentials();
         } catch (\Exception $e) {
             throw new ExtensionNotConfiguredException(
                 'OIDC extension configuration is incomplete. Please, fix it: ' . $e->getMessage(),
@@ -138,5 +138,10 @@ final class OidcConfiguration
             }
         }
         return false;
+    }
+
+    public function getProviders(): array
+    {
+        return $this->providers;
     }
 }

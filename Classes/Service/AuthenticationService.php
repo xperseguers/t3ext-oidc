@@ -672,7 +672,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function getMapping(string $table): array
     {
-        return $this->config->providers['default']['mapping'][$table] ?? [];
+        return current($this->config->getProviders())?->getMapping()[$table] ?? [];
     }
 
     /**
