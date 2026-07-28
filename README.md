@@ -36,13 +36,52 @@ https://tools.ietf.org/html/rfc7636 for details.
 
 ## Configuration
 
-### Mapping for both Backend and Frontend User Fields
-
 Configuration is done through a YAML file located in the TYPO3 system config directory : `config/system/oidc.yaml`
 
   ```
-  providers:
-    default:
+name: causal/oidc
+label: OIDC
+
+authenticationServicePriority: 82
+authenticationServiceQuality: 80
+authenticationUrlRoute: oidc/authentication
+
+providers:
+  default:
+    authorizeLanguageParameter: language
+    clientKey: '%env(TYPO3_OIDC_CLIENT_KEY)%'
+    clientScopeSeparator: '%env(TYPO3_OIDC_ENABLE_CODE_VERIFIER)%'
+    clientScopes: '%env(TYPO3_OIDC_CLIENT_SCOPES)%'
+    clientSecret: '%env(TYPO3_OIDC_CLIENT_SECRET)%'
+    disableCSRFProtection: 0
+    enableBackendAuthentication: 1
+    enableCodeVerifier: '%env(TYPO3_OIDC_ENABLE_CODE_VERIFIER)%'
+    enableFrontendAuthentication: 0
+    enablePasswordCredentials: 0
+    endpointAuthorize: '%env(TYPO3_OIDC_ENDPOINT_AUTHORIZE)%'
+    endpointLogout: '%env(TYPO3_OIDC_ENDPOINT_LOGOUT)%'
+    endpointRevoke: '%env(TYPO3_OIDC_ENDPOINTREVOKE)%'
+    endpointToken: '%env(TYPO3_OIDC_ENDPOINT_TOKEN)%'
+    endpointUserInfo: '%env(TYPO3_OIDC_ENDPOINT_USERINFO)%'
+    frontendUserMustExistLocally: 0
+    mapping:
+      be_users:
+        realName: '<name> // <family_name> <given_name> // <email>'
+      fe_users:
+        name: '<name> // <family_name> <given_name> // <email>'
+    oauthProviderFactory:
+    reEnableFrontendUsers: 0
+    redirectUri: '%env(TYPO3_OIDC_REDIRECT_URI)%'
+    revokeAccessTokenAfterLogin: 0
+    undeleteFrontendUsers: 0
+    useRequestPathAuthentication: 0
+    usersDefaultGroup:
+    usersStoragePid: 0
+  ```
+
+### Mapping for both Backend and Frontend User Fields
+
+  ```
       mapping:
         fe_users:
           name: '<name> // <family_name> <given_name> // <email>'
