@@ -12,17 +12,3 @@ plugin.tx_oidc_login {
 # Setting oidc plugin TypoScript
 tt_content.oidc_login =< plugin.tx_oidc_login
 
-# format is "TYPO3 column" = <OIDC field>
-plugin.tx_oidc.mapping {
-    fe_users {
-        username   = <sub>
-        name       = <name>
-        first_name = <given_name>
-        last_name  = <family_name>
-        address    = <street_address>
-        title      = <title>
-        zip        = <postal_code>
-        city       = <locality>
-        country    = <country>
-    }
-}

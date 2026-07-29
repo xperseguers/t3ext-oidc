@@ -161,6 +161,9 @@ class Provider
         return $this->enableFrontendAuthentication;
     }
 
+    /**
+     * @return MappingConfig
+     */
     public function getMapping(): array
     {
         return $this->mapping;
