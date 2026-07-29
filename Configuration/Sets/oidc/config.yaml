@@ -23,11 +23,11 @@ providers:
     endpointToken: '%env(TYPO3_OIDC_ENDPOINT_TOKEN)%'
     endpointUserInfo: '%env(TYPO3_OIDC_ENDPOINT_USERINFO)%'
     frontendUserMustExistLocally: 0
-    maintainerRole: maintainer
     mapping:
       be_users:
-        name: '<name> // <family_name> <given_name> // <email>'
+        realName: '<name> // <family_name> <given_name> // <email>'
       fe_users:
+        name: '<name> // <family_name> <given_name> // <email>'
     oauthProviderFactory:
     reEnableFrontendUsers: 0
     redirectUri: '%env(TYPO3_OIDC_REDIRECT_URI)%'
