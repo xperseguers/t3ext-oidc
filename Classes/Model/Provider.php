@@ -9,6 +9,37 @@ use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+/**
+ * @phpstan-type MappingConfig array{be_users?: array<string, int|string>, fe_users?: array<string, int|string>}
+ * @phpstan-type ProviderConfig array{
+ *     authorizeLanguageParameter: string,
+ *     clientKey: string,
+ *     clientScopeSeparator: string,
+ *     clientScopes: string,
+ *     clientSecret: string,
+ *     disableCSRFProtection: int,
+ *     enableBackendAuthentication: int,
+ *     enableCodeVerifier: int,
+ *     enableFrontendAuthentication: int,
+ *     enablePasswordCredentials: int,
+ *     endpointAuthorize: string,
+ *     endpointLogout: string,
+ *     endpointRevoke: string,
+ *     endpointToken: string,
+ *     endpointUserInfo: string,
+ *     frontendUserMustExistLocally: int,
+ *     mapping: MappingConfig,
+ *     name: string,
+ *     oauthProviderFactory: class-string<OAuthProviderFactoryInterface>,
+ *     reEnableFrontendUsers: int,
+ *     redirectUri: string,
+ *     revokeAccessTokenAfterLogin: int,
+ *     undeleteFrontendUsers: int,
+ *     useRequestPathAuthentication: int,
+ *     usersDefaultGroup: string,
+ *     usersStoragePids: array
+ * }
+ */
 class Provider
 {
     private string $authorizeLanguageParameter = 'language';
@@ -27,7 +58,7 @@ class Provider
     private string $endpointToken = '';
     private string $endpointUserInfo = '';
     private bool $frontendUserMustExistLocally = false;
-    /** @var array{be_users?: array<string, int|string>, fe_users?: array<string, int|string>} */
+    /** @var MappingConfig */
     private array $mapping = [];
     private string $name;
     /** @var class-string<OAuthProviderFactoryInterface> */
@@ -42,6 +73,8 @@ class Provider
     private array $usersStoragePids = [0];
 
     /**
+     * @param string $name
+     * @param ?ProviderConfig $config
      * @throws ProviderConfigurationException
      */
     public function __construct(string $name, ?array $config)

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Causal\Oidc;
 
 use Causal\Oidc\Exception\ExtensionNotConfiguredException;
+use Causal\Oidc\Exception\ProviderConfigurationException;
 use Causal\Oidc\Model\Provider;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
@@ -13,6 +14,10 @@ use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use UnexpectedValueException;
 
+/**
+ * @phpstan-import-type ProviderConfig from Provider
+ * @phpstan-type YamlConfig array{authenticationServicePriority: int, authenticationServiceQuality: int, authenticationUrlRoute: string, providers: array<string, ProviderConfig>}
+ */
 final class OidcConfiguration
 {
     public const CONFIG_PATH = '/system/oidc.yaml';
@@ -46,17 +51,17 @@ final class OidcConfiguration
     public string $usersDefaultGroup;
     public array $usersStoragePids;
 
-    /** @var array<Provider>  */
+    /** @var array<Provider> */
     private array $providers = [];
 
     /**
-     * @param array<string, string> $extConfig
+     * @param ?YamlConfig $yamlConfig
      * @throws ExtensionConfigurationPathDoesNotExistException
      * @throws ExtensionNotConfiguredException
+     * @throws ProviderConfigurationException
      */
     public function __construct(?array $yamlConfig = null)
     {
-        /** @var array{authenticationServicePriority: int, authenticationServiceQuality: int, authenticationUrlRoute: string, providers: array<string, Provider>} $yamlConfig */
         $yamlConfig ??= GeneralUtility::makeInstance(YamlFileLoader::class)
             ->load(Environment::getConfigPath() . self::CONFIG_PATH);
 
