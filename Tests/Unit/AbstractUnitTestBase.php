@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace Causal\Oidc\Tests\Unit;
 
 use Causal\Oidc\Exception\ExtensionNotConfiguredException;
+use Causal\Oidc\Exception\ProviderConfigurationException;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\OAuthService;
+use PHPUnit\Framework\MockObject\Exception;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class AbstractUnitTestBase extends UnitTestCase
 {
     /**
+     * @return OAuthService
      * @throws ExtensionConfigurationPathDoesNotExistException
-     * @throws ExtensionConfigurationExtensionNotConfiguredException
+     * @throws ExtensionNotConfiguredException
+     * @throws ProviderConfigurationException
+     * @throws Exception
      */
     protected function createOAuthService(): OAuthService
     {
@@ -29,6 +33,7 @@ class AbstractUnitTestBase extends UnitTestCase
     /**
      * @throws ExtensionConfigurationPathDoesNotExistException
      * @throws ExtensionNotConfiguredException
+     * @throws ProviderConfigurationException
      */
     protected function setupOidcConfiguration(): OidcConfiguration
     {
@@ -37,7 +42,7 @@ class AbstractUnitTestBase extends UnitTestCase
             'authenticationServiceQuality' => 80,
             'authenticationUrlRoute' => 'oidc/authentication',
             'providers' => [
-                'default' => [
+                'test' => [
                     'enableBackendAuthentication' => 1,
                     'enableFrontendAuthentication' => 1,
                     'reEnableFrontendUsers' => 0,
