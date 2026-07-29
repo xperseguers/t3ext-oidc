@@ -41,6 +41,9 @@ final class OidcConfiguration
     public bool $revokeAccessTokenAfterLogin = false;
     public bool $enablePasswordCredentials = false;
 
+    /**
+     * @param array<string, string> $extConfig
+     */
     public function __construct(array $extConfig = [])
     {
         $extConfig = $extConfig ?: $this->getExtensionConfiguration();
@@ -67,7 +70,7 @@ final class OidcConfiguration
         $this->endpointUserInfo = $extConfig['oidcEndpointUserInfo'];
         $this->endpointRevoke = $extConfig['oidcEndpointRevoke'];
         $this->endpointLogout = $extConfig['oidcEndpointLogout'];
-        $this->usersStoragePids = GeneralUtility::intExplode(',', (string)$extConfig['usersStoragePid'], true) ?: [0];
+        $this->usersStoragePids = GeneralUtility::intExplode(',', $extConfig['usersStoragePid'], true) ?: [0];
         $this->usersDefaultGroup = $extConfig['usersDefaultGroup'];
         $this->oidcRedirectUri = $extConfig['oidcRedirectUri'];
         $this->revokeAccessTokenAfterLogin = (bool)$extConfig['oidcRevokeAccessTokenAfterLogin'];
@@ -76,6 +79,7 @@ final class OidcConfiguration
 
     protected function getExtensionConfiguration(): array
     {
+        /** @var array<string, string> $config */
         $config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('oidc');
         if ($config) {
             return $config;
