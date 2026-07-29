@@ -38,7 +38,7 @@ https://tools.ietf.org/html/rfc7636 for details.
 
 Configuration is done through a YAML file located in the TYPO3 system config directory : `config/system/oidc.yaml`
 
-  ```
+  ```yaml
 name: causal/oidc
 label: OIDC
 
