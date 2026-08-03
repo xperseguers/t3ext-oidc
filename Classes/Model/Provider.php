@@ -45,6 +45,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class Provider
 {
+    private string $administratorRole = '';
     private string $authorizeLanguageParameter = 'language';
     private bool $backendUserMustExistLocally = false;
     private string $clientKey = '';
@@ -62,6 +63,7 @@ class Provider
     private string $endpointToken = '';
     private string $endpointUserInfo = '';
     private bool $frontendUserMustExistLocally = false;
+    private string $maintainerRole = '';
     /** @var MappingConfig */
     private array $mapping = [];
     private string $name;
@@ -167,6 +169,11 @@ class Provider
         return $this->enableFrontendAuthentication;
     }
 
+    public function getAdministratorRole(): string
+    {
+        return $this->administratorRole;
+    }
+
     public function getAuthorizeLanguageParameter(): string
     {
         return $this->authorizeLanguageParameter;
@@ -215,6 +222,11 @@ class Provider
     public function getEndpointUserInfo(): string
     {
         return $this->endpointUserInfo;
+    }
+
+    public function getMaintainerRole(): string
+    {
+        return $this->maintainerRole;
     }
 
     /**
