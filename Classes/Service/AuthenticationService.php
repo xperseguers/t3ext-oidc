@@ -354,7 +354,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $userLookupResult->free();
 
         $modeName = $mode === 'FE' ? 'Frontend' : 'Backend';
-        if (!$row && $this->config->{lcfirst($modeName).'UserMustExistLocally'}) {
+        if (!$row && $this->config->{lcfirst($modeName) . 'UserMustExistLocally'}) {
             // User does not exist locally, it should not be created on-the-fly
             $this->logger->info($modeName . ' User does not exist locally, denying access', ['info' => $info]);
             return false;
@@ -478,7 +478,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         // emit a generic groups mapping event
         // to customize the groups if the resource structure pattern "Roles" does not fit
-        $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info, $this, $isAdministrator, $isSystemMaintainer );
+        $event = new AuthenticationGetUserGroupsEvent($userGroupTable, $newUserGroups, $info, $this, $isAdministrator, $isSystemMaintainer);
         $eventDispatcher->dispatch($event);
         $isAdministrator = $event->isAdministrator();
         $isSystemMaintainer = $event->isSystemMaintainer();
