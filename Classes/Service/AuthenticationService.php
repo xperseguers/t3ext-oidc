@@ -27,6 +27,7 @@ use Causal\Oidc\Event\ModifyUserEvent;
 use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\OidcConfiguration;
 use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Exception;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -37,6 +38,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Context\Exception\AspectNotFoundException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\InvalidPasswordHashException;
 use TYPO3\CMS\Core\Crypto\PasswordHashing\PasswordHashFactory;
 use TYPO3\CMS\Core\Database\Connection;
@@ -301,7 +303,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Converts a resource owner into a TYPO3 Frontend user.
      *
+     * @param ResourceOwnerInterface $resourceOwnerObject
+     * @param AccessToken $accessToken
      * @return array|bool
+     * @throws AspectNotFoundException
+     * @throws Exception
      */
     protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): bool|array
     {
@@ -346,19 +352,20 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
         $userLookupResult->free();
 
-        if (!$row && $this->config->frontendUserMustExistLocally) {
+        $modeName = $mode === 'FE' ? 'Frontend' : 'Backend';
+        if (!$row && $this->config->{lcfirst($modeName).'UserMustExistLocally'}) {
             // User does not exist locally, it should not be created on-the-fly
-            $this->logger->info('User does not exist locally, denying access', ['info' => $info]);
+            $this->logger->info($modeName . ' User does not exist locally, denying access', ['info' => $info]);
             return false;
         }
-        if (($row['deleted'] ?? false) && !$this->config->undeleteFrontendUsers) {
+        if (($row['deleted'] ?? false) && !$this->config->{'undelete' . $modeName . 'Users'}) {
             // User was manually deleted, it should not get automatically restored
-            $this->logger->info('User was manually deleted, denying access', ['user' => $row]);
+            $this->logger->info($modeName . ' User was manually deleted, denying access', ['user' => $row]);
             return false;
         }
-        if (($row['disable'] ?? false) && !$this->config->reEnableFrontendUsers) {
+        if (($row['disable'] ?? false) && !$this->config->{'reEnable' . $modeName . 'Users'}) {
             // User was manually disabled, it should not get automatically re-enabled
-            $this->logger->info('User was manually disabled, denying access', ['user' => $row]);
+            $this->logger->info($modeName . 'User was manually disabled, denying access', ['user' => $row]);
             return false;
         }
 
