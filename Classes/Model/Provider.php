@@ -161,12 +161,14 @@ class Provider
         return $this->enableFrontendAuthentication;
     }
 
-    /**
-     * @return MappingConfig
-     */
-    public function getMapping(): array
+    public function getAuthorizeLanguageParameter(): string
     {
-        return $this->mapping;
+        return $this->authorizeLanguageParameter;
+    }
+
+    public function getClientKey(): string
+    {
+        return $this->clientKey;
     }
 
     public function getClientScopeSeparator(): string
@@ -182,21 +184,6 @@ class Provider
     public function getClientSecret(): string
     {
         return $this->clientSecret;
-    }
-
-    public function isDisableCSRFProtection(): bool
-    {
-        return $this->disableCSRFProtection;
-    }
-
-    public function isEnableCodeVerifier(): bool
-    {
-        return $this->enableCodeVerifier;
-    }
-
-    public function isEnablePasswordCredentials(): bool
-    {
-        return $this->enablePasswordCredentials;
     }
 
     public function getEndpointAuthorize(): string
@@ -224,9 +211,12 @@ class Provider
         return $this->endpointUserInfo;
     }
 
-    public function isFrontendUserMustExistLocally(): bool
+    /**
+     * @return MappingConfig
+     */
+    public function getMapping(): array
     {
-        return $this->frontendUserMustExistLocally;
+        return $this->mapping;
     }
 
     public function getOauthProviderFactory(): string
@@ -234,14 +224,44 @@ class Provider
         return $this->oauthProviderFactory;
     }
 
-    public function isReEnableFrontendUsers(): bool
-    {
-        return $this->reEnableFrontendUsers;
-    }
-
     public function getRedirectUri(): string
     {
         return $this->redirectUri;
+    }
+
+    public function getUsersDefaultGroup(): string
+    {
+        return $this->usersDefaultGroup;
+    }
+
+    public function getUsersStoragePids(): array
+    {
+        return $this->usersStoragePids;
+    }
+
+    public function isDisableCSRFProtection(): bool
+    {
+        return $this->disableCSRFProtection;
+    }
+
+    public function isEnableCodeVerifier(): bool
+    {
+        return $this->enableCodeVerifier;
+    }
+
+    public function isEnablePasswordCredentials(): bool
+    {
+        return $this->enablePasswordCredentials;
+    }
+
+    public function isFrontendUserMustExistLocally(): bool
+    {
+        return $this->frontendUserMustExistLocally;
+    }
+
+    public function isReEnableFrontendUsers(): bool
+    {
+        return $this->reEnableFrontendUsers;
     }
 
     public function isRevokeAccessTokenAfterLogin(): bool
@@ -257,25 +277,5 @@ class Provider
     public function isUseRequestPathAuthentication(): bool
     {
         return $this->useRequestPathAuthentication;
-    }
-
-    public function getUsersDefaultGroup(): string
-    {
-        return $this->usersDefaultGroup;
-    }
-
-    public function getUsersStoragePids(): array
-    {
-        return $this->usersStoragePids;
-    }
-
-    public function getClientKey(): string
-    {
-        return $this->clientKey;
-    }
-
-    public function getAuthorizeLanguageParameter(): string
-    {
-        return $this->authorizeLanguageParameter;
     }
 }
