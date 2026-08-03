@@ -27,6 +27,7 @@ final class OidcConfiguration
     public int $authenticationServiceQuality = 80;
     public string $authenticationUrlRoute = 'oidc/authentication';
 
+    public string $administratorRole;
     public string $authorizeLanguageParameter;
     public bool $backendUserMustExistLocally;
     public string $clientKey;
@@ -44,6 +45,7 @@ final class OidcConfiguration
     public string $endpointToken;
     public string $endpointUserInfo;
     public bool $frontendUserMustExistLocally;
+    public string $maintainerRole;
     public string $oauthProviderFactory;
     public bool $reEnableBackendUsers;
     public bool $reEnableFrontendUsers;
@@ -102,6 +104,8 @@ final class OidcConfiguration
 
             // We only support one provider for now
             $provider = current($this->providers);
+
+            $this->administratorRole = $provider->getAdministratorRole();
             $this->enableBackendAuthentication = $provider->isEnableBackendAuthentication();
             $this->enableFrontendAuthentication = $provider->isEnableFrontendAuthentication();
             $this->reEnableBackendUsers = $provider->isReEnableBackendUsers();
@@ -124,6 +128,7 @@ final class OidcConfiguration
             $this->endpointUserInfo = $provider->getEndpointUserInfo();
             $this->endpointRevoke = $provider->getEndpointRevoke();
             $this->endpointLogout = $provider->getEndpointLogout();
+            $this->maintainerRole = $provider->getMaintainerRole();
             $this->usersStoragePids = $provider->getUsersStoragePids();
             $this->usersDefaultGroup = $provider->getUsersDefaultGroup();
             $this->redirectUri = $provider->getRedirectUri();
