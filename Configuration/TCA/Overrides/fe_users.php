@@ -1,8 +1,11 @@
 <?php
 
+use Causal\Oidc\OidcConfiguration;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
 defined('TYPO3') or die();
 
-$settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('oidc') ?? [];
+$settings = GeneralUtility::makeInstance(OidcConfiguration::class);
 
 $tempColumns = [
     'tx_oidc' => [
@@ -11,7 +14,7 @@ $tempColumns = [
         'config' => [
             'type' => 'input',
             'size' => 30,
-            'readOnly' => !($settings['frontendUserMustExistLocally'] ?? ''),
+            'readOnly' => !($settings->frontendUserMustExistLocally ?? ''),
         ],
     ],
 ];
