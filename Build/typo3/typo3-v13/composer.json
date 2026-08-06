@@ -7,7 +7,7 @@
 			"typo3/cms-composer-installers": true
 		},
 		"platform": {
-			"php": "8.3",
+			"php": "8.5",
 			"ext-intl": "1"
 		},
 		"sort-packages": true

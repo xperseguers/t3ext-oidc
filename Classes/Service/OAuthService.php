@@ -42,22 +42,27 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 class OAuthService
 {
     protected ?AbstractProvider $provider = null;
+    protected ?ServerRequestInterface $request = null;
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         protected OidcConfiguration $settings
     ) {}
 
+    public function setRequest(?ServerRequestInterface $request): void
+    {
+        $this->request = $request;
+    }
+
     /**
      * Returns the authorization URL.
      *
-     * @param ServerRequestInterface|null $request
      * @param array $options
      * @return string
      */
-    public function getAuthorizationUrl(?ServerRequestInterface $request, array $options = []): string
+    public function getAuthorizationUrl(array $options = []): string
     {
-        $event = $this->eventDispatcher->dispatch(new GetAuthorizationUrlEvent($request, $this->settings, $options));
+        $event = $this->eventDispatcher->dispatch(new GetAuthorizationUrlEvent($this->request, $this->settings, $options));
         $options = $event->options;
         return $this->getProvider()->getAuthorizationUrl($options);
     }
@@ -250,6 +255,6 @@ class OAuthService
 
     protected function getRedirectUrl(): string
     {
-        return $this->settings->oidcRedirectUri ?: GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
+        return $this->settings->oidcRedirectUri ?: $this->request->getAttribute('normalizedParams')->getSiteUrl();
     }
 }

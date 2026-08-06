@@ -11,17 +11,16 @@ declare(strict_types=1);
 //  - Remove unused use statements in the PHP source code
 //  - Ensure Concatenation to have at least one whitespace around
 //  - Remove trailing whitespace at the end of blank lines.
-return (new \PhpCsFixer\Config())
+return new \PhpCsFixer\Config()
     ->setFinder(
-        (new PhpCsFixer\Finder())
+        new PhpCsFixer\Finder()
             ->ignoreVCSIgnored(true)
             ->in(realpath(__DIR__))
     )
     ->setRiskyAllowed(true)
     ->setRules([
         '@DoctrineAnnotation' => true,
-        '@PER-CS3x0' => true,
-        '@PHP8x2Migration' => true,
+        '@auto' => true,
         'cast_spaces' => ['space' => 'none'],
         'declare_parentheses' => true,
         'dir_constant' => true,

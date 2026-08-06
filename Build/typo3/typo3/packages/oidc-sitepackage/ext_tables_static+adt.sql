@@ -2,12 +2,6 @@ TRUNCATE pages;
 TRUNCATE tt_content;
 TRUNCATE sys_template;
 
-# Needed for TYPO3 v12
-INSERT INTO `sys_template` (`uid`, `pid`, `title`, `root`)
-VALUES
-	('1', '1', 'oidc-sitepackage', '1');
-;
-
 INSERT INTO pages SET
     uid = 1,
     pid = 0,

@@ -1,50 +1,5 @@
 name: t3ext-oidc
 services:
-  v12:
-    build:
-      context: typo3
-      additional_contexts:
-        - certs=./certs
-        - oidc=..
-        - typo3-version=./typo3/typo3-v12
-    networks:
-      default:
-        aliases:
-          - v12.t3ext-oidc.test
-    depends_on:
-      db-v12:
-        condition: service_healthy
-    env_file:
-      - typo3/oidc.env
-    environment:
-      - SERVER_NAME=v12.t3ext-oidc.test
-      - TYPO3_CONTEXT=Development
-
-      - TYPO3_DB_HOST=db-v12
-      - TYPO3_DB_PORT=3306
-      - TYPO3_DB_USERNAME=app
-      - TYPO3_DB_PASSWORD=app
-      - TYPO3_DB_DBNAME=app
-
-      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v12.t3ext-oidc.test/login/redirect
-    healthcheck:
-      test: ["CMD", "curl", "-f", "https://v12.t3ext-oidc.test/"]
-      interval: 3s
-
-  db-v12:
-    image: mariadb:10.11.10
-    environment:
-      MARIADB_ROOT_PASSWORD: root
-      MARIADB_USER: app
-      MARIADB_PASSWORD: app
-      MARIADB_DATABASE: app
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      start_period: 10s
-      interval: 3s
-      timeout: 5s
-      retries: 3
-
   v13:
     build:
       context: typo3
@@ -77,7 +32,52 @@ services:
       interval: 3s
 
   db-v13:
-    image: mariadb:10.11.10
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_USER: app
+      MARIADB_PASSWORD: app
+      MARIADB_DATABASE: app
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 3s
+      timeout: 5s
+      retries: 3
+
+  v14:
+    build:
+      context: typo3
+      additional_contexts:
+        - certs=./certs
+        - oidc=..
+        - typo3-version=./typo3/typo3-v14
+    networks:
+      default:
+        aliases:
+          - v14.t3ext-oidc.test
+    depends_on:
+      db-v14:
+        condition: service_healthy
+    env_file:
+      - typo3/oidc.env
+    environment:
+      - SERVER_NAME=v14.t3ext-oidc.test
+      - TYPO3_CONTEXT=Development
+
+      - TYPO3_DB_HOST=db-v14
+      - TYPO3_DB_PORT=3306
+      - TYPO3_DB_USERNAME=app
+      - TYPO3_DB_PASSWORD=app
+      - TYPO3_DB_DBNAME=app
+
+      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v14.t3ext-oidc.test/login/redirect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://v14.t3ext-oidc.test/"]
+      interval: 3s
+
+  db-v14:
+    image: mariadb:10.11
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_USER: app
@@ -183,9 +183,9 @@ services:
       - DISPLAY=vnc:1
     working_dir: /e2e
     depends_on:
-      v12:
-        condition: service_healthy
       v13:
+        condition: service_healthy
+      v14:
         condition: service_healthy
       oidc-server-mock:
         condition: service_healthy

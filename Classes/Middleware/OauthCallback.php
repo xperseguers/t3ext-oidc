@@ -48,7 +48,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
         // A code was supplied, we start the OIDC handling
         $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
         if (!$authContext) {
-            return (new Response())->withStatus(400, 'Missing OIDC authentication context');
+            return new Response()->withStatus(400, 'Missing OIDC authentication context');
         }
 
         $this->logger->debug('Authentication context is available', ['data' => $authContext]);
@@ -57,7 +57,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
 
         $state = $queryParams['state'] ?? '';
         if (!$state) {
-            return (new Response())->withStatus(400, 'Invalid state');
+            return new Response()->withStatus(400, 'Invalid state');
         }
         if ($state !== $authContext->state) {
             if (!$this->settings->disableCSRFProtection) {
@@ -65,7 +65,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
                     'expected' => $authContext->state,
                     'actual' => $state,
                 ]);
-                return (new Response())->withStatus(400, 'Invalid state');
+                return new Response()->withStatus(400, 'Invalid state');
             }
             $this->logger->info('State mismatch. Bypassing CSRF attack mitigation protection according to the extension configuration', [
                 'expected' => $authContext->state,

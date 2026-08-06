@@ -29,6 +29,7 @@ use Firebase\JWT\Key;
  * @internal
  *
  * IMPORTANT: This is a _partial_ copy of \TYPO3\CMS\Core\Security\JwtTrait in TYPO3 v12
+ * @todo update this to latest v13/14 counterparts
  */
 trait JwtTrait
 {

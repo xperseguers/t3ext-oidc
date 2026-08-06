@@ -34,8 +34,8 @@ class DataHandlerOidc
 
         if (isset($fieldArray['tx_oidc_pattern']) && empty($fieldArray['tx_oidc_pattern'])) {
             // Pattern has been cleared => disconnect group from users (see https://github.com/xperseguers/t3ext-oidc/issues/11)
-            $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
-                ->getQueryBuilderForTable('fe_users');
+            $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+            $queryBuilder = $connectionPool->getQueryBuilderForTable('fe_users');
             $queryBuilder->getRestrictions()->removeAll();
             $usersInThisUserGroup = $queryBuilder
                 ->select('uid', 'usergroup')
@@ -45,8 +45,8 @@ class DataHandlerOidc
                 )
                 ->executeQuery();
 
-            $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)
-                ->getConnectionForTable('fe_users');
+            $now = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
+            $tableConnection = $connectionPool->getConnectionForTable('fe_users');
             while ($user = $usersInThisUserGroup->fetchAssociative()) {
                 $userGroups = GeneralUtility::intExplode(',', $user['usergroup'], true);
                 // Remove this user group from the list
@@ -57,7 +57,7 @@ class DataHandlerOidc
                     'fe_users',
                     [
                         'usergroup' => implode(',', $userGroups),
-                        'tstamp' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
+                        'tstamp' => $now,
                     ],
                     [
                         'uid' => $user['uid'],

@@ -10,6 +10,8 @@ use Causal\Oidc\Service\OpenIdConnectService;
 use Causal\Oidc\Tests\Unit\AbstractUnitTestBase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Core\Crypto\HashService;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class OpenIdConnectServiceTest extends AbstractUnitTestBase
 {
@@ -20,6 +22,7 @@ class OpenIdConnectServiceTest extends AbstractUnitTestBase
     public function getFinalLoginUrlReturnsExpectedUrl(string $loginUrl, string $expected): void
     {
         $service = new OpenIdConnectService(
+            GeneralUtility::makeInstance(HashService::class),
             $this->createOAuthService(),
             new AuthenticationContextService(),
             $this->setupOidcConfiguration(),
