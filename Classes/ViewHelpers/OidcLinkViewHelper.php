@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Causal\Oidc\ViewHelpers;
 
 use Causal\Oidc\Service\OpenIdConnectService;
+use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
@@ -28,7 +29,13 @@ class OidcLinkViewHelper extends AbstractViewHelper
      */
     public function render(): string
     {
-        $url = GeneralUtility::makeInstance(OpenIdConnectService::class)->getAuthenticationRequestUrl();
-        return (string)$url;
+        $request = $GLOBALS['TYPO3_REQUEST'];
+        $currentUrl = new Uri(GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL'));
+        $redirectUrl = new Uri($request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '');
+        return (string)GeneralUtility::makeInstance(OpenIdConnectService::class)->getFrontendAuthenticationRequestUrl(
+            $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage()),
+            $currentUrl,
+            $redirectUrl,
+        );
     }
 }
