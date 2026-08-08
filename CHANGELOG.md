@@ -12,6 +12,7 @@
   to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
   Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
 - Breaking: Public method `OpenIdConnectService::getAuthenticationRequestUrl` has been replaced by `OpenIdConnectService::getFrontendAuthenticationRequestUrl`.
+- Breaking: DataHandler hook has been removed. Groups are not removed from users anymore automatically once a group is disconnected from OIDC (tx_oidc_pattern).
 - Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
 - Feature: Support backend login.
 - Feature: Added Site Set
