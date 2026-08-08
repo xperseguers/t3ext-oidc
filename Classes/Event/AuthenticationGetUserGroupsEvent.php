@@ -25,22 +25,31 @@ use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
  */
 final class AuthenticationGetUserGroupsEvent
 {
+    protected AbstractAuthenticationService $authenticationService;
     protected string $groupTable;
     protected array $groups;
     protected array $resource;
-    protected AbstractAuthenticationService $authenticationService;
+    private bool $isAdministrator;
+    private bool $isSystemMaintainer;
 
     /**
      * @param string $groupTable - fe_groups or be_groups
      * @param array $groups - known user group ids
      * @param array $resourceOwner - resource owner data
      */
-    public function __construct(string $groupTable, array $groups, array $resourceOwner, AbstractAuthenticationService $authenticationService)
+    public function __construct(string $groupTable, array $groups, array $resourceOwner, AbstractAuthenticationService $authenticationService, bool $isAdministrator, bool $isSystemMaintainer)
     {
         $this->groupTable = $groupTable;
         $this->groups = $groups;
         $this->resource = $resourceOwner;
         $this->authenticationService = $authenticationService;
+        $this->isAdministrator = $isAdministrator;
+        $this->isSystemMaintainer = $isSystemMaintainer;
+    }
+
+    public function getAuthenticationService(): AbstractAuthenticationService
+    {
+        return $this->authenticationService;
     }
 
     public function getGroupTable(): string
@@ -48,19 +57,34 @@ final class AuthenticationGetUserGroupsEvent
         return $this->groupTable;
     }
 
-    public function getUserGroups(): array
-    {
-        return $this->groups;
-    }
-
     public function getResource(): array
     {
         return $this->resource;
     }
 
-    public function getAuthenticationService(): AbstractAuthenticationService
+    public function getUserGroups(): array
     {
-        return $this->authenticationService;
+        return $this->groups;
+    }
+
+    public function isAdministrator(): bool
+    {
+        return $this->isAdministrator;
+    }
+
+    public function setIsAdministrator(bool $isAdministrator): void
+    {
+        $this->isAdministrator = $isAdministrator;
+    }
+
+    public function isSystemMaintainer(): bool
+    {
+        return $this->isSystemMaintainer;
+    }
+
+    public function setIsSystemMaintainer(bool $isSystemMaintainer): void
+    {
+        $this->isSystemMaintainer = $isSystemMaintainer;
     }
 
     /**
