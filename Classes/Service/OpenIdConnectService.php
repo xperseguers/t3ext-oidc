@@ -45,7 +45,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         }
 
         $queryParametersString = implode(array_values($queryParameters));
-        $queryParameters['validation_hash'] =  $this->calculateUrlHash($queryParametersString);
+        $queryParameters['validation_hash'] = $this->calculateUrlHash($queryParametersString);
 
         $query = GeneralUtility::implodeArrayForUrl('', $queryParameters);
 
