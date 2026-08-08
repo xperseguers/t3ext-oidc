@@ -2,23 +2,26 @@
 
 ## Version 5.x.x
 
-- Breaking: Dropped support for TYPO3 11 LTS and PHP < 8.2
-- Breaking: Introduced OidcConfiguration class to represent extension configuration.
-  Default values of endpoints have been removed. Please validate your configuration during upgrade.
-- Breaking: Dropped direct felogin-integration (via event).
-  Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
-- Breaking: Move OIDC Login Plugin from "list_type" to real content type.
-- Breaking: The default scope separator is changed from comma (`,`) to the space-character (` `)
-  to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
-  Change extension configuration `oidcClientScopeSeparator = ,` for old behaviour.
-- Breaking: Public method `OpenIdConnectService::getAuthenticationRequestUrl` has been replaced by `OpenIdConnectService::getFrontendAuthenticationRequestUrl`.
-- Breaking: DataHandler hook has been removed. Groups are not removed from users anymore automatically once a group is disconnected from OIDC (tx_oidc_pattern).
-- Feature: Added extension setting `enablePasswordCredentials` to disable password-authentication.
-- Feature: Support backend login.
-- Feature: Added Site Set
-- Method `getFreshAccessToken()` now actually returns the fresh access token.
+### Features
 
-## Version 4.0.0
+- Added extension setting `enablePasswordCredentials` to disable password-authentication.
+- Added support for backend login.
+- Added Site Set
+- Method `\Causal\Oidc\Service\OAuthService::getFreshAccessToken()` now actually returns the fresh access token.
+
+### Breaking changes
+
+- Dropped support for TYPO3 11 LTS and PHP < 8.2
+- Extension configuration: Default values of endpoints have been removed. Please validate your configuration during upgrade.
+- Dropped Event-based direct ext:felogin-integration.
+  Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
+- Move OIDC Login Plugin from "list_type" to content type.
+- The default scope separator is changed from comma (`,`) to the space-character (` `) to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
+  Change extension configuration `oidcClientScopeSeparator = ,` for the old behavior.
+- Public method `OpenIdConnectService::getAuthenticationRequestUrl` has been replaced by `OpenIdConnectService::getFrontendAuthenticationRequestUrl`.
+- DataHandler hook has been removed. Groups are not removed from users anymore automatically once a group is disconnected from OIDC (tx_oidc_pattern).
+
+## Version 4.0.0 (2025-01-27)
 
 - Breaking: Existing fe_users are not looked up by their username anymore.
   You may use the `AuthenticationFetchUserEvent` to re-add this functionality,
@@ -31,7 +34,7 @@
   It is now possible to post-process the mapping by ìmplementing the `AuthenticationProcessMappingEvent`
 - The query parameters for the authorization URL can now be modified via `GetAuthorizationUrlEvent`.
 
-## Version 3.0.0
+## Version 3.0.0 (2024-12-17)
 
 - The callback URL changed from `/typo3conf/ext/oidc/Public/callback.php` to `TYPO3_SITE_URL`. (configurable with option `oidcRedirectUri`) [#116](https://github.com/xperseguers/t3ext-oidc/issues/116)
 - No PHP native session is needed anymore. A JWT-Cookie (named `oidc_context`) is now used to store relevant information during an authentication process. [#155](https://github.com/xperseguers/t3ext-oidc/issues/155)
