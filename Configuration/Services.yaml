@@ -36,14 +36,3 @@ services:
       - name: event.listener
         identifier: 'causal/oidc-get-authorization-url-set-language'
         event: Causal\Oidc\Event\GetAuthorizationUrlEvent
-
-  Causal\Oidc\EventListener\ModifyBlindedConfigurationOptionsListener:
-    tags:
-      - name: event.listener
-        identifier: 'causal/blind-configuration-options'
-
-  # Causal\Oidc\Frontend\FrontendSimulationV13 instantiates two internal core classes via GeneralUtility::makeInstance
-  TYPO3\CMS\Frontend\Page\PageInformationFactory:
-    public: true
-  TYPO3\CMS\Core\TypoScript\FrontendTypoScriptFactory:
-    public: true
