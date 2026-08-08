@@ -15,7 +15,7 @@
 - Extension configuration: Default values of endpoints have been removed. Please validate your configuration during upgrade.
 - Dropped Event-based direct ext:felogin-integration.
   Please use the `OidcLinkViewHelper` instead, if you previously relied on the `{openidConnectUri}` variable in your template.
-- Move OIDC Login Plugin from "list_type" to content type.
+- Move OIDC Login Plugin from "list_type" to content type. Use Upgrade Wizard to migrate.
 - The default scope separator is changed from comma (`,`) to the space-character (` `) to follow official [RFC-6749](https://datatracker.ietf.org/doc/html/rfc6749#section-3.3).
   Change extension configuration `oidcClientScopeSeparator = ,` for the old behavior.
 - Public method `OpenIdConnectService::getAuthenticationRequestUrl` has been replaced by `OpenIdConnectService::getFrontendAuthenticationRequestUrl`.
