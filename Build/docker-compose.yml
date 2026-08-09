@@ -10,14 +10,14 @@ services:
     networks:
       default:
         aliases:
-          - v13.t3ext-oidc.test
+          - v13.t3ext-oidc.ddev.site
     depends_on:
       db-v13:
         condition: service_healthy
     env_file:
       - typo3/oidc.env
     environment:
-      - SERVER_NAME=v13.t3ext-oidc.test
+      - SERVER_NAME=v13.t3ext-oidc.ddev.site
       - TYPO3_CONTEXT=Development
 
       - TYPO3_DB_HOST=db-v13
@@ -26,9 +26,9 @@ services:
       - TYPO3_DB_PASSWORD=app
       - TYPO3_DB_DBNAME=app
 
-      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v13.t3ext-oidc.test/login/redirect
+      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v13.t3ext-oidc.ddev.site/login/redirect
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://v13.t3ext-oidc.test/"]
+      test: ["CMD", "curl", "-f", "https://v13.t3ext-oidc.ddev.site/"]
       interval: 3s
 
   db-v13:
@@ -55,14 +55,14 @@ services:
     networks:
       default:
         aliases:
-          - v14.t3ext-oidc.test
+          - v14.t3ext-oidc.ddev.site
     depends_on:
       db-v14:
         condition: service_healthy
     env_file:
       - typo3/oidc.env
     environment:
-      - SERVER_NAME=v14.t3ext-oidc.test
+      - SERVER_NAME=v14.t3ext-oidc.ddev.site
       - TYPO3_CONTEXT=Development
 
       - TYPO3_DB_HOST=db-v14
@@ -71,9 +71,9 @@ services:
       - TYPO3_DB_PASSWORD=app
       - TYPO3_DB_DBNAME=app
 
-      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v14.t3ext-oidc.test/login/redirect
+      - TYPO3_OIDC_OIDC_REDIRECT_URI=https://v14.t3ext-oidc.ddev.site/login/redirect
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://v14.t3ext-oidc.test/"]
+      test: ["CMD", "curl", "-f", "https://v14.t3ext-oidc.ddev.site/"]
       interval: 3s
 
   db-v14:
@@ -97,7 +97,7 @@ services:
     networks:
       default:
         aliases:
-          - oidc.t3ext-oidc.test
+          - oidc.t3ext-oidc.ddev.site
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
     environment:

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('Login via OidcLinkViewHelper', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Login with OpenID Connect' }).click();
-  await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.test/'));
+  await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.ddev.site/'));
 
   await page.getByLabel('Username').fill('User1');
   await page.getByLabel('Password').fill('pwd');
