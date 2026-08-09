@@ -7,7 +7,7 @@ services:
       - ./typo3/typo3-v13:/app
       - ..:/app/packages/oidc
       - ./typo3/typo3/packages/oidc-sitepackage:/app/packages/oidc-sitepackage
-    command: install
+    command: update -W
 
   composer-v14:
     build:
@@ -17,4 +17,4 @@ services:
       - ./typo3/typo3-v14:/app
       - ..:/app/packages/oidc
       - ./typo3/typo3/packages/oidc-sitepackage:/app/packages/oidc-sitepackage
-    command: install
+    command: update -W

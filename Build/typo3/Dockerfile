@@ -121,6 +121,8 @@ RUN composer install --no-dev
 
 FROM webserver AS oidc-webserver
 COPY --from=php-dependencies /app /app
+# ensure there is no var folder (present in v14 due to asset:publish after dumpautoload)
+RUN rm -rf /app/var
 RUN install -d -o www-data -g www-data -m 775 -v /app/var
 RUN cp vendor/typo3/cms-install/Resources/Private/FolderStructureTemplateFiles/root-htaccess public/.htaccess
 
