@@ -6,6 +6,7 @@ namespace Causal\Oidc\Updates;
 
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Schema\Column;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -16,6 +17,9 @@ use TYPO3\CMS\Install\Updates\UpgradeWizardInterface;
 #[UpgradeWizard('OIDCPluginUpdater')]
 class PluginUpdater implements UpgradeWizardInterface
 {
+    protected const TABLE_CONTENT = 'tt_content';
+    protected const TABLE_BACKEND_USER_GROUPS = 'be_groups';
+
     protected const MIGRATION_SETTINGS = [
         'oidc_login' => 'oidc_login',
     ];
@@ -29,19 +33,7 @@ class PluginUpdater implements UpgradeWizardInterface
 
     public function getDescription(): string
     {
-        $plugins = count($this->getMigrationRecords());
-        $begroups = $this->hasBackendUserGroupsToUpdate();
-
-        $description = 'List-Type plugins are migrated to CType. User permissions are migrated too.';
-
-        if ($plugins) {
-            $description .= 'This update wizard migrates all existing plugin settings and changes the plugin';
-            $description .= 'to use the new plugins available. Count of plugins: ' . $plugins . ' ';
-        }
-        if ($begroups) {
-            $description .= 'BE permissions will be migrated.';
-        }
-        return $description;
+        return 'List-Type plugins are migrated to CType. User permissions are migrated too.';
     }
 
     public function getPrerequisites(): array
@@ -50,16 +42,35 @@ class PluginUpdater implements UpgradeWizardInterface
             DatabaseUpdatedPrerequisite::class,
         ];
     }
-
     public function updateNecessary(): bool
     {
-        return $this->getMigrationRecords() || $this->hasBackendUserGroupsToUpdate();
+        return (
+                $this->columnsExistInContentTable()
+                && $this->getMigrationRecords()
+            )
+            || (
+                $this->columnsExistInBackendUserGroupsTable()
+                && $this->hasNoLegacyBackendGroupsExplicitAllowDenyConfiguration()
+                && $this->hasBackendUserGroupsToUpdate()
+            );
     }
 
     public function executeUpdate(): bool
     {
-        $this->performMigration();
-        $this->updateBackendUserGroups();
+        if (
+            $this->columnsExistInContentTable()
+            && $this->getMigrationRecords()
+        ) {
+            $this->performMigration();
+        }
+        if (
+            $this->columnsExistInBackendUserGroupsTable()
+            && $this->hasNoLegacyBackendGroupsExplicitAllowDenyConfiguration()
+            && $this->hasBackendUserGroupsToUpdate()
+        ) {
+            $this->updateBackendUserGroups();
+        }
+
         return true;
     }
 
@@ -78,12 +89,12 @@ class PluginUpdater implements UpgradeWizardInterface
 
     protected function getMigrationRecords(): array
     {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE_CONTENT);
         $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
 
         return $queryBuilder
             ->select('uid', 'pid', 'CType', 'list_type', 'pi_flexform')
-            ->from('tt_content')
+            ->from(self::TABLE_CONTENT)
             ->where(
                 $queryBuilder->expr()->eq(
                     'CType',
@@ -113,8 +124,8 @@ class PluginUpdater implements UpgradeWizardInterface
      */
     protected function updateContentElement(int $uid, string $newCtype): void
     {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
-        $queryBuilder->update('tt_content')
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE_CONTENT);
+        $queryBuilder->update(self::TABLE_CONTENT)
             ->set('CType', $newCtype)
             ->set('list_type', '')
             ->where(
@@ -125,7 +136,7 @@ class PluginUpdater implements UpgradeWizardInterface
 
     protected function hasBackendUserGroupsToUpdate(): bool
     {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('be_groups');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE_BACKEND_USER_GROUPS);
         $queryBuilder->getRestrictions()->removeAll();
 
         $searchConstraints = [];
@@ -140,7 +151,7 @@ class PluginUpdater implements UpgradeWizardInterface
 
         $queryBuilder
             ->count('uid')
-            ->from('be_groups')
+            ->from(self::TABLE_BACKEND_USER_GROUPS)
             ->where(
                 $queryBuilder->expr()->or(...$searchConstraints),
             );
@@ -150,7 +161,7 @@ class PluginUpdater implements UpgradeWizardInterface
 
     protected function updateBackendUserGroups(): void
     {
-        $connection = $this->connectionPool->getConnectionForTable('be_groups');
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE_BACKEND_USER_GROUPS);
 
         /**
          * @var string $listType
@@ -175,7 +186,7 @@ class PluginUpdater implements UpgradeWizardInterface
                 }
 
                 $connection->update(
-                    'be_groups',
+                    self::TABLE_BACKEND_USER_GROUPS,
                     [
                         'explicit_allowdeny' => implode(',', array_unique($fields)),
                     ],
@@ -187,11 +198,11 @@ class PluginUpdater implements UpgradeWizardInterface
 
     protected function getBackendUserGroupsToUpdate(string $listType): array
     {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('be_groups');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE_BACKEND_USER_GROUPS);
         $queryBuilder->getRestrictions()->removeAll();
         $queryBuilder
             ->select('uid', 'explicit_allowdeny')
-            ->from('be_groups')
+            ->from(self::TABLE_BACKEND_USER_GROUPS)
             ->where(
                 $queryBuilder->expr()->like(
                     'explicit_allowdeny',
@@ -201,5 +212,59 @@ class PluginUpdater implements UpgradeWizardInterface
                 ),
             );
         return $queryBuilder->executeQuery()->fetchAllAssociative();
+    }
+
+    /**
+     * Returns true, if no legacy explicit_allowdeny be_groups configuration is found. Note, that we can not rely
+     * BackendGroupsExplicitAllowDenyMigration status here, since the update must also be executed for new
+     * TYPO3 v13+ installations, where BackendGroupsExplicitAllowDenyMigration is not required.
+     */
+    protected function hasNoLegacyBackendGroupsExplicitAllowDenyConfiguration(): bool
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE_BACKEND_USER_GROUPS);
+        $queryBuilder->getRestrictions()->removeAll();
+        $queryBuilder
+            ->count('uid')
+            ->from(self::TABLE_BACKEND_USER_GROUPS)
+            ->where(
+                $queryBuilder->expr()->like(
+                    'explicit_allowdeny',
+                    $queryBuilder->createNamedParameter(
+                        '%ALLOW%'
+                    )
+                ),
+            );
+        return (int)$queryBuilder->executeQuery()->fetchOne() === 0;
+    }
+
+    protected function columnsExistInBackendUserGroupsTable(): bool
+    {
+        $schemaManager = $this->connectionPool
+            ->getConnectionForTable(self::TABLE_BACKEND_USER_GROUPS)
+            ->createSchemaManager();
+
+        return isset($schemaManager->listTableColumns(self::TABLE_BACKEND_USER_GROUPS)['explicit_allowdeny']);
+    }
+
+    protected function columnsExistInContentTable(): bool
+    {
+        $schemaManager = $this->connectionPool
+            ->getConnectionForTable(self::TABLE_CONTENT)
+            ->createSchemaManager();
+
+        $tableColumnNames = array_flip(
+            array_map(
+                static fn(Column $column) => $column->getName(),
+                $schemaManager->listTableColumns(self::TABLE_CONTENT)
+            )
+        );
+
+        foreach (['CType', 'list_type'] as $column) {
+            if (!isset($tableColumnNames[$column])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
