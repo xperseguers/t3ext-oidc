@@ -40,25 +40,46 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
         }
 
         $queryParams = $request->getQueryParams();
+
         $code = $queryParams['code'] ?? '';
-        if (!$code) {
+        $state = $queryParams['state'] ?? '';
+        $error = $queryParams['error'] ?? '';
+
+        if (!$state && !$code && !$error) {
             return $handler->handle($request);
+        }
+
+        if (!$state) {
+            $this->logger->debug('Missing state');
+            return (new Response())->withStatus(400, 'Missing state');
         }
 
         // A code was supplied, we start the OIDC handling
         $authContext = $this->authenticationContextService->resolveAuthenticationContext($request);
         if (!$authContext) {
+            $this->logger->debug('Missing OIDC authentication context', ['request' => $request]);
             return (new Response())->withStatus(400, 'Missing OIDC authentication context');
         }
-
         $this->logger->debug('Authentication context is available', ['data' => $authContext]);
+
+        if ($error) {
+            switch ($error) {
+                case 'temporarily_unavailable':
+                case 'access_denied':
+                    $this->logger->debug('Redirecting to login URL due to denied login', ['url' => $authContext->loginUrl]);
+                    return new RedirectResponse(GeneralUtility::locationHeaderUrl($authContext->loginUrl), 303);
+                default:
+                    $this->logger->alert('Failed authentication at IdP', [
+                        'error' => $error,
+                        'error_description' => $queryParams['error_description'] ?? '',
+                        'error_uri' => $queryParams['error_uri'] ?? '',
+                    ]);
+                    return (new Response())->withStatus(400, 'Communication error with IdP');
+            }
+        }
 
         $this->logger->debug('Initiating the silent authentication');
 
-        $state = $queryParams['state'] ?? '';
-        if (!$state) {
-            return (new Response())->withStatus(400, 'Invalid state');
-        }
         if ($state !== $authContext->state) {
             if (!$this->settings->disableCSRFProtection) {
                 $this->logger->error('Invalid returning state detected', [
