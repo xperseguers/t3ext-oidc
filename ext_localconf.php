@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Causal\Oidc\LoginProvider\OidcLoginProvider;
+use Causal\Oidc\LoginProvider\OidcLoginProvider14;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\AuthenticationService;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
@@ -52,10 +53,19 @@ if (is_file($pharFileName)) {
 }
 
 if ($settings->enableBackendAuthentication) {
-    $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
-        'provider' => OidcLoginProvider::class,
-        'sorting' => 50,
-        'iconIdentifier' => 'actions-key',
-        'label' => 'OIDC',
-    ];
+    if (new \TYPO3\CMS\Core\Information\Typo3Version()->getMajorVersion() < 14) {
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
+            'provider' => OidcLoginProvider::class,
+            'sorting' => 50,
+            'iconIdentifier' => 'actions-key',
+            'label' => 'OIDC',
+        ];
+    } else {
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider14::IDENTIFIER] = [
+            'provider' => OidcLoginProvider14::class,
+            'sorting' => 50,
+            'iconIdentifier' => 'actions-key',
+            'label' => 'OIDC',
+        ];
+    }
 }
