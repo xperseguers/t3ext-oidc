@@ -1,5 +1,4 @@
 <?php
-
 return [
     'BE' => [
         'debug' => true,
@@ -26,10 +25,6 @@ return [
             'loginLogo' => '',
             'loginLogoAlt' => '',
         ],
-        'extensionmanager' => [
-            'automaticInstallation' => '1',
-            'offlineMode' => '0',
-        ],
         'oidc' => [
             'authenticationServicePriority' => '82',
             'authenticationServiceQuality' => '80',
@@ -42,6 +37,7 @@ return [
             'oauthProviderFactory' => '',
             'oidcAuthorizeLanguageParameter' => 'language',
             'oidcClientKey' => 't3ext-oidc',
+            'oidcClientScopeSeparator' => '',
             'oidcClientScopes' => 'openid',
             'oidcClientSecret' => 't3ext-oidc',
             'oidcDisableCSRFProtection' => '0',
