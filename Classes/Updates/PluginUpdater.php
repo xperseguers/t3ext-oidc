@@ -45,9 +45,9 @@ class PluginUpdater implements UpgradeWizardInterface
     public function updateNecessary(): bool
     {
         return (
-                $this->columnsExistInContentTable()
-                && $this->getMigrationRecords()
-            )
+            $this->columnsExistInContentTable()
+            && $this->getMigrationRecords()
+        )
             || (
                 $this->columnsExistInBackendUserGroupsTable()
                 && $this->hasNoLegacyBackendGroupsExplicitAllowDenyConfiguration()
