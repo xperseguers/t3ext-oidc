@@ -1,6 +1,6 @@
 # OpenID Connect integration for TYPO3 - changelog
 
-## Version 5.x.x
+## Version 5.0.0 (2026-08-10)
 
 ### Features
 
