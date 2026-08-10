@@ -20,6 +20,7 @@ namespace Causal\Oidc\Controller;
 use Causal\Oidc\Service\OpenIdConnectService;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
@@ -63,7 +64,7 @@ class LoginController
      * @param array|null $pluginConfiguration
      * @throws PropagateResponseException
      */
-    public function login(string $_, ?array $pluginConfiguration): void
+    public function login(string $_, ?array $pluginConfiguration): string
     {
         if (is_array($pluginConfiguration)) {
             $this->pluginConfiguration = $pluginConfiguration;
@@ -71,10 +72,22 @@ class LoginController
 
         /** @var Context $context */
         $context = GeneralUtility::makeInstance(Context::class);
-        $loginType = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
-        if ($loginType === 'login' || $context->getAspect('frontend.user')->isLoggedIn()) {
+        $loggedIn = $context->getAspect('frontend.user')->isLoggedIn();
+        $loginTypeFromRequest = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
+
+        // V12 backwards compatibility
+        $loginTypeLogin = LoginType::LOGIN;
+        if ($loginTypeLogin instanceof \BackedEnum) {
+            $loginTypeLogin = $loginTypeLogin->value;
+        }
+
+        $isActiveLogin = $loginTypeFromRequest === $loginTypeLogin;
+        if ($isActiveLogin || $loggedIn) {
+            if (!$loggedIn) {
+                return 'Login failed! Please try again.';
+            }
             $redirectUrl = $this->determineRedirectUrl();
-            $this->redirect($redirectUrl);
+            throw new PropagateResponseException(new RedirectResponse($redirectUrl));
         }
 
         $authorizationRedirect = $this->getAuthorizationRedirect($this->request, $pluginConfiguration['authorizationUrlOptions.'] ?? []);
@@ -107,13 +120,5 @@ class LoginController
         }
 
         return '/';
-    }
-
-    /**
-     * @throws PropagateResponseException
-     */
-    protected function redirect(string $redirectUrl): void
-    {
-        throw new PropagateResponseException(new RedirectResponse($redirectUrl));
     }
 }
