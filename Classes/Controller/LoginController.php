@@ -21,6 +21,7 @@ use Causal\Oidc\Service\OpenIdConnectService;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Attribute\AsAllowedCallable;
+use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
@@ -57,7 +58,7 @@ class LoginController
      * @throws PropagateResponseException
      */
     #[AsAllowedCallable]
-    public function login(string $_, ?array $pluginConfiguration, ServerRequestInterface $request): void
+    public function login(string $_, ?array $pluginConfiguration, ServerRequestInterface $request): string
     {
         $this->request = $request;
         if (is_array($pluginConfiguration)) {
@@ -65,8 +66,20 @@ class LoginController
         }
 
         $context = GeneralUtility::makeInstance(Context::class);
-        $loginType = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
-        if ($loginType === 'login' || $context->getAspect('frontend.user')->isLoggedIn()) {
+        $loggedIn = $context->getAspect('frontend.user')->isLoggedIn();
+        $loginTypeFromRequest = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
+
+        // V12 backwards compatibility
+        $loginTypeLogin = LoginType::LOGIN;
+        if ($loginTypeLogin instanceof \BackedEnum) {
+            $loginTypeLogin = $loginTypeLogin->value;
+        }
+
+        $isActiveLogin = $loginTypeFromRequest === $loginTypeLogin;
+        if ($isActiveLogin || $loggedIn) {
+            if (!$loggedIn) {
+                return 'Login failed! Please try again.';
+            }
             $redirectUrl = $this->determineRedirectUrl();
             throw new PropagateResponseException(new RedirectResponse($redirectUrl));
         }

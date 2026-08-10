@@ -92,8 +92,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         if (
             $this->pObj->loginType === 'BE'
-            && ($request->getQueryParams()['loginProvider'] ?? '') == OidcLoginProvider::IDENTIFIER
-            && !isset($code)
+            && (int)($request->getQueryParams()['loginProvider'] ?? 0) === OidcLoginProvider::IDENTIFIER
+            && $code === null
         ) {
             $this->logger->debug('Initiate backend authentication');
             $currentUrl = $request->getUri();
