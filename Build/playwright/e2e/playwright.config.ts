@@ -33,15 +33,15 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'v12',
+      name: 'v13',
       use: {
-        baseURL: 'https://v12.t3ext-oidc.test',
+        baseURL: 'https://v13.t3ext-oidc.ddev.site',
       },
     },
     {
-      name: 'v13',
+      name: 'v14',
       use: {
-        baseURL: 'https://v13.t3ext-oidc.test',
+        baseURL: 'https://v14.t3ext-oidc.ddev.site',
       },
     },
   ],

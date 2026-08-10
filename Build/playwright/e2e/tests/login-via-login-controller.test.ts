@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('Login via LoginController', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Link to login page', exact: true }).click();
-  await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.test/'));
+  await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.ddev.site/'));
 
   await page.getByLabel('Username').fill('User1');
   await page.getByLabel('Password').fill('pwd');
@@ -24,7 +24,7 @@ test('Login via LoginController', async ({ page }) => {
 test('Login via LoginController with redirect url', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Link to login page with redirect_url' }).click();
-  await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.test/'));
+  await expect(page).toHaveURL(new RegExp('http://oidc.t3ext-oidc.ddev.site/'));
 
   await page.getByLabel('Username').fill('User1');
   await page.getByLabel('Password').fill('pwd');

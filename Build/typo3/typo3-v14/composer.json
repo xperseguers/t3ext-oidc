@@ -1,5 +1,5 @@
 {
-	"name": "somebdyelse/oidc-v13",
+	"name": "somebdyelse/oidc-v14",
 	"type": "project",
 	"config": {
 		"allow-plugins": {
@@ -14,7 +14,7 @@
 	},
 	"require": {
 		"causal/oidc": "@dev",
-		"helhum/typo3-console": "^8.2",
+		"helhum/typo3-console": "9.0.x-dev",
 		"somebdyelse/oidc-sitepackage": "@dev"
 	},
 	"repositories": [

@@ -16,7 +16,7 @@ namespace PHPSTORM_META {
         'frontend.user',
         'workspace',
         'language',
-        'typoscript'
+        'frontend.preview',
     );
     override(\TYPO3\CMS\Core\Context\Context::getAspect(), map([
         'date' => \TYPO3\CMS\Core\Context\DateTimeAspect::class,
@@ -25,7 +25,7 @@ namespace PHPSTORM_META {
         'frontend.user' => \TYPO3\CMS\Core\Context\UserAspect::class,
         'workspace' => \TYPO3\CMS\Core\Context\WorkspaceAspect::class,
         'language' => \TYPO3\CMS\Core\Context\LanguageAspect::class,
-        'typoscript' => \TYPO3\CMS\Core\Context\TypoScriptAspect::class,
+        'frontend.preview' => \TYPO3\CMS\Frontend\Context\PreviewAspect::class,
     ]));
     expectedArguments(
         \TYPO3\CMS\Core\Context\DateTimeAspect::get(),
@@ -71,9 +71,9 @@ namespace PHPSTORM_META {
         'legacyOverlayType'
     );
     expectedArguments(
-        \TYPO3\CMS\Core\Context\TypoScriptAspect::get(),
+        \TYPO3\CMS\Frontend\Context\PreviewAspect::get(),
         0,
-        'forcedTemplateParsing'
+        'isPreview'
     );
 
     expectedArguments(
@@ -86,8 +86,13 @@ namespace PHPSTORM_META {
         'routing',
         'module',
         'moduleData',
-        'frontend.controller',
         'frontend.typoscript',
+        'frontend.cache.collector',
+        'frontend.cache.instruction',
+        'frontend.page.information',
+        'frontent.page.parts',
+        'frontend.register.stack',
+        'frontend.response.data'
     );
     override(\Psr\Http\Message\ServerRequestInterface::getAttribute(), map([
         'frontend.user' => \TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication::class,
@@ -97,8 +102,13 @@ namespace PHPSTORM_META {
         'routing' => '\TYPO3\CMS\Core\Routing\SiteRouteResult|\TYPO3\CMS\Core\Routing\PageArguments',
         'module' => \TYPO3\CMS\Backend\Module\ModuleInterface::class,
         'moduleData' => \TYPO3\CMS\Backend\Module\ModuleData::class,
-        'frontend.controller' => \TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController::class,
         'frontend.typoscript' => \TYPO3\CMS\Core\TypoScript\FrontendTypoScript::class,
+        'frontend.cache.collector' => \TYPO3\CMS\Core\Cache\CacheDataCollector::class,
+        'frontend.cache.instruction' => \TYPO3\CMS\Frontend\Cache\CacheInstruction::class,
+        'frontend.page.information' => \TYPO3\CMS\Frontend\Page\PageInformation::class,
+        'frontend.page.parts' => \TYPO3\CMS\Frontend\Page\PageParts::class,
+        'frontend.register.stack' => \TYPO3\CMS\Frontend\ContentObject\RegisterStack::class,
+        'frontend.response.data' => \TYPO3\CMS\Frontend\Response\ResponseData::class,
     ]));
 
     expectedArguments(
@@ -140,10 +150,6 @@ namespace PHPSTORM_META {
     ]));
 
     override(\Psr\EventDispatcher\EventDispatcherInterface::dispatch(0), map([
-        '' => '@',
-    ]));
-
-    override(\TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(0), map([
         '' => '@',
     ]));
 }

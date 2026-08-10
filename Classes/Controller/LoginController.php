@@ -20,11 +20,11 @@ namespace Causal\Oidc\Controller;
 use Causal\Oidc\Service\OpenIdConnectService;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Attribute\AsAllowedCallable;
 use TYPO3\CMS\Core\Authentication\LoginType;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\RedirectResponse;
-use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
@@ -40,12 +40,7 @@ class LoginController
      */
     public ?ContentObjectRenderer $cObj = null;
 
-    protected ServerRequest $request;
-
-    public function __construct()
-    {
-        $this->request = $GLOBALS['TYPO3_REQUEST'];
-    }
+    protected ServerRequestInterface $request;
 
     public function setContentObjectRenderer(ContentObjectRenderer $cObj): void
     {
@@ -60,17 +55,16 @@ class LoginController
      * If the user has just been logged in and just came back from the authorization server, redirect the user to the
      * final redirect URL.
      *
-     * @param string $_ ignored
-     * @param array|null $pluginConfiguration
      * @throws PropagateResponseException
      */
-    public function login(string $_, ?array $pluginConfiguration): string
+    #[AsAllowedCallable]
+    public function login(string $_, ?array $pluginConfiguration, ServerRequestInterface $request): string
     {
+        $this->request = $request;
         if (is_array($pluginConfiguration)) {
             $this->pluginConfiguration = $pluginConfiguration;
         }
 
-        /** @var Context $context */
         $context = GeneralUtility::makeInstance(Context::class);
         $loggedIn = $context->getAspect('frontend.user')->isLoggedIn();
         $loginTypeFromRequest = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';

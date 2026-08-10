@@ -31,7 +31,7 @@ final class OAuthServiceTest extends AbstractUnitTestBase
     #[Test]
     public function getFreshAccessTokenReturnsExistingAccessTokenIfNotExpired(): void
     {
-        $accessToken = $this->createAccessTokenWithExpire((new DateTimeImmutable())->modify('+30 seconds'));
+        $accessToken = $this->createAccessTokenWithExpire(new DateTimeImmutable()->modify('+30 seconds'));
 
         $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
 
@@ -44,8 +44,8 @@ final class OAuthServiceTest extends AbstractUnitTestBase
     #[Test]
     public function getFreshAccessTokenReturnsFreshAccessTokenIfExpired(): void
     {
-        $accessToken = $this->createAccessTokenWithExpire((new DateTimeImmutable())->modify('-30 seconds'));
-        $newAccessToken = $this->createAccessTokenWithExpire((new DateTimeImmutable())->modify('+1 minutes'));
+        $accessToken = $this->createAccessTokenWithExpire(new DateTimeImmutable()->modify('-30 seconds'));
+        $newAccessToken = $this->createAccessTokenWithExpire(new DateTimeImmutable()->modify('+1 minutes'));
 
         $provider = $this->createMock(AbstractProvider::class);
         $provider->expects(self::once())
@@ -79,7 +79,7 @@ final class OAuthServiceTest extends AbstractUnitTestBase
     #[Test]
     public function getFreshAccessTokenReturnsNullIfRefreshThrowsIdentityProviderException(): void
     {
-        $accessToken = $this->createAccessTokenWithExpire((new DateTimeImmutable())->modify('-30 seconds'));
+        $accessToken = $this->createAccessTokenWithExpire(new DateTimeImmutable()->modify('-30 seconds'));
 
         $provider = self::createStub(AbstractProvider::class);
         $provider->method('getAccessToken')->willThrowException(new IdentityProviderException('message', 10, 'response'));

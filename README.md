@@ -203,8 +203,8 @@ Please lookup their usage within the code to identify the right event(s) matchin
 ### Running acceptance tests
 
 The `Build` folder contains a docker compose test environment for this oidc extension. It contains:
-* TYPO3 v12 instance with ext-oidc installed
 * TYPO3 v13 instance with ext-oidc installed
+* TYPO3 v14 instance with ext-oidc installed
 * mock oidc server
 * Playwright test runner to run acceptance tests
 * VNC Server to watch the playwright tests

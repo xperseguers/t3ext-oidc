@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use TYPO3\CMS\Core\Crypto\HashService;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Http\Uri;
@@ -22,6 +23,7 @@ class OpenIdConnectService implements LoggerAwareInterface
     use LoggerAwareTrait;
 
     public function __construct(
+        protected HashService $hashService,
         protected OAuthService $OAuthService,
         protected AuthenticationContextService $authenticationContextService,
         protected OidcConfiguration $config
@@ -117,7 +119,8 @@ class OpenIdConnectService implements LoggerAwareInterface
             $authorizationUrlOptions = array_merge($authorizationUrlOptions, $this->getCodeChallengeOptions($codeChallenge));
         }
 
-        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($request, $authorizationUrlOptions);
+        $this->OAuthService->setRequest($request);
+        $authorizationUrl = $this->OAuthService->getAuthorizationUrl($authorizationUrlOptions);
         $state = $this->OAuthService->getState();
 
         $normalizedParams = $request->getAttribute('normalizedParams');
@@ -188,13 +191,6 @@ class OpenIdConnectService implements LoggerAwareInterface
 
     protected function calculateUrlHash(string $value): string
     {
-        if (class_exists(\TYPO3\CMS\Core\Crypto\HashService::class)) {
-            // TYPO3 v13
-            $calculatedHash = GeneralUtility::makeInstance(\TYPO3\CMS\Core\Crypto\HashService::class)->hmac($value, 'oidc');
-        } else {
-            // TYPO3 v12
-            $calculatedHash = GeneralUtility::hmac($value, 'oidc');
-        }
-        return $calculatedHash;
+        return $this->hashService->hmac($value, 'oidc');
     }
 }

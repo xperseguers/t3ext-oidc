@@ -6,6 +6,7 @@ services:
 
   Causal\Oidc\:
     resource: '../Classes/*'
+    exclude: '../Classes/LoginProvider/*'
 
   Causal\Oidc\Service\AuthenticationService:
     public: true

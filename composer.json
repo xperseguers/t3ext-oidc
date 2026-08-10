@@ -27,22 +27,22 @@
 	],
 	"license": "GPL-2.0-or-later",
 	"require": {
-		"php": "^8.2",
+		"php": "^8.4",
 		"ext-json": "*",
-		"guzzlehttp/psr7": "^2.4",
-		"typo3/cms-core": "^12.4.33 || ^13.4.14",
-		"typo3/cms-frontend": "^12.4 || ^13.4",
-		"typo3/cms-lowlevel": "^12.4 || ^13.4",
-		"typo3/cms-install": "^12.4 || ^13.4",
-		"symfony/http-foundation": "^7",
-		"league/oauth2-client": "^2.8",
-		"firebase/php-jwt": "^6.10.2 || ^7.0.2"
+		"guzzlehttp/psr7": "^2.7",
+		"typo3/cms-core": "^13.4.14 || ^14.3",
+		"typo3/cms-frontend": "^13.4 || ^14.3",
+		"typo3/cms-lowlevel": "^13.4 || ^14.3",
+		"typo3/cms-install": "^13.4 || ^14.3",
+		"symfony/http-foundation": "^7.2",
+		"league/oauth2-client": "^2.9",
+		"firebase/php-jwt": "^7.0.2"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "^10",
-		"typo3/testing-framework": "8.x-dev",
-		"typo3/minimal": "^12 || ^13",
-		"friendsofphp/php-cs-fixer": "^3.88"
+		"phpunit/phpunit": "^13",
+		"typo3/testing-framework": "^9",
+		"typo3/minimal": "^13 || ^14",
+		"friendsofphp/php-cs-fixer": "^3.95"
 	},
 	"autoload": {
 		"psr-4": {
@@ -58,7 +58,7 @@
 		"extension-create-libs": [
 			"mkdir -p Libraries/temp",
 			"[ -f $COMPOSER_HOME/vendor/bin/phar-composer ] || composer global require clue/phar-composer",
-			"if [ ! -f Libraries/league-oauth2-client.phar ]; then cd Libraries/temp && composer require league/oauth2-client=^2.8 && composer require firebase/php-jwt=^7.0 && composer config classmap-authoritative true && composer config prepend-autoloader false && composer dump-autoload && cd ../../; fi",
+			"if [ ! -f Libraries/league-oauth2-client.phar ]; then cd Libraries/temp && composer require league/oauth2-client=^2.9 && composer require firebase/php-jwt=^7.0 && composer config classmap-authoritative true && composer config prepend-autoloader false && composer dump-autoload && cd ../../; fi",
 			"[ -f Libraries/league-oauth2-client.phar ] || php -d phar.readonly=off $COMPOSER_HOME/vendor/bin/phar-composer build Libraries/temp/ Libraries/league-oauth2-client.phar",
 			"chmod -x Libraries/*.phar",
 			"rm -rf Libraries/temp"
@@ -66,29 +66,24 @@
 		"extension-build": [
 			"@extension-create-libs"
 		],
-		"extension-release": [
-			"@extension-build",
-			"rm -rf Tests/",
-			"rm .gitattributes",
-			"rm .gitignore"
-		],
 		"extension-clean": [
 			"rm -rf Libraries"
 		]
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-master": "5.x-dev"
+			"dev-master": "6.x-dev"
 		},
 		"typo3/cms": {
 			"web-dir": ".Build/web",
-			"extension-key": "oidc"
+			"extension-key": "oidc",
+			"version": "6.0.0",
+			"Package": {
+				"providesPackages": {}
+			}
 		}
 	},
 	"config": {
-		"audit": {
-			"block-insecure": false
-		},
 		"vendor-dir": ".Build/vendor",
 		"lock": false,
 		"allow-plugins": {

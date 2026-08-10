@@ -9,6 +9,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Cache\Frontend\PhpFrontend;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Localization\Locales;
+use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Routing\PageArguments;
 use TYPO3\CMS\Core\Routing\RouteNotFoundException;
 use TYPO3\CMS\Core\Routing\SiteMatcher;
@@ -20,13 +22,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Aspect\PreviewAspect;
 use TYPO3\CMS\Frontend\Cache\CacheInstruction;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
-use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 use TYPO3\CMS\Frontend\Page\PageInformationFactory;
 
-/**
- * Basic idea taken from \TYPO3\CMS\Redirects\Service\RedirectService::bootFrontendController
- */
-class FrontendSimulationV13 implements FrontendSimulationInterface
+class FrontendSimulationV14 implements FrontendSimulationInterface
 {
     public function getCObj(ServerRequestInterface $originalRequest): ContentObjectRenderer
     {
@@ -36,12 +34,12 @@ class FrontendSimulationV13 implements FrontendSimulationInterface
             $site = $routeResult->getSite();
             if ($site instanceof Site) {
                 try {
+                    $queryParams = [];
                     $pageInformationFactory = GeneralUtility::makeInstance(PageInformationFactory::class);
                     $frontendTypoScriptFactory = GeneralUtility::makeInstance(FrontendTypoScriptFactory::class);
                     $cacheManager = GeneralUtility::makeInstance(CacheManager::class);
-                    /** @var PhpFrontend $cache */
-                    $cache = $cacheManager->getCache('typoscript');
-                    $queryParams = [];
+                    /** @var PhpFrontend $typoScriptCache */
+                    $typoScriptCache = $cacheManager->getCache('typoscript');
 
                     $context = GeneralUtility::makeInstance(Context::class);
                     $context->setAspect('frontend.preview', new PreviewAspect());
@@ -54,18 +52,24 @@ class FrontendSimulationV13 implements FrontendSimulationInterface
                     $originalRequest = $originalRequest->withAttribute('routing', $pageArguments);
                     $pageInformation = $pageInformationFactory->create($originalRequest);
                     $originalRequest = $originalRequest->withAttribute('frontend.page.information', $pageInformation);
-                    $controller = GeneralUtility::makeInstance(TypoScriptFrontendController::class);
-                    $controller->initializePageRenderer($originalRequest);
-                    $expressionMatcherVariables = $this->getExpressionMatcherVariables($site, $originalRequest, $controller);
+                    $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
+                    $language = $originalRequest->getAttribute('language') ?? $originalRequest->getAttribute('site')->getDefaultLanguage();
+                    if ($language->hasCustomTypo3Language()) {
+                        $locale = GeneralUtility::makeInstance(Locales::class)->createLocale($language->getTypo3Language());
+                    } else {
+                        $locale = $language->getLocale();
+                    }
+                    $pageRenderer->setLanguage($locale, $originalRequest);
+                    $expressionMatcherVariables = $this->getExpressionMatcherVariables($site, $originalRequest);
                     $frontendTypoScript = $frontendTypoScriptFactory->createSettingsAndSetupConditions(
                         $site,
                         $pageInformation->getSysTemplateRows(),
                         // $originalRequest does not contain site ...
                         $expressionMatcherVariables,
-                        $cache,
+                        $typoScriptCache,
                     );
                     // Note, that we need the full TypoScript setup array, which is required for links created by
-                    // DatabaseRecordLinkBuilder. This should be kept in mind when TSFE will be removed in v14.
+                    // DatabaseRecordLinkBuilder.
                     $frontendTypoScript = $frontendTypoScriptFactory->createSetupConfigOrFullSetup(
                         true,
                         $frontendTypoScript,
@@ -73,15 +77,14 @@ class FrontendSimulationV13 implements FrontendSimulationInterface
                         $pageInformation->getSysTemplateRows(),
                         $expressionMatcherVariables,
                         '0',
-                        $cache,
+                        $typoScriptCache,
                         null
                     );
-
                     $newRequest = $originalRequest->withAttribute('frontend.typoscript', $frontendTypoScript);
-                    $controller->newCObj($newRequest);
-                    $GLOBALS['TSFE'] = $controller;
 
-                    return $controller->cObj;
+                    $contentObjectRenderer = GeneralUtility::makeInstance(ContentObjectRenderer::class);
+                    $contentObjectRenderer->setRequest($newRequest);
+                    return $contentObjectRenderer;
                 } catch (RouteNotFoundException) {
                 }
             }
@@ -95,13 +98,11 @@ class FrontendSimulationV13 implements FrontendSimulationInterface
         $context->unsetAspect('language');
         $context->unsetAspect('typoscript');
         $context->unsetAspect('frontend.preview');
-        unset($GLOBALS['TSFE']);
     }
 
     protected function getExpressionMatcherVariables(
         SiteInterface $site,
         ServerRequestInterface $request,
-        TypoScriptFrontendController $controller
     ): array {
         $pageInformation = $request->getAttribute('frontend.page.information');
         $topDownRootLine = $pageInformation->getRootLine();
@@ -115,7 +116,6 @@ class FrontendSimulationV13 implements FrontendSimulationInterface
             'localRootLine' => $localRootline,
             'site' => $site,
             'siteLanguage' => $request->getAttribute('language'),
-            'tsfe' => $controller,
         ];
     }
 }

@@ -11,8 +11,8 @@ use TYPO3\CMS\Core\Http\NormalizedParams;
 
 class AuthenticationContextService
 {
-    protected const SECURE_PREFIX = '__Secure-';
-    protected const COOKIE_NAME = 'oidc_context';
+    protected const string SECURE_PREFIX = '__Secure-';
+    protected const string COOKIE_NAME = 'oidc_context';
 
     /**
      * Produce a cookie that stores the authentication context
