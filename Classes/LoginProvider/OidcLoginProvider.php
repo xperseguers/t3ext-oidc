@@ -8,7 +8,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Controller\LoginController;
 use TYPO3\CMS\Backend\LoginProvider\LoginProviderInterface;
 use TYPO3\CMS\Core\Page\PageRenderer;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\View\ViewInterface;
 use TYPO3\CMS\Fluid\View\FluidViewAdapter;
 
@@ -17,6 +16,10 @@ class OidcLoginProvider implements LoginProviderInterface
     public const int IDENTIFIER = 1742888452490;
 
     /**
+     * This method is only here, because the Interface in v13
+     * requires it. But the Core actually never uses this method
+     * as long as modifyView is present.
+     *
      * @inheritDoc
      * @param \TYPO3\CMS\Fluid\View\StandaloneView $view
      */
