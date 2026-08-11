@@ -169,6 +169,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $this->logger->debug('Initializing OpenID Connect service');
 
         $service = GeneralUtility::makeInstance(OAuthService::class);
+        $service->setRequest($this->getRequest());
 
         // Try to get an access token using the authorization code grant
         try {

@@ -7,16 +7,37 @@ namespace Causal\Oidc\Tests\Unit;
 use Causal\Oidc\OidcConfiguration;
 use Causal\Oidc\Service\OAuthService;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use TYPO3\CMS\Core\Http\NormalizedParams;
+use TYPO3\CMS\Core\Http\ServerRequest;
+use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class AbstractUnitTestBase extends UnitTestCase
 {
     protected function createOAuthService(): OAuthService
     {
-        return new OAuthService(
+        $service = new OAuthService(
             self::createStub(EventDispatcherInterface::class),
             $this->setupOidcConfiguration()
         );
+        $uri = new Uri('http://example.com/');
+        $request = new ServerRequest(
+            $uri,
+            'GET',
+            'php://input',
+            [],
+            [
+                'HTTP_HOST' => $uri->getHost(),
+                'SERVER_NAME' => $uri->getHost(),
+                'HTTPS' => $uri->getScheme() === 'https',
+                'SCRIPT_FILENAME' => __FILE__,
+                'SCRIPT_NAME' => rtrim($uri->getPath(), '/') . '/',
+            ]
+        );
+        $normalizedParams = NormalizedParams::createFromRequest($request);
+        $request = $request->withAttribute('normalizedParams', $normalizedParams);
+        $service->setRequest($request);
+        return $service;
     }
 
     protected function setupOidcConfiguration(): OidcConfiguration
