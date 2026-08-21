@@ -35,7 +35,8 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($request->getMethod() !== 'GET') {
+        $callBackUrl = $this->settings->oidcRedirectUri ?: $request->getAttribute('normalizedParams')->getSiteUrl();
+        if ($request->getMethod() !== 'GET' || (string)$request->getUri()->withQuery('') !== $callBackUrl) {
             return $handler->handle($request);
         }
 
