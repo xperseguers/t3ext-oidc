@@ -74,10 +74,11 @@ class OpenIdConnectService implements LoggerAwareInterface
      */
     public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
     {
+        $hasDiscovery = $this->config->oidcDiscoveryUrl !== '';
         if (!$this->config->oidcClientKey
             || !$this->config->oidcClientSecret
-            || !$this->config->endpointAuthorize
-            || !$this->config->endpointToken
+            || (!$hasDiscovery && !$this->config->endpointAuthorize)
+            || (!$hasDiscovery && !$this->config->endpointToken)
         ) {
             throw new InvalidArgumentException('Missing extension configuration', 1715775147);
         }
