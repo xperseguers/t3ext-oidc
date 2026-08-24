@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 5.0.1 (2026-08-24)
+
+- Middleware only listens on URL path which matches the configured redirectUri
+
 ## Version 5.0.0 (2026-08-10)
 
 ### Features
