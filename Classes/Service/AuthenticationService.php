@@ -85,6 +85,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     public function getUser(): array|false
     {
         $request = $this->getRequest();
+
+        $this->oauthService->setRequest($request);
+
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
 

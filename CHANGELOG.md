@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version x.y.z
+
+- The redirect/callback URI generation has been centralized and does not use global TYPO3 state anymore
+
 ## Version 5.0.1 (2026-08-24)
 
 - Middleware only listens on URL path which matches the configured redirectUri

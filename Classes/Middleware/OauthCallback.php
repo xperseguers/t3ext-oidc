@@ -28,14 +28,11 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
     ) {}
 
     /**
-     * @param ServerRequestInterface $request
-     * @param RequestHandlerInterface $handler
-     * @return ResponseInterface
      * see https://github.com/thephpleague/oauth2-client
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $callBackUrl = $this->settings->oidcRedirectUri ?: $request->getAttribute('normalizedParams')->getSiteUrl();
+        $callBackUrl = $this->settings->determineRedirectUri($request);
         if ($request->getMethod() !== 'GET' || (string)$request->getUri()->withQuery('') !== $callBackUrl) {
             return $handler->handle($request);
         }
