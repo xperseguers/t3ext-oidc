@@ -6,8 +6,10 @@ namespace Causal\Oidc;
 
 use Causal\Oidc\Factory\GenericOAuthProviderFactory;
 use Causal\Oidc\Factory\OAuthProviderFactoryInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use UnexpectedValueException;
 
 final class OidcConfiguration
 {
@@ -77,6 +79,17 @@ final class OidcConfiguration
         $this->enablePasswordCredentials = (bool)($extConfig['enablePasswordCredentials'] ?? $this->enablePasswordCredentials);
     }
 
+    public function determineRedirectUri(?ServerRequestInterface $request = null): string
+    {
+        if ($this->oidcRedirectUri !== '') {
+            return $this->oidcRedirectUri;
+        }
+        if ($request) {
+            return $request->getAttribute('normalizedParams')->getSiteUrl();
+        }
+        throw new UnexpectedValueException('OIDC redirectUri (callback) can\'t be determined. Missing request and no oidcRedirectUri configuration set.', 1787738362);
+    }
+
     protected function getExtensionConfiguration(): array
     {
         /** @var array<string, string> $config */
@@ -84,6 +97,6 @@ final class OidcConfiguration
         if ($config) {
             return $config;
         }
-        throw new \UnexpectedValueException('OIDC extension configuration not found', 1763986824);
+        throw new UnexpectedValueException('OIDC extension configuration not found', 1763986824);
     }
 }
