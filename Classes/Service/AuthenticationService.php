@@ -30,6 +30,7 @@ use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\OidcConfiguration;
 use Doctrine\DBAL\ArrayParameterType;
+use GuzzleHttp\Psr7\Uri;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
@@ -70,22 +71,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
     public function __construct(
+        protected readonly EventDispatcherInterface $eventDispatcher,
         protected OidcConfiguration $config,
         protected AuthenticationContextService $authenticationContextService,
+        protected OAuthService $oauthService,
     ) {}
 
     /**
      * Finds a user.
      *
-     * @return array|bool
-     * @throws RuntimeException
+     * @throws PropagateResponseException
      */
-    public function getUser(): bool|array
+    public function getUser(): array|false
     {
-        /** @var EventDispatcherInterface $eventDispatcher */
-        $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
-
-        $user = false;
         $request = $this->getRequest();
         $params = $request->getQueryParams()['tx_oidc'] ?? [];
         $code = $params['code'] ?? null;
@@ -95,28 +93,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             && (int)($request->getQueryParams()['loginProvider'] ?? 0) === OidcLoginProvider::IDENTIFIER
             && $code === null
         ) {
-            $this->logger->debug('Initiate backend authentication');
-            $currentUrl = $request->getUri();
-
-            // V12 backwards compatibility
-            $loginType = LoginType::LOGIN;
-            if ($loginType instanceof \BackedEnum) {
-                $loginType = $loginType->value;
-            }
-
-            $loginUrl = \GuzzleHttp\Psr7\Uri::withQueryValue($currentUrl, 'login_status', $loginType);
-
-            $openIdConnectService = GeneralUtility::makeInstance(OpenIdConnectService::class);
-            $authContext = $openIdConnectService->buildAuthenticationContext(
-                $request,
-                [],
-                $loginUrl->__toString()
-            );
-            $response = $openIdConnectService->getAuthorizationRedirect($authContext);
-
-            throw new PropagateResponseException($response, 1743415700019);
+            $this->getUserBe($request);
         }
 
+        return $this->getUserFE($request, $code);
+    }
+
+    protected function getUserFE(ServerRequestInterface $request, ?string $code): array|false
+    {
+        $user = false;
         if ($code !== null) {
             $codeVerifier = null;
             if ($this->config->enableCodeVerifier) {
@@ -126,7 +111,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $user = $this->authenticateWithAuthorizationCode($code, $codeVerifier);
         } elseif ($this->config->enablePasswordCredentials) {
             $event = new AuthenticationPreUserEvent($this->login, $this);
-            $eventDispatcher->dispatch($event);
+            $this->eventDispatcher->dispatch($event);
             if (!$event->shouldProcess) {
                 return false;
             }
@@ -150,11 +135,39 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // so other extensions can use them to make further requests to an API
             // provided by the authentication server
             $event = new AuthenticationGetUserEvent($user, $this);
-            $eventDispatcher->dispatch($event);
+            $this->eventDispatcher->dispatch($event);
             $user = $event->getUser();
         }
 
         return $user;
+    }
+
+    /**
+     * @throws PropagateResponseException
+     */
+    protected function getUserBe(ServerRequestInterface $request): never
+    {
+        $this->logger->debug('Initiate backend authentication');
+
+        // V12 backwards compatibility
+        $loginType = LoginType::LOGIN;
+        if ($loginType instanceof \BackedEnum) {
+            $loginType = $loginType->value;
+        }
+
+        $loginUrl = Uri::withQueryValue($request->getUri(), 'login_status', $loginType);
+
+        $openIdConnectService = GeneralUtility::makeInstance(OpenIdConnectService::class);
+        $authContext = $openIdConnectService->buildAuthenticationContext(
+            $request,
+            [],
+            $loginUrl->__toString()
+        );
+        $response = $openIdConnectService->getAuthorizationRedirect($authContext);
+
+        $this->logger->debug('Redirecting to:' . $authContext->authorizationUrl);
+
+        throw new PropagateResponseException($response, 1743415700019);
     }
 
     /**
@@ -168,12 +181,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
-        $service = GeneralUtility::makeInstance(OAuthService::class);
-
         // Try to get an access token using the authorization code grant
         try {
             $this->logger->debug('Retrieving an access token');
-            $accessToken = $service->getAccessToken($code, null, $codeVerifier);
+            $accessToken = $this->oauthService->getAccessToken($code, null, $codeVerifier);
             $this->logger->debug('Access token retrieved', $accessToken->jsonSerialize());
         } catch (IdentityProviderException $e) {
             // Probably a "server_error", meaning the code is not valid anymore
@@ -184,7 +195,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             return false;
         }
 
-        $user = $this->getUserFromAccessToken($service, $accessToken);
+        $user = $this->getUserFromAccessToken($accessToken);
         if (is_array($user)) {
             $user['accessToken'] = $accessToken;
         }
@@ -194,31 +205,24 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     /**
      * Authenticates a user using resource owner password credentials grant.
-     *
-     * @param string $username
-     * @param string $password
-     * @return array|bool
      */
-    protected function authenticateWithResourceOwnerPasswordCredentials(string $username, #[\SensitiveParameter] string $password): bool|array
+    protected function authenticateWithResourceOwnerPasswordCredentials(string $username, #[\SensitiveParameter] string $password): array|false
     {
         $user = false;
         $this->logger->debug('Initializing OpenID Connect service');
-
-        /** @var OAuthService $service */
-        $service = GeneralUtility::makeInstance(OAuthService::class);
 
         $accessToken = '';
         try {
             if ($this->config->useRequestPathAuthentication) {
                 $this->logger->debug('Retrieving an access token using request path authentication');
-                $accessToken = $service->getAccessTokenWithRequestPathAuthentication($username, $password);
+                $accessToken = $this->oauthService->getAccessTokenWithRequestPathAuthentication($username, $password);
             } else {
                 $this->logger->debug('Retrieving an access token using resource owner password credentials');
-                $accessToken = $service->getAccessToken($username, $password);
+                $accessToken = $this->oauthService->getAccessToken($username, $password);
             }
             if ($accessToken !== null) {
                 $this->logger->debug('Access token retrieved', $accessToken->jsonSerialize());
-                $user = $this->getUserFromAccessToken($service, $accessToken);
+                $user = $this->getUserFromAccessToken($accessToken);
             }
         } catch (IdentityProviderException $e) {
             $this->logger->error('Authentication has been refused by the authentication server', [
@@ -237,15 +241,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Looks up a TYPO3 user from an access token.
      *
-     * @param OAuthService $oidcService
      * @param AccessToken $accessToken
      * @return array|bool
      */
-    protected function getUserFromAccessToken(OAuthService $oidcService, AccessToken $accessToken): bool|array
+    protected function getUserFromAccessToken(AccessToken $accessToken): bool|array
     {
         $this->logger->debug('Retrieving resource owner');
         try {
-            $resourceOwnerObject = $oidcService->getResourceOwner($accessToken);
+            $resourceOwnerObject = $this->oauthService->getResourceOwner($accessToken);
             $this->logger->debug('Resource owner retrieved', ['resourceOwner' => $resourceOwnerObject]);
         } catch (IdentityProviderException $e) {
             $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
@@ -255,7 +258,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         if (!$resourceOwnerObject->getId()) {
             $this->logger->error('No identifier (like sub) found in resource owner, revoking access token');
             try {
-                $oidcService->revokeToken($accessToken);
+                $this->oauthService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
                 $this->logger->error('Could not revoke token', ['exception' => $e]);
                 return false;
@@ -271,7 +274,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         if ($this->config->revokeAccessTokenAfterLogin) {
             try {
-                $oidcService->revokeToken($accessToken);
+                $this->oauthService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
                 $this->logger->error('Could not revoke token', ['exception' => $e]);
             }
@@ -304,10 +307,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     /**
      * Converts a resource owner into a TYPO3 Frontend user.
-     *
-     * @return array|bool
      */
-    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): bool|array
+    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): array|false
     {
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
