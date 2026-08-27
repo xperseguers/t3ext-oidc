@@ -62,6 +62,10 @@
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 				<target>Deaktivieren Sie die Abschwächung von CSRF-Angriffen: ACHTUNG! Dies ist ein Sicherheitsschutz, der den Rückgabewert mit dem erwarteten Wert abgleicht. Deaktivieren Sie diesen Schutz auf Ihr eigenes Risiko.</target>
 			</trans-unit>
+			<trans-unit id="settings.oidcDiscoveryUrl">
+				<source>OIDC Discovery URL: Provider URL or full .well-known/openid-configuration URL. If set, empty endpoint fields are auto-filled from the discovery document.</source>
+				<target>OIDC Discovery URL: Provider-URL oder vollständige .well-known/openid-configuration URL. Wenn gesetzt, werden leere Endpunkt-Felder automatisch aus dem Discovery-Dokument befüllt.</target>
+			</trans-unit>
 			<trans-unit id="settings.oidcEndpointAuthorize">
 				<source>Endpoint URI for authorization</source>
 				<target>Endpunkt-URI für Autorisierung</target>

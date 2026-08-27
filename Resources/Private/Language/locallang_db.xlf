@@ -53,6 +53,9 @@
 			<trans-unit id="settings.oidcDisableCSRFProtection">
 				<source>Disable CSRF attack mitigation: CAUTION! This is a security protection which checks the return state with the expected value. Disable this protection at your own risk.</source>
 			</trans-unit>
+			<trans-unit id="settings.oidcDiscoveryUrl">
+				<source>OIDC Discovery URL: Provider URL or full .well-known/openid-configuration URL. If set, empty endpoint fields are auto-filled from the discovery document.</source>
+			</trans-unit>
 			<trans-unit id="settings.oidcEndpointAuthorize">
 				<source>Endpoint URI for authorization</source>
 			</trans-unit>
