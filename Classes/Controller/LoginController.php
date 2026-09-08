@@ -67,7 +67,7 @@ class LoginController
 
         $context = GeneralUtility::makeInstance(Context::class);
         $loggedIn = $context->getAspect('frontend.user')->isLoggedIn();
-        $loginTypeFromRequest = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
+        $loginTypeFromRequest = $this->getOrPostValue('logintype');
 
         $isActiveLogin = $loginTypeFromRequest === LoginType::LOGIN->value;
         if ($isActiveLogin || $loggedIn) {
@@ -95,7 +95,7 @@ class LoginController
 
     protected function determineRedirectUrl(): string
     {
-        $redirectUrl = $this->request->getParsedBody()['redirect_url'] ?? $this->request->getQueryParams()['redirect_url'] ?? '';
+        $redirectUrl = $this->getOrPostValue('redirect_url');
         if (!empty($redirectUrl)) {
             return $redirectUrl;
         }
@@ -108,5 +108,12 @@ class LoginController
         }
 
         return '/';
+    }
+
+    protected function getOrPostValue(string $key, mixed $default = '', ?ServerRequestInterface $request = null): string
+    {
+        $request ??= $this->request;
+        $parsedBody = (array)($request->getParsedBody() ?? []);
+        return (string)($parsedBody[$key] ?? $request->getQueryParams()[$key] ?? $default);
     }
 }

@@ -33,11 +33,17 @@ class OidcLinkViewHelper extends AbstractViewHelper
         /** @var ServerRequestInterface $request */
         $request = $GLOBALS['TYPO3_REQUEST'];
         $currentUrl = new Uri($request->getAttribute('normalizedParams')->getRequestUrl());
-        $redirectUrl = new Uri($request->getParsedBody()['redirect_url'] ?? $request->getQueryParams()['redirect_url'] ?? '');
+        $redirectUrl = new Uri($this->getOrPostValue($request, 'redirect_url'));
         return (string)GeneralUtility::makeInstance(OpenIdConnectService::class)->getFrontendAuthenticationRequestUrl(
             $request->getAttribute('language', $request->getAttribute('site')->getDefaultLanguage()),
             $currentUrl,
             $redirectUrl,
         );
+    }
+
+    protected function getOrPostValue(ServerRequestInterface $request, string $key, mixed $default = ''): string
+    {
+        $parsedBody = (array)($request->getParsedBody() ?? []);
+        return (string)($parsedBody[$key] ?? $request->getQueryParams()[$key] ?? $default);
     }
 }
