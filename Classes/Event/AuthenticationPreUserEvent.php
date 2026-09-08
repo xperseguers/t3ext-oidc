@@ -30,6 +30,7 @@ final class AuthenticationPreUserEvent
     public function __construct(array $loginData, AbstractAuthenticationService $authenticationService)
     {
         $this->loginData = $loginData;
+        $this->authenticationService = $authenticationService;
     }
 
     public function getAuthenticationService(): AbstractAuthenticationService
