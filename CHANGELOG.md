@@ -1,8 +1,10 @@
 # OpenID Connect integration for TYPO3 - changelog
 
-## Version x.y.z
+## Version 5.0.2 (2026-09-08)
 
 - The redirect/callback URI generation has been centralized and does not use global TYPO3 state anymore
+- Fixed a bug where AuthenticationPreUserEvent did not provide the authentication service
+- Fixed a JWT parsing bug
 
 ## Version 5.0.1 (2026-08-24)
 
