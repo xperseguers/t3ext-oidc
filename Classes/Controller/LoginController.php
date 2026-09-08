@@ -69,13 +69,7 @@ class LoginController
         $loggedIn = $context->getAspect('frontend.user')->isLoggedIn();
         $loginTypeFromRequest = $this->request->getParsedBody()['logintype'] ?? $this->request->getQueryParams()['logintype'] ?? '';
 
-        // V12 backwards compatibility
-        $loginTypeLogin = LoginType::LOGIN;
-        if ($loginTypeLogin instanceof \BackedEnum) {
-            $loginTypeLogin = $loginTypeLogin->value;
-        }
-
-        $isActiveLogin = $loginTypeFromRequest === $loginTypeLogin;
+        $isActiveLogin = $loginTypeFromRequest === LoginType::LOGIN->value;
         if ($isActiveLogin || $loggedIn) {
             if (!$loggedIn) {
                 return 'Login failed! Please try again.';
