@@ -1,0 +1,112 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#1 \$resource of static method GuzzleHttp\\Psr7\\Utils\:\:streamFor\(\) expects bool\|\(callable\(\)\: mixed\)\|float\|int\|Iterator\|Psr\\Http\\Message\\StreamInterface\|resource\|string\|null, League\\OAuth2\\Client\\Tool\\StreamInterface\|resource\|non\-empty\-string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: Classes/Factory/RequestFactory.php
+
+		-
+			message: '#^Parameter \$body of method Causal\\Oidc\\Factory\\RequestFactory\:\:getRequest\(\) has invalid type League\\OAuth2\\Client\\Tool\\StreamInterface\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/Factory/RequestFactory.php
+
+		-
+			message: '#^Return type \(Psr\\Http\\Message\\RequestInterface\) of method Causal\\Oidc\\Factory\\RequestFactory\:\:getRequest\(\) should be covariant with return type \(GuzzleHttp\\Psr7\\Request\) of method League\\OAuth2\\Client\\Tool\\RequestFactory\:\:getRequest\(\)$#'
+			identifier: method.childReturnType
+			count: 1
+			path: Classes/Factory/RequestFactory.php
+
+		-
+			message: '#^Access to property \$cObj on an unknown class TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/Frontend/FrontendSimulationV13.php
+
+		-
+			message: '#^Call to method initializePageRenderer\(\) on an unknown class TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/Frontend/FrontendSimulationV13.php
+
+		-
+			message: '#^Call to method newCObj\(\) on an unknown class TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/Frontend/FrontendSimulationV13.php
+
+		-
+			message: '#^Class TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/Frontend/FrontendSimulationV13.php
+
+		-
+			message: '#^Parameter \$controller of method Causal\\Oidc\\Frontend\\FrontendSimulationV13\:\:getExpressionMatcherVariables\(\) has invalid type TYPO3\\CMS\\Frontend\\Controller\\TypoScriptFrontendController\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/Frontend/FrontendSimulationV13.php
+
+		-
+			message: '#^Method Causal\\Oidc\\LoginProvider\\OidcLoginProvider\:\:render\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: Classes/LoginProvider/OidcLoginProvider.php
+
+		-
+			message: '#^Parameter \$view of method Causal\\Oidc\\LoginProvider\\OidcLoginProvider\:\:render\(\) has invalid type TYPO3\\CMS\\Fluid\\View\\StandaloneView\.$#'
+			identifier: class.notFound
+			count: 1
+			path: Classes/LoginProvider/OidcLoginProvider.php
+
+		-
+			message: '#^Loose comparison via "\!\=" is not allowed\.$#'
+			identifier: notEqual.notAllowed
+			count: 1
+			path: Classes/Service/AuthenticationService.php
+
+		-
+			message: '''
+				#^Access to constant on deprecated class TYPO3\\CMS\\Install\\Updates\\DatabaseUpdatedPrerequisite\:
+				since v14\.0, will be removed in TYPO3 v15\.0\. Use \\TYPO3\\CMS\\Core\\Upgrades\\DatabaseUpdatedPrerequisite instead\.$#
+			'''
+			identifier: classConstant.deprecatedClass
+			count: 1
+			path: Classes/Updates/PluginUpdater.php
+
+		-
+			message: '#^Attribute class TYPO3\\CMS\\Install\\Attribute\\UpgradeWizard is deprecated\: since v14\.0, will be removed in TYPO3 v15\.0\. Use \\TYPO3\\CMS\\Core\\Attribute\\UpgradeWizard instead\.$#'
+			identifier: attribute.deprecated
+			count: 1
+			path: Classes/Updates/PluginUpdater.php
+
+		-
+			message: '''
+				#^Call to deprecated method getName\(\) of class Doctrine\\DBAL\\Schema\\AbstractAsset\:
+				Use \{@see NamedObject\:\:getObjectName\(\)\} or \{@see OptionallyQualifiedName\:\:getObjectName\(\)\} instead\.
+				            In SQL context, convert the resulting \{@see Name\} to SQL using \{@see Name\:\:toSQL\(\)\}\. In other
+				            contexts, convert the resulting name to string using \{@see Name\:\:toString\(\)\}\.$#
+			'''
+			identifier: method.deprecated
+			count: 1
+			path: Classes/Updates/PluginUpdater.php
+
+		-
+			message: '''
+				#^Call to deprecated method listTableColumns\(\) of class Doctrine\\DBAL\\Schema\\AbstractSchemaManager\:
+				Use \{@see introspectTableColumns\(\)\}, \{@see introspectTableColumnsByUnquotedName\(\)\}
+				            or \{@see introspectTableColumnsByQuotedName\(\)\} instead\.$#
+			'''
+			identifier: method.deprecated
+			count: 2
+			path: Classes/Updates/PluginUpdater.php
+
+		-
+			message: '''
+				#^Class Causal\\Oidc\\Updates\\PluginUpdater implements deprecated interface TYPO3\\CMS\\Install\\Updates\\UpgradeWizardInterface\:
+				since v14\.0, will be removed in TYPO3 v15\.0\. Use \\TYPO3\\CMS\\Core\\Upgrades\\UpgradeWizardInterface instead\.$#
+			'''
+			identifier: class.implementsDeprecatedInterface
+			count: 1
+			path: Classes/Updates/PluginUpdater.php

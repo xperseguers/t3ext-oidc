@@ -1,0 +1,16 @@
+includes:
+	- phpstan-baseline.neon
+
+parameters:
+	level: 7
+	treatPhpDocTypesAsCertain: false
+	paths:
+		- Classes
+		- Tests
+	ignoreErrors:
+	  - identifier: missingType.iterableValue
+	strictRules:
+		booleansInConditions: false
+		booleansInLoopConditions: false
+		disallowedEmpty: false
+		disallowedShortTernary: false
