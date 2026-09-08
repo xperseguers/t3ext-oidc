@@ -33,7 +33,7 @@ final class OAuthServiceTest extends AbstractUnitTestBase
     {
         $accessToken = $this->createAccessTokenWithExpire(new DateTimeImmutable()->modify('+30 seconds'));
 
-        $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
+        $result = $this->subject->getFreshAccessToken((string)json_encode($accessToken));
 
         self::assertSame(
             json_encode($accessToken),
@@ -60,7 +60,7 @@ final class OAuthServiceTest extends AbstractUnitTestBase
 
         $this->setProperty($this->subject, 'provider', $provider);
 
-        $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
+        $result = $this->subject->getFreshAccessToken((string)json_encode($accessToken));
 
         self::assertSame(
             $newAccessToken,
@@ -86,7 +86,7 @@ final class OAuthServiceTest extends AbstractUnitTestBase
 
         $this->setProperty($this->subject, 'provider', $provider);
 
-        $result = $this->subject->getFreshAccessToken(json_encode($accessToken));
+        $result = $this->subject->getFreshAccessToken((string)json_encode($accessToken));
 
         self::assertNull($result);
     }

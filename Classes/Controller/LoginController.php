@@ -93,7 +93,7 @@ class LoginController
         return $oidcService->getAuthorizationRedirect($authContext);
     }
 
-    protected function determineRedirectUrl()
+    protected function determineRedirectUrl(): string
     {
         $redirectUrl = $this->request->getParsedBody()['redirect_url'] ?? $this->request->getQueryParams()['redirect_url'] ?? '';
         if (!empty($redirectUrl)) {

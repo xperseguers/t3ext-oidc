@@ -6,7 +6,6 @@ namespace Causal\Oidc\Middleware;
 
 use Causal\Oidc\Service\AuthenticationContextService;
 use Causal\Oidc\Service\OpenIdConnectService;
-use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -26,9 +25,6 @@ class AuthenticationUrlRequest implements MiddlewareInterface, LoggerAwareInterf
     ) {}
 
     /**
-     * @param ServerRequestInterface $request
-     * @param RequestHandlerInterface $handler
-     * @return ResponseInterface
      * see https://github.com/thephpleague/oauth2-client
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -36,9 +32,8 @@ class AuthenticationUrlRequest implements MiddlewareInterface, LoggerAwareInterf
         if ($request->getMethod() === 'GET' && $this->openIdConnectService->isAuthenticationRequest($request)) {
             try {
                 $authContext = $this->openIdConnectService->generateAuthenticationContext($request);
-                $response = $this->openIdConnectService->getAuthorizationRedirect($authContext);
-                return $response;
-            } catch (InvalidArgumentException|Throwable $e) {
+                return $this->openIdConnectService->getAuthorizationRedirect($authContext);
+            } catch (Throwable $e) {
                 $this->logger->alert('OIDC authentication provider error', ['exception' => $e]);
                 // config error or
                 // whatever the provider did wrong (can be connection errors)

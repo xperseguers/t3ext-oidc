@@ -53,7 +53,7 @@ class FrontendSimulationV14 implements FrontendSimulationInterface
                     $pageInformation = $pageInformationFactory->create($originalRequest);
                     $originalRequest = $originalRequest->withAttribute('frontend.page.information', $pageInformation);
                     $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
-                    $language = $originalRequest->getAttribute('language') ?? $originalRequest->getAttribute('site')->getDefaultLanguage();
+                    $language = $originalRequest->getAttribute('language', $originalRequest->getAttribute('site')->getDefaultLanguage());
                     if ($language->hasCustomTypo3Language()) {
                         $locale = GeneralUtility::makeInstance(Locales::class)->createLocale($language->getTypo3Language());
                     } else {

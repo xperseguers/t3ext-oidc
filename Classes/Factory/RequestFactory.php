@@ -7,6 +7,7 @@ namespace Causal\Oidc\Factory;
 use GuzzleHttp\Psr7\Utils;
 use League\OAuth2\Client\Tool\RequestFactory as Oauth2RequestFactory;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\RequestInterface;
 
 class RequestFactory extends Oauth2RequestFactory
 {
@@ -17,6 +18,9 @@ class RequestFactory extends Oauth2RequestFactory
         $this->requestFactory = $requestFactory;
     }
 
+    /**
+     * @return RequestInterface
+     */
     public function getRequest(
         $method,
         $uri,

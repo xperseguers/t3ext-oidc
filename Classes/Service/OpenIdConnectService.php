@@ -71,6 +71,8 @@ class OpenIdConnectService implements LoggerAwareInterface
      * The login URL and the optional redirect URL need to be signed with a
      * validation hash, provided as the validation_hash parameter of the
      * given request.
+     *
+     * @throws InvalidArgumentException
      */
     public function generateAuthenticationContext(ServerRequestInterface $request, array $authorizationUrlOptions = []): AuthenticationContext
     {
@@ -95,7 +97,7 @@ class OpenIdConnectService implements LoggerAwareInterface
 
         // Add logintype to login URL
         $loginUrlParams = ['logintype' => 'login'];
-        if ($redirectUrl != '' && !str_contains($loginUrl, 'redirect_url=')) {
+        if ($redirectUrl !== '' && !str_contains($loginUrl, 'redirect_url=')) {
             $loginUrlParams['redirect_url'] = $redirectUrl;
         }
         $loginUrl = \GuzzleHttp\Psr7\Uri::withQueryValues(new Uri($loginUrl), $loginUrlParams)->__toString();
@@ -136,7 +138,7 @@ class OpenIdConnectService implements LoggerAwareInterface
         );
     }
 
-    public function getAuthorizationRedirect(AuthenticationContext $authContext)
+    public function getAuthorizationRedirect(AuthenticationContext $authContext): RedirectResponse
     {
         $url = new Uri($authContext->authorizationUrl);
         $cookie = $this->authenticationContextService->getCookieForAuthenticationContext($authContext);
@@ -171,12 +173,12 @@ class OpenIdConnectService implements LoggerAwareInterface
         return bin2hex(random_bytes(64));
     }
 
-    protected function convertVerifierToChallenge($codeVerifier): string
+    protected function convertVerifierToChallenge(string $codeVerifier): string
     {
         return rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
     }
 
-    protected function getCodeChallengeOptions($codeChallenge): array
+    protected function getCodeChallengeOptions(string $codeChallenge): array
     {
         return [
             'code_challenge' => $codeChallenge,

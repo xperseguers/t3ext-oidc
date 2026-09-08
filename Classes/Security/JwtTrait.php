@@ -57,11 +57,15 @@ trait JwtTrait
      * @param string $jwt
      * @param Key $key
      * @param bool $associative
-     * @return \stdClass|array
+     * @phpstan-return ($associative is true ? array : \stdClass)
      */
     private static function decodeJwt(string $jwt, Key $key, bool $associative = false)
     {
         $payload = JWT::decode($jwt, $key);
-        return $associative ? json_decode(json_encode($payload), true) : $payload;
+        $encodedPayload = json_encode($payload);
+        if ($encodedPayload === false) {
+            throw new \InvalidArgumentException('Invalid JWT string', 1788878063);
+        }
+        return $associative ? json_decode($encodedPayload, true) : $payload;
     }
 }

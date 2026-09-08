@@ -28,8 +28,8 @@ final class OidcConfiguration
     public string $authenticationUrlRoute = 'oidc/authentication';
     public string $authorizeLanguageParameter = 'language';
     public bool $useRequestPathAuthentication = false;
-    /** @var class-string<OAuthProviderFactoryInterface> */
-    public string $oauthProviderFactory = '';
+    /** @var class-string<OAuthProviderFactoryInterface>*/
+    public string $oauthProviderFactory = GenericOAuthProviderFactory::class;
     public string $oidcClientKey = '';
     public string $oidcClientSecret = '';
     public string $oidcClientScopes = 'openid';

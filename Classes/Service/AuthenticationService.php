@@ -517,8 +517,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         // Hook for post-processing the user record
         $reloadUserRecord = false;
         if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] ?? null)) {
+            /** @var class-string<ResourceOwnerHookInterface> $className */
             foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['oidc']['resourceOwner'] as $className) {
-                /** @var ResourceOwnerHookInterface $postProcessor */
                 $postProcessor = GeneralUtility::makeInstance($className);
                 if ($postProcessor instanceof ResourceOwnerHookInterface) {
                     $postProcessor->postProcessUser($mode, $user, $info);
@@ -526,7 +526,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 } else {
                     throw new InvalidArgumentException(
                         sprintf(
-                            'Invalid post-processing class %s. It must implement the \\Causal\\Oidc\\Service\\ResourceOwnerHookInterface interface',
+                            'Invalid post-processing class %s. It must implement the ' . ResourceOwnerHookInterface::class . ' interface',
                             $className
                         ),
                         1491229263

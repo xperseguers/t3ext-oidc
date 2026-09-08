@@ -51,14 +51,9 @@ class OAuthService
         $this->request = $request;
     }
 
-    /**
-     * Returns the authorization URL.
-     *
-     * @param array $options
-     * @return string
-     */
     public function getAuthorizationUrl(array $options = []): string
     {
+        /** @var GetAuthorizationUrlEvent $event */
         $event = $this->eventDispatcher->dispatch(new GetAuthorizationUrlEvent($this->request, $this->settings, $options));
         $options = $event->options;
         return $this->getProvider()->getAuthorizationUrl($options);
@@ -66,8 +61,6 @@ class OAuthService
 
     /**
      * Returns the state generated for us.
-     *
-     * @return string
      * @see getAuthorizationUrl()
      */
     public function getState(): string
@@ -150,8 +143,8 @@ class OAuthService
         if ($result->getHeader('Location')) {
             $targetUrl = $result->getHeader('Location')[0];
             $query = parse_url($targetUrl, PHP_URL_QUERY);
-            parse_str($query, $queryParams);
-            if (isset($queryParams['code'])) {
+            parse_str((string)$query, $queryParams);
+            if (isset($queryParams['code']) && is_string($queryParams['code'])) {
                 return $this->getAccessToken($queryParams['code']);
             }
         }
