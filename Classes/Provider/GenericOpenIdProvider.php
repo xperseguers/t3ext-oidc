@@ -26,7 +26,7 @@ class GenericOpenIdProvider extends GenericProvider
 
         // extract resource owner from ID token
         $jwt = $token->getToken();
-        $jwtDecoded = base64_decode(str_replace(['_', '-'], ['/' - '+'], explode('.', $jwt)[1]));
+        $jwtDecoded = base64_decode(str_replace(['_', '-'], ['/', '+'], explode('.', $jwt)[1]), true);
         $resourceOwner = json_decode($jwtDecoded, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new UnexpectedValueException('The provided JWT is invalid', 1759222069);
