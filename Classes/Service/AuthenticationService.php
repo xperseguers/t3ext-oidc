@@ -34,7 +34,7 @@ use GuzzleHttp\Psr7\Uri;
 use InvalidArgumentException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
-use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Token\AccessTokenInterface;
 use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -234,7 +234,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Looks up a TYPO3 user from an access token.
      */
-    protected function getUserFromAccessToken(AccessToken $accessToken): array|false
+    protected function getUserFromAccessToken(AccessTokenInterface $accessToken): array|false
     {
         $this->logger->debug('Retrieving resource owner');
         try {
@@ -298,7 +298,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     /**
      * Converts a resource owner into a TYPO3 Frontend user
      */
-    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): array|false
+    protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessTokenInterface $accessToken): array|false
     {
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);

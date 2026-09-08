@@ -82,7 +82,6 @@ class OAuthService
      * @param string $codeOrUsername Either a code or the username (if password is provided)
      * @param string|null $password Optional parameter if authenticating with authorization code grant
      * @param string|null $codeVerifier Code verifier for PKCE
-     * @return AccessToken
      * @throws IdentityProviderException
      */
     public function getAccessToken(
@@ -91,7 +90,7 @@ class OAuthService
         ?string $password = null,
         #[\SensitiveParameter]
         ?string $codeVerifier = null
-    ): AccessToken {
+    ): AccessTokenInterface {
         if ($password === null) {
             $options = [
                 'code' => $codeOrUsername,
@@ -124,12 +123,9 @@ class OAuthService
      * This non-standard behaviour is described on
      * https://docs.wso2.com/display/IS530/Try+Password+Grant
      *
-     * @param string $username
-     * @param string $password
-     * @return AccessToken|null
      * @throws IdentityProviderException
      */
-    public function getAccessTokenWithRequestPathAuthentication(string $username, #[\SensitiveParameter] string $password): ?AccessToken
+    public function getAccessTokenWithRequestPathAuthentication(string $username, #[\SensitiveParameter] string $password): ?AccessTokenInterface
     {
         $url = $this->settings->endpointAuthorize . '?' . http_build_query([
             'response_type' => 'code',
@@ -165,24 +161,23 @@ class OAuthService
 
     /**
      * Returns the resource owner.
-     *
-     * @param AccessToken $token
-     * @return ResourceOwnerInterface
+    *
      * @throws IdentityProviderException May be thrown by provider
      */
-    public function getResourceOwner(AccessToken $token): ResourceOwnerInterface
+    public function getResourceOwner(AccessTokenInterface $token): ResourceOwnerInterface
     {
+        if (!$token instanceof AccessToken) {
+            throw new \UnexpectedValueException('Token must be an instance of AccessToken', 1788876988);
+        }
         return $this->getProvider()->getResourceOwner($token);
     }
 
     /**
      * Revokes the access token.
      *
-     * @param AccessToken $token
-     * @return bool
      * @throws IdentityProviderException
      */
-    public function revokeToken(AccessToken $token): bool
+    public function revokeToken(AccessTokenInterface $token): bool
     {
         if (!$this->settings->endpointRevoke) {
             return false;
@@ -224,7 +219,7 @@ class OAuthService
         return $this->provider;
     }
 
-    public function getFreshAccessToken(string $serializedToken): ?AccessToken
+    public function getFreshAccessToken(string $serializedToken): ?AccessTokenInterface
     {
         $options = json_decode($serializedToken, true);
         if (empty($serializedToken) || empty($options)) {

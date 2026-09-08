@@ -17,7 +17,7 @@ declare(strict_types=1);
 
 namespace Causal\Oidc\Event;
 
-use League\OAuth2\Client\Token\AccessToken;
+use League\OAuth2\Client\Token\AccessTokenInterface;
 use TYPO3\CMS\Core\Authentication\AbstractAuthenticationService;
 
 final class ModifyResourceOwnerEvent
@@ -28,7 +28,7 @@ final class ModifyResourceOwnerEvent
          */
         protected array $resourceOwner,
         protected AbstractAuthenticationService $authenticationService,
-        protected AccessToken $accessToken,
+        protected AccessTokenInterface $accessToken,
     ) {}
 
     public function getResourceOwner(): array
@@ -46,7 +46,7 @@ final class ModifyResourceOwnerEvent
         return $this->authenticationService;
     }
 
-    public function getAccessToken(): AccessToken
+    public function getAccessToken(): AccessTokenInterface
     {
         return $this->accessToken;
     }
