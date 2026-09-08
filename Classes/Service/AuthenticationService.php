@@ -169,12 +169,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     /**
      * Authenticates a user using authorization code grant.
-     *
-     * @param string $code
-     * @param string|null $codeVerifier
-     * @return array|bool
      */
-    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier): bool|array
+    protected function authenticateWithAuthorizationCode(string $code, ?string $codeVerifier): array|false
     {
         $this->logger->debug('Initializing OpenID Connect service');
 
@@ -237,11 +233,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     /**
      * Looks up a TYPO3 user from an access token.
-     *
-     * @param AccessToken $accessToken
-     * @return array|bool
      */
-    protected function getUserFromAccessToken(AccessToken $accessToken): bool|array
+    protected function getUserFromAccessToken(AccessToken $accessToken): array|false
     {
         $this->logger->debug('Retrieving resource owner');
         try {
