@@ -309,7 +309,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     }
 
     /**
-     * Converts a resource owner into a TYPO3 Frontend user.
+     * Converts a resource owner into a TYPO3 user.
      */
     protected function convertResourceOwner(ResourceOwnerInterface $resourceOwnerObject, AccessToken $accessToken): array|false
     {
@@ -713,17 +713,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         $defaultMapping = [
             'username'   => '<sub>',
-            'name'       => '<name>',
-            'first_name' => '<Vorname>',
-            'last_name'  => '<FamilienName>',
-            'address'    => '<Strasse>',
-            'title'      => '<Anredecode>',
-            'zip'        => '<PLZ>',
-            'city'       => '<Ort>',
-            'country'    => '<Land>',
         ];
 
         if ($table === 'fe_users') {
+            $defaultMapping = array_merge($defaultMapping, [
+                'name'       => '<name>',
+                'first_name' => '<Vorname>',
+                'last_name'  => '<FamilienName>',
+                'address'    => '<Strasse>',
+                'title'      => '<Anredecode>',
+                'zip'        => '<PLZ>',
+                'city'       => '<Ort>',
+                'country'    => '<Land>',
+            ]);
             $feSim = $this->getFrontendSimulation();
             $GLOBALS['TSFE'] = $feSim->getTSFE($request);
             $setup = $feSim->getTypoScriptSetup($request, $GLOBALS['TSFE']);
@@ -731,6 +733,13 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             if (!empty($setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'])) {
                 $mapping = $setup['plugin.']['tx_oidc.']['mapping.'][$table . '.'];
             }
+        }
+
+        if ($table === 'be_users') {
+            $defaultMapping = array_merge($defaultMapping, [
+                'realName' => '<name>',
+                'email'    => '<email>',
+            ]);
         }
 
         return $mapping ?: $defaultMapping;
