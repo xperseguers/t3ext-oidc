@@ -4,7 +4,7 @@ defined('TYPO3') or die();
 
 $settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('oidc') ?? [];
 
-if ($settings['enableFrontendAuthentication']) {
+if ($settings['enableBackendAuthentication']) {
     $tempColumns = [
         'tx_oidc' => [
             'exclude' => true,
@@ -20,4 +20,3 @@ if ($settings['enableFrontendAuthentication']) {
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('fe_users', $tempColumns);
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('fe_users', 'tx_oidc');
 }
-
