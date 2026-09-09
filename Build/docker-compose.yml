@@ -32,7 +32,7 @@ services:
       interval: 3s
 
   db-v13:
-    image: mariadb:10.11
+    image: docker.io/mariadb:10.11
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_USER: app
@@ -77,7 +77,7 @@ services:
       interval: 3s
 
   db-v14:
-    image: mariadb:10.11
+    image: docker.io/mariadb:10.11
     environment:
       MARIADB_ROOT_PASSWORD: root
       MARIADB_USER: app
@@ -193,7 +193,7 @@ services:
         condition: service_healthy
 
   vnc:
-    image: consol/ubuntu-xfce-vnc
+    image: docker.io/consol/ubuntu-xfce-vnc
     environment:
       - VNC_PW=password
     command: /bin/bash -c "xhost + && tail -f /dev/null"
