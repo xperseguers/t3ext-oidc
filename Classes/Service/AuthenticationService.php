@@ -716,7 +716,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function getBeMapping(): array
     {
-        return  [
+        return [
             'username'   => '<sub>',
             'realName' => '<name>',
             'email'    => '<email>',
