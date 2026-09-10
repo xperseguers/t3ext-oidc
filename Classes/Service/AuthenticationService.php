@@ -580,11 +580,15 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $request = $this->getRequest();
         $out = array_merge($typo3User, $baseData);
 
-        $feSim = $this->getFrontendSimulation();
-        $contentObj = $feSim->getCObj($request);
-        $contentObj->start($oidc);
-        $typoScriptSetup = $contentObj->getRequest()->getAttribute('frontend.typoscript')->getSetupArray();
-        $mapping = $this->getFeMapping($typoScriptSetup);
+        if ($table === 'fe_users') {
+            $feSim = $this->getFrontendSimulation();
+            $contentObj = $feSim->getCObj($request);
+            $contentObj->start($oidc);
+            $typoScriptSetup = $contentObj->getRequest()->getAttribute('frontend.typoscript')->getSetupArray();
+            $mapping = $this->getFeMapping($typoScriptSetup);
+        } else {
+            $mapping = $this->getBeMapping();
+        }
 
         // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
         $typoScriptKeys = [];
@@ -604,15 +608,17 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
         }
 
-        // Process every TypoScript definition
-        foreach ($typoScriptKeys as $typoScriptKey) {
-            // Remove the trailing period to get corresponding field name
-            $field = substr($typoScriptKey, 0, -1);
-            $value = $out[$field] ?? '';
-            $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
-            $out = $this->mergeSimple([$field => $value], $out, $field, $value);
+        if ($table === 'fe_users') {
+            // Process every TypoScript definition
+            foreach ($typoScriptKeys as $typoScriptKey) {
+                // Remove the trailing period to get corresponding field name
+                $field = substr($typoScriptKey, 0, -1);
+                $value = $out[$field] ?? '';
+                $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
+                $out = $this->mergeSimple([$field => $value], $out, $field, $value);
+            }
+            $feSim->cleanupTSFE();
         }
-        $feSim->cleanupTSFE();
 
         $event = new AuthenticationProcessMappingEvent($request, $table, $typo3User, $oidc, $out);
 
@@ -703,6 +709,18 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         return $mapping ?: $defaultMapping;
+    }
+
+    /**
+     * Returns the mapping configuration for OIDC fields for be_users
+     */
+    protected function getBeMapping(): array
+    {
+        return  [
+            'username'   => '<sub>',
+            'realName' => '<name>',
+            'email'    => '<email>',
+        ];
     }
 
     protected function getFrontendSimulation(): FrontendSimulationInterface
