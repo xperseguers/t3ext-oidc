@@ -16,12 +16,12 @@ $settings = GeneralUtility::makeInstance(OidcConfiguration::class);
 
 // Service configuration
 $subTypes = array_merge(
-    ($settings->enableFrontendAuthentication) ? [
+    ($settings->hasProviderForFrontendAuthentication()) ? [
         'getUserFE',
         'authUserFE',
         'getGroupsFE',
     ] : [],
-    ($settings->enableBackendAuthentication) ? [
+    ($settings->hasProviderForBackendAuthentication()) ? [
         'getUserBE',
         'authUserBE',
     ] : [],
@@ -51,7 +51,7 @@ if (is_file($pharFileName)) {
     @include 'phar://' . $pharFileName . '/vendor/autoload.php';
 }
 
-if ($settings->enableBackendAuthentication) {
+if ($settings->hasProviderForBackendAuthentication()) {
     $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][OidcLoginProvider::IDENTIFIER] = [
         'provider' => OidcLoginProvider::class,
         'sorting' => 50,

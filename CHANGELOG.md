@@ -2,6 +2,9 @@
 
 ## Version 7.0.0
 
+- Breaking: Extension Configuration is now in `/config/system/oidc.yml`. Example is in README.
+- Breaking: OIDC claim to TYPO3 user mapping is now configured in `oidc.yaml` as well. The former TypoScript configuration has been dropped.
+
 ## Version 6.0.0 (2026-09-10)
 
 - Added TYPO3 14 LTS support

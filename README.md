@@ -56,38 +56,78 @@ If enabled, the extension provides a login provider for backend of the TYPO3 ins
 
 ## Configuration
 
+Configuration is done through a YAML file located in the TYPO3 system config directory : `config/system/oidc.yaml`
+
 The extension requires at least a configuration for how user information from the IdP
 is mapped to TYPO3 user records fe_users/be_users.
 
+  ```yaml
+authenticationServicePriority: 82
+authenticationServiceQuality: 80
+authenticationUrlRoute: oidc/authentication
+
+providers:
+  default:
+    administratorRole:
+    authorizeLanguageParameter: language
+    backendUserMustExistLocally: 0
+    clientKey: '%env(TYPO3_OIDC_CLIENT_KEY)%'
+    clientScopeSeparator: '%env(TYPO3_OIDC_ENABLE_CODE_VERIFIER)%'
+    clientScopes: '%env(TYPO3_OIDC_CLIENT_SCOPES)%'
+    clientSecret: '%env(TYPO3_OIDC_CLIENT_SECRET)%'
+    disableCSRFProtection: 0
+    enableBackendAuthentication: 1
+    enableCodeVerifier: '%env(TYPO3_OIDC_ENABLE_CODE_VERIFIER)%'
+    enableFrontendAuthentication: 0
+    enablePasswordCredentials: 0
+    endpointAuthorize: '%env(TYPO3_OIDC_ENDPOINT_AUTHORIZE)%'
+    endpointLogout: '%env(TYPO3_OIDC_ENDPOINT_LOGOUT)%'
+    endpointRevoke: '%env(TYPO3_OIDC_ENDPOINTREVOKE)%'
+    endpointToken: '%env(TYPO3_OIDC_ENDPOINT_TOKEN)%'
+    endpointUserInfo: '%env(TYPO3_OIDC_ENDPOINT_USERINFO)%'
+    frontendUserMustExistLocally: 0
+    maintainerRole:
+    mapping: []
+    oauthProviderFactory:
+    reEnableBackendUsers: 0
+    reEnableFrontendUsers: 0
+    redirectUri: '%env(TYPO3_OIDC_REDIRECT_URI)%'
+    revokeAccessTokenAfterLogin: 0
+    undeleteBackendUsers: 0
+    undeleteFrontendUsers: 0
+    useRequestPathAuthentication: 0
+    usersDefaultGroup:
+    usersStoragePid: 0
+  ```
+
 ### Mapping user fields
 
-- Configuration is done through TypoScript within the key `plugin.tx_oidc.mapping.fe_users`
-- There is a fixed mapping for be_users.
+- Configuration is done through YAML within the keys
+  ```yaml
+    mapping:
+      be_users:
+        realName: '<name> // <family_name> <given_name> // <email>'
+      fe_users:
+        name: '<name> // <family_name> <given_name> // <email>'
+  ```
 - Information about the user from OIDC attributes (ID Token or UserInfo-endpoint) will be recognized by the specific characters `<>`:
 
-  ```typo3_typoscript
-  email = <mail>
+  ```yaml
+  email: "<mail>"
   ```
 
 - You may combine multiple markers as well, e.g.,
 
-  ```typo3_typoscript
-  name = <family_name>, <given_name>
-  ```
-
-- Support for [stdWrap](https://docs.typo3.org/permalink/t3tsref:stdwrap) in field definition, e.g.,
-
-  ```typo3_typoscript
-  name = <name>
-  name.wrap = |-OIDC
+  ```yaml
+  name: "<family_name>, <given_name>"
   ```
 
 - Support for [TypoScript data fallback](https://docs.typo3.org/permalink/t3tsref:data-type-gettext)
   (`//`). This will check multiple field names and return the first one yielding
   some non-empty value. E.g.,
 
-  ```typo3_typoscript
-  username = <sub> // <contact_number> // <emailaddress> // <benutzername>
+  ```yaml
+  username: "<sub> // <contact_number> // <emailaddress> // <benutzername>"
   ```
 
 ### Mapping user groups
