@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 5.0.3 (2026-09-10)
+
+- Fixed BE user field mapping
+
 ## Version 5.0.2 (2026-09-08)
 
 - The redirect/callback URI generation has been centralized and does not use global TYPO3 state anymore
