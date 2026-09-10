@@ -1,6 +1,6 @@
 # OpenID Connect integration for TYPO3 - changelog
 
-## Version 6.x.x
+## Version 6.0.0 (2026-09-10)
 
 - Added TYPO3 14 LTS support
 - Breaking: Dropped support for TYPO3 12 LTS and PHP < 8.4
