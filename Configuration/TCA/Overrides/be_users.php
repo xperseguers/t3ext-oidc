@@ -14,7 +14,6 @@ if ($settings['enableBackendAuthentication']) {
             'config' => [
                 'type' => 'input',
                 'size' => 30,
-                'readOnly' => !($settings['frontendUserMustExistLocally'] ?? ''),
             ],
         ],
     ];
