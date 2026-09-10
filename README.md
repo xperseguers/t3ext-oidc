@@ -61,8 +61,8 @@ is mapped to TYPO3 user records fe_users/be_users.
 
 ### Mapping user fields
 
-- Configuration is done through TypoScript within the keys
-  `plugin.tx_oidc.mapping.fe_users` and  `plugin.tx_oidc.mapping.be_users`
+- Configuration is done through TypoScript within the key `plugin.tx_oidc.mapping.fe_users`
+- There is a fixed mapping for be_users.
 - Information about the user from OIDC attributes (ID Token or UserInfo-endpoint) will be recognized by the specific characters `<>`:
 
   ```typo3_typoscript
