@@ -31,10 +31,17 @@ final readonly class GenericOAuthProviderFactory implements OAuthProviderFactory
             'requestFactory' => $this->requestFactory,
         ];
 
+        $clientSecret = $settings->oidcClientSecret;
+
+        // PKCE public client: no client secret required
+        if ($settings->enableCodeVerifier && $clientSecret === '') {
+            $clientSecret = '';
+        }
+
         return new GenericOpenIdProvider(
             [
                 'clientId' => $settings->oidcClientKey,
-                'clientSecret' => $settings->oidcClientSecret,
+                'clientSecret' => $clientSecret,
                 'redirectUri' => $settings->oidcRedirectUri,
                 'urlAuthorize' => $settings->endpointAuthorize,
                 'urlAccessToken' => $settings->endpointToken,
