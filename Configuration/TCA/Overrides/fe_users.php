@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 defined('TYPO3') or die();
 
-$settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('oidc') ?? [];
+$settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\Causal\Oidc\OidcConfiguration::class);
 
-if ($settings['enableFrontendAuthentication']) {
+if ($settings->enableFrontendAuthentication) {
     $tempColumns = [
         'tx_oidc' => [
             'exclude' => true,
@@ -14,7 +14,7 @@ if ($settings['enableFrontendAuthentication']) {
             'config' => [
                 'type' => 'input',
                 'size' => 30,
-                'readOnly' => !($settings['frontendUserMustExistLocally'] ?? ''),
+                'readOnly' => !($settings->frontendUserMustExistLocally),
             ],
         ],
     ];

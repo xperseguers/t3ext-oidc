@@ -24,9 +24,6 @@ use Causal\Oidc\Event\AuthenticationPreUserEvent;
 use Causal\Oidc\Event\AuthenticationProcessMappingEvent;
 use Causal\Oidc\Event\ModifyResourceOwnerEvent;
 use Causal\Oidc\Event\ModifyUserEvent;
-use Causal\Oidc\Frontend\FrontendSimulationInterface;
-use Causal\Oidc\Frontend\FrontendSimulationV13;
-use Causal\Oidc\Frontend\FrontendSimulationV14;
 use Causal\Oidc\LoginProvider\OidcLoginProvider;
 use Causal\Oidc\OidcConfiguration;
 use Doctrine\DBAL\ArrayParameterType;
@@ -50,7 +47,6 @@ use TYPO3\CMS\Core\Database\Query\Restriction\HiddenRestriction;
 use TYPO3\CMS\Core\Database\Query\Restriction\StartTimeRestriction;
 use TYPO3\CMS\Core\Http\PropagateResponseException;
 use TYPO3\CMS\Core\Http\ServerRequestFactory;
-use TYPO3\CMS\Core\Information\Typo3Version;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 use UnexpectedValueException;
@@ -362,6 +358,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $info,
             $row ?: [],
             [
+                'username' => $resourceOwnerObject->getId(),
                 'tx_oidc' => $resourceOwnerObject->getId(),
                 'deleted' => 0,
                 'disable' => 0,
@@ -577,50 +574,22 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     protected function applyMapping(string $table, array $oidc, array $typo3User, array $baseData = [], bool $reportErrors = false): array
     {
-        $request = $this->getRequest();
         $out = array_merge($typo3User, $baseData);
 
-        if ($table === 'fe_users') {
-            $feSim = $this->getFrontendSimulation();
-            $contentObj = $feSim->getCObj($request);
-            $contentObj->start($oidc);
-            $typoScriptSetup = $contentObj->getRequest()->getAttribute('frontend.typoscript')->getSetupArray();
-            $mapping = $this->getFeMapping($typoScriptSetup);
-        } else {
-            $mapping = $this->getBeMapping();
-        }
-
-        // Process every field (except "usergroup" and "parentGroup") which is not a TypoScript definition
-        $typoScriptKeys = [];
-        foreach ($mapping as $field => $value) {
-            if (!str_ends_with($field, '.')) {
-                if ($field !== 'usergroup' && $field !== 'parentGroup') {
-                    try {
-                        $out = $this->mergeSimple($oidc, $out, $field, $value);
-                    } catch (UnexpectedValueException $uve) {
-                        if ($reportErrors) {
-                            $out['__errors'][] = $uve->getMessage();
-                        }
+        // Process every field (except "usergroup" and "parentGroup") which is not a YAML definition
+        foreach ($this->getMapping($table) as $field => $value) {
+            if ($field !== 'usergroup' && $field !== 'parentGroup') {
+                try {
+                    $out = $this->mergeSimple($oidc, $out, $field, $value);
+                } catch (UnexpectedValueException $uve) {
+                    if ($reportErrors) {
+                        $out['__errors'][] = $uve->getMessage();
                     }
                 }
-            } else {
-                $typoScriptKeys[] = $field;
             }
         }
 
-        if ($table === 'fe_users') {
-            // Process every TypoScript definition
-            foreach ($typoScriptKeys as $typoScriptKey) {
-                // Remove the trailing period to get corresponding field name
-                $field = substr($typoScriptKey, 0, -1);
-                $value = $out[$field] ?? '';
-                $value = $contentObj->stdWrap($value, $mapping[$typoScriptKey]);
-                $out = $this->mergeSimple([$field => $value], $out, $field, $value);
-            }
-            $feSim->cleanupTSFE();
-        }
-
-        $event = new AuthenticationProcessMappingEvent($request, $table, $typo3User, $oidc, $out);
+        $event = new AuthenticationProcessMappingEvent($this->getRequest(), $table, $typo3User, $oidc, $out);
 
         /** @var EventDispatcherInterface $eventDispatcher */
         $eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
@@ -687,51 +656,14 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     }
 
     /**
-     * Returns the mapping configuration for OIDC fields for fe_users
+     * Returns the mapping configuration for OID¶C fields.
+     *
+     * @param string $table
+     * @return array
      */
-    protected function getFeMapping(array $typoScriptSetup): array
+    protected function getMapping(string $table): array
     {
-        $defaultMapping = [
-            'username'   => '<sub>',
-            'name'       => '<name>',
-            'first_name' => '<Vorname>',
-            'last_name'  => '<FamilienName>',
-            'address'    => '<Strasse>',
-            'title'      => '<Anredecode>',
-            'zip'        => '<PLZ>',
-            'city'       => '<Ort>',
-            'country'    => '<Land>',
-        ];
-
-        $mapping = [];
-        if (!empty($typoScriptSetup['plugin.']['tx_oidc.']['mapping.']['fe_users.'])) {
-            $mapping = $typoScriptSetup['plugin.']['tx_oidc.']['mapping.']['fe_users.'];
-        }
-
-        return $mapping ?: $defaultMapping;
-    }
-
-    /**
-     * Returns the mapping configuration for OIDC fields for be_users
-     */
-    protected function getBeMapping(): array
-    {
-        return [
-            'username'   => '<sub>',
-            'realName' => '<name>',
-            'email'    => '<email>',
-        ];
-    }
-
-    protected function getFrontendSimulation(): FrontendSimulationInterface
-    {
-        $typo3Version = new Typo3Version()->getMajorVersion();
-        if ($typo3Version === 13) {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV13::class);
-        } else {
-            $feSim = GeneralUtility::makeInstance(FrontendSimulationV14::class);
-        }
-        return $feSim;
+        return current($this->config->getProviders())?->getMapping()[$table] ?? [];
     }
 
     /**
