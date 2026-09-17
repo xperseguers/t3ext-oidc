@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 5.0.4 (2026-09-17)
+
+- Gracefully handle missing extension configuration in TCA
+
 ## Version 5.0.3 (2026-09-10)
 
 - Fixed BE user field mapping
