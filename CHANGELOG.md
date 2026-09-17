@@ -1,5 +1,9 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 6.0.1 (2026-09-17)
+
+- Gracefully handle missing extension configuration in TCA
+
 ## Version 6.0.0 (2026-09-10)
 
 - Added TYPO3 14 LTS support
