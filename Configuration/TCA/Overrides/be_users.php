@@ -6,7 +6,7 @@ defined('TYPO3') or die();
 
 $settings = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('oidc') ?? [];
 
-if ($settings['enableBackendAuthentication']) {
+if ($settings['enableBackendAuthentication'] ?? false) {
     $tempColumns = [
         'tx_oidc' => [
             'exclude' => true,
