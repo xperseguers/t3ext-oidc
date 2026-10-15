@@ -20,6 +20,18 @@ class AuthenticationContextService
      */
     public function getCookieForAuthenticationContext(AuthenticationContext $authenticationContext): Cookie
     {
+        return $this->createCookie($authenticationContext);
+    }
+
+    public function getCookieDeletionForAuthenticationContext(AuthenticationContext $authenticationContext): Cookie
+    {
+        return $this->createCookie($authenticationContext)
+            ->withExpires(-1)
+            ->withValue('');
+    }
+
+    private function createCookie(AuthenticationContext $authenticationContext): Cookie
+    {
         return new Cookie(
             $this->getCookieName($authenticationContext->secureContext),
             $authenticationContext->toHashSignedJwt(),
