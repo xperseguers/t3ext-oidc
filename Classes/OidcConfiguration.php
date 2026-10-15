@@ -26,7 +26,9 @@ final class OidcConfiguration
     public int $authenticationServiceQuality = 80;
     public string $authenticationUrlRoute = 'oidc/authentication';
 
+    public string $administratorRole;
     public string $authorizeLanguageParameter;
+    public bool $backendUserMustExistLocally;
     public string $clientKey;
     public string $clientScopeSeparator;
     public string $clientScopes;
@@ -42,15 +44,17 @@ final class OidcConfiguration
     public string $endpointToken;
     public string $endpointUserInfo;
     public bool $frontendUserMustExistLocally;
+    public string $maintainerRole;
     public string $oauthProviderFactory;
+    public bool $reEnableBackendUsers;
     public bool $reEnableFrontendUsers;
     public string $redirectUri;
     public bool $revokeAccessTokenAfterLogin;
+    public bool $undeleteBackendUsers;
     public bool $undeleteFrontendUsers;
     public bool $useRequestPathAuthentication;
     public string $usersDefaultGroup;
     public array $usersStoragePids;
-
     /** @var array<Provider> */
     private array $providers = [];
 
@@ -94,10 +98,15 @@ final class OidcConfiguration
 
             // We only support one provider for now
             $provider = current($this->providers);
+
+            $this->administratorRole = $provider->getAdministratorRole();
             $this->enableBackendAuthentication = $provider->isEnableBackendAuthentication();
             $this->enableFrontendAuthentication = $provider->isEnableFrontendAuthentication();
+            $this->reEnableBackendUsers = $provider->isReEnableBackendUsers();
             $this->reEnableFrontendUsers = $provider->isReEnableFrontendUsers();
+            $this->undeleteBackendUsers = $provider->isUndeleteBackendUsers();
             $this->undeleteFrontendUsers = $provider->isUndeleteFrontendUsers();
+            $this->backendUserMustExistLocally = $provider->isBackendUserMustExistLocally();
             $this->frontendUserMustExistLocally = $provider->isFrontendUserMustExistLocally();
             $this->disableCSRFProtection = $provider->isDisableCSRFProtection();
             $this->enableCodeVerifier = $provider->isEnableCodeVerifier();
@@ -113,6 +122,7 @@ final class OidcConfiguration
             $this->endpointUserInfo = $provider->getEndpointUserInfo();
             $this->endpointRevoke = $provider->getEndpointRevoke();
             $this->endpointLogout = $provider->getEndpointLogout();
+            $this->maintainerRole = $provider->getMaintainerRole();
             $this->usersStoragePids = $provider->getUsersStoragePids();
             $this->usersDefaultGroup = $provider->getUsersDefaultGroup();
             $this->redirectUri = $provider->getRedirectUri();
@@ -138,6 +148,11 @@ final class OidcConfiguration
         throw new UnexpectedValueException('OIDC redirectUri (callback) can\'t be determined. Missing request and no redirectUri configuration set.', 1787738362);
     }
 
+    public function getProviders(): array
+    {
+        return $this->providers;
+    }
+
     public function hasProviderForBackendAuthentication(): bool
     {
         foreach ($this->providers as $provider) {
@@ -156,10 +171,5 @@ final class OidcConfiguration
             }
         }
         return false;
-    }
-
-    public function getProviders(): array
-    {
-        return $this->providers;
     }
 }

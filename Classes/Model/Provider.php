@@ -13,6 +13,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * @phpstan-type MappingConfig array{be_users?: array<string, int|string>, fe_users?: array<string, int|string>}
  * @phpstan-type ProviderConfig array{
  *     authorizeLanguageParameter: string,
+ *     backendUserMustExistLocally: int,
  *     clientKey: string,
  *     clientScopeSeparator: string,
  *     clientScopes: string,
@@ -31,9 +32,11 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *     mapping: MappingConfig,
  *     name: string,
  *     oauthProviderFactory: class-string<OAuthProviderFactoryInterface>,
+ *     reEnableBackendUsers: int,
  *     reEnableFrontendUsers: int,
  *     redirectUri: string,
  *     revokeAccessTokenAfterLogin: int,
+ *     undeleteBackendUsers: int,
  *     undeleteFrontendUsers: int,
  *     useRequestPathAuthentication: int,
  *     usersDefaultGroup: string,
@@ -42,7 +45,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class Provider
 {
+    private string $administratorRole = '';
     private string $authorizeLanguageParameter = 'language';
+    private bool $backendUserMustExistLocally = false;
     private string $clientKey = '';
     private string $clientScopeSeparator = ' ';
     private string $clientScopes = 'openid';
@@ -58,14 +63,17 @@ class Provider
     private string $endpointToken = '';
     private string $endpointUserInfo = '';
     private bool $frontendUserMustExistLocally = false;
+    private string $maintainerRole = '';
     /** @var MappingConfig */
     private array $mapping = [];
     private string $name;
     /** @var class-string<OAuthProviderFactoryInterface> */
     private string $oauthProviderFactory = GenericOAuthProviderFactory::class;
+    private bool $reEnableBackendUsers = false;
     private bool $reEnableFrontendUsers = false;
     private string $redirectUri = '';
     private bool $revokeAccessTokenAfterLogin = false;
+    private bool $undeleteBackendUsers = false;
     private bool $undeleteFrontendUsers = false;
     private bool $useRequestPathAuthentication = false;
     private string $usersDefaultGroup = '';
@@ -161,6 +169,11 @@ class Provider
         return $this->enableFrontendAuthentication;
     }
 
+    public function getAdministratorRole(): string
+    {
+        return $this->administratorRole;
+    }
+
     public function getAuthorizeLanguageParameter(): string
     {
         return $this->authorizeLanguageParameter;
@@ -211,12 +224,22 @@ class Provider
         return $this->endpointUserInfo;
     }
 
+    public function getMaintainerRole(): string
+    {
+        return $this->maintainerRole;
+    }
+
     /**
      * @return MappingConfig
      */
     public function getMapping(): array
     {
         return $this->mapping;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     public function getOauthProviderFactory(): string
@@ -239,6 +262,11 @@ class Provider
         return $this->usersStoragePids;
     }
 
+    public function isBackendUserMustExistLocally(): bool
+    {
+        return $this->backendUserMustExistLocally;
+    }
+
     public function isDisableCSRFProtection(): bool
     {
         return $this->disableCSRFProtection;
@@ -259,6 +287,11 @@ class Provider
         return $this->frontendUserMustExistLocally;
     }
 
+    public function isReEnableBackendUsers(): bool
+    {
+        return $this->reEnableBackendUsers;
+    }
+
     public function isReEnableFrontendUsers(): bool
     {
         return $this->reEnableFrontendUsers;
@@ -267,6 +300,11 @@ class Provider
     public function isRevokeAccessTokenAfterLogin(): bool
     {
         return $this->revokeAccessTokenAfterLogin;
+    }
+
+    public function isUndeleteBackendUsers(): bool
+    {
+        return $this->undeleteBackendUsers;
     }
 
     public function isUndeleteFrontendUsers(): bool
