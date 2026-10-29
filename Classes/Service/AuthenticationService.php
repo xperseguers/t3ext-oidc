@@ -492,10 +492,12 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 return false;
             }
             $this->logger->info('New user detected, creating a TYPO3 user');
+            $now = GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp');
             $data = array_merge($data, [
                 'pid' => $this->config->usersStoragePids[0],
                 'usergroup' => implode(',', $newUserGroups),
-                'crdate' => GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
+                'crdate' => $now,
+                'tstamp' => $now,
                 'tx_oidc' => $resourceOwnerObject->getId(),
                 'password' => $this->generatePassword($mode),
             ]);
