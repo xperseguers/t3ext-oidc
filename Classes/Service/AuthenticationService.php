@@ -28,6 +28,7 @@ use Causal\Oidc\Frontend\FrontendSimulationInterface;
 use Causal\Oidc\Frontend\FrontendSimulationV12;
 use Causal\Oidc\Frontend\FrontendSimulationV13;
 use Causal\Oidc\LoginProvider\OidcLoginProvider;
+use Causal\Oidc\Middleware\StoreAccessTokenMiddleware;
 use Causal\Oidc\OidcConfiguration;
 use Doctrine\DBAL\ArrayParameterType;
 use GuzzleHttp\Psr7\Uri;
@@ -70,11 +71,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     private const STATUS_AUTHENTICATION_FAILURE_CONTINUE = 100;
 
+    /**
+     * 0 - prevent authentication. User is not authenticated anymore
+     */
+    private const STATUS_AUTHENTICATION_FAILURE_BREAK = 0;
+
+    public const ACCESS_TOKEN_SESSION_KEY = 'oidc_access_token';
+
     public function __construct(
         protected readonly EventDispatcherInterface $eventDispatcher,
         protected OidcConfiguration $config,
         protected AuthenticationContextService $authenticationContextService,
         protected OAuthService $oauthService,
+        protected StoreAccessTokenMiddleware $storeAccessTokenMiddleware,
     ) {}
 
     /**
@@ -131,6 +140,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             if (!empty($username) && !empty($password)) {
                 $user = $this->authenticateWithResourceOwnerPasswordCredentials($username, $password);
             }
+        } else {
+            $user = $this->getUserForExistingSession();
         }
 
         if ($user) {
@@ -173,6 +184,22 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         throw new PropagateResponseException($response, 1743415700019);
     }
 
+    protected function getUserForExistingSession(): array|bool
+    {
+        $accessToken = $this->getAccessTokenFromSession();
+        if (!$accessToken instanceof AccessToken) {
+            return false;
+        }
+
+        $user = $this->getUserFromAccessToken($accessToken);
+        if (!is_array($user)) {
+            return false;
+        }
+
+        $user['accessToken'] = $accessToken;
+        return $user;
+    }
+
     /**
      * Authenticates a user using authorization code grant.
      *
@@ -201,6 +228,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $user = $this->getUserFromAccessToken($accessToken);
         if (is_array($user)) {
             $user['accessToken'] = $accessToken;
+            if (!$this->config->revokeAccessTokenAfterLogin) {
+                $this->storeAccessTokenMiddleware->setAccessToken($accessToken);
+            }
         }
 
         return $user;
@@ -294,15 +324,19 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
     public function authUser(array $user): int
     {
-        // missing access token means the actual OIDC authentication step in the `getUser` method failed
-        // or has neven been executed, if the user was discovered by some other authentication service
-        if (!isset($user['accessToken'])) {
-            return self::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
-        }
-
         // this is not a valid user authenticated via OIDC
         if (empty($user['tx_oidc'])) {
             return self::STATUS_AUTHENTICATION_FAILURE_CONTINUE;
+        }
+
+        // access token means the actual OIDC authentication step in the `getUser` method worked
+        if (isset($user['accessToken'])) {
+            return self::STATUS_AUTHENTICATION_SUCCESS_BREAK;
+        }
+
+        // Actual OIDC authenticated user, but access token is no longer valid
+        if (!$this->hasValidAccessToken()) {
+            return self::STATUS_AUTHENTICATION_FAILURE_BREAK;
         }
 
         return self::STATUS_AUTHENTICATION_SUCCESS_BREAK;
@@ -772,6 +806,49 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             return '';
         }
         return $objInstanceSaltedPW->getHashedPassword($password);
+    }
+
+    protected function hasValidAccessToken(): bool
+    {
+        return $this->getAccessTokenFromSession() instanceof AccessToken;
+    }
+
+    protected function getAccessTokenFromSession(): ?AccessToken
+    {
+        $accessToken = null;
+
+        $accessTokenData = $this->pObj->getSessionData(self::ACCESS_TOKEN_SESSION_KEY);
+        if (is_array($accessTokenData)) {
+            $accessToken = new AccessToken($accessTokenData);
+        }
+        if (!$accessToken instanceof AccessToken) {
+            return null;
+        }
+
+        if ($accessToken->hasExpired()) {
+            $accessToken = $this->getRefreshedAccessToken($accessToken);
+        }
+
+        if ($accessToken instanceof AccessToken && !$this->config->revokeAccessTokenAfterLogin) {
+            $this->storeAccessTokenMiddleware->setAccessToken($accessToken);
+        }
+
+        return $accessToken;
+    }
+
+    protected function getRefreshedAccessToken(AccessToken $expiredAccessToken): ?AccessToken
+    {
+        $serializedOldAccessToken = json_encode($expiredAccessToken);
+        if (!$serializedOldAccessToken) {
+            return null;
+        }
+
+        $accessToken = $this->oauthService->getFreshAccessToken($serializedOldAccessToken);
+        if (!$accessToken instanceof AccessToken) {
+            return null;
+        }
+
+        return $accessToken;
     }
 
     protected function getRequest(): ServerRequestInterface
