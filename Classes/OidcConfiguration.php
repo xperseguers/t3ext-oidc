@@ -9,6 +9,7 @@ use Causal\Oidc\Exception\ProviderConfigurationException;
 use Causal\Oidc\Model\Provider;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
+use TYPO3\CMS\Core\Configuration\Loader\Exception\YamlParseException;
 use TYPO3\CMS\Core\Configuration\Loader\YamlFileLoader;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -32,9 +33,9 @@ final class OidcConfiguration
     public string $clientScopes;
     public string $clientSecret;
     public bool $disableCSRFProtection;
-    public bool $enableBackendAuthentication;
+    public bool $enableBackendAuthentication = false;
     public bool $enableCodeVerifier;
-    public bool $enableFrontendAuthentication;
+    public bool $enableFrontendAuthentication = false;
     public bool $enablePasswordCredentials;
     public string $endpointAuthorize;
     public string $endpointLogout;
@@ -62,8 +63,13 @@ final class OidcConfiguration
      */
     public function __construct(?array $yamlConfig = null)
     {
-        $yamlConfig ??= GeneralUtility::makeInstance(YamlFileLoader::class)
-            ->load(Environment::getConfigPath() . self::CONFIG_PATH);
+        try {
+            $yamlConfig ??= GeneralUtility::makeInstance(YamlFileLoader::class)
+                ->load(Environment::getConfigPath() . self::CONFIG_PATH);
+        } catch (YamlParseException) {
+            // something is wrong in the config file
+            return;
+        }
 
         if (isset($yamlConfig['authenticationServicePriority'])) {
             settype($yamlConfig['authenticationServicePriority'], gettype($this->authenticationServicePriority));
