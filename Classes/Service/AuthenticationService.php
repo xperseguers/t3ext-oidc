@@ -238,6 +238,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 'username' => $username,
                 'exception' => $e,
             ]);
+        } catch (ClientExceptionInterface $e) {
+            $this->logger->error('Connection to IdP failed', ['exception' => $e]);
         }
 
         if (is_array($user)) {
@@ -262,6 +264,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         } catch (IdentityProviderException $e) {
             $this->logger->error('Could not retrieve resource owner', ['exception' => $e]);
             return false;
+        } catch (ClientExceptionInterface $e) {
+            $this->logger->error('Connection to IdP failed', ['exception' => $e]);
+            return false;
         }
 
         if (!$resourceOwnerObject->getId()) {
@@ -270,6 +275,9 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 $this->oauthService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
                 $this->logger->error('Could not revoke token', ['exception' => $e]);
+                return false;
+            } catch (ClientExceptionInterface $e) {
+                $this->logger->error('Connection to IdP failed', ['exception' => $e]);
                 return false;
             }
             throw new RuntimeException(
@@ -286,6 +294,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
                 $this->oauthService->revokeToken($accessToken);
             } catch (IdentityProviderException $e) {
                 $this->logger->error('Could not revoke token', ['exception' => $e]);
+            } catch (ClientExceptionInterface $e) {
+                $this->logger->error('Connection to IdP failed', ['exception' => $e]);
             }
         }
 
