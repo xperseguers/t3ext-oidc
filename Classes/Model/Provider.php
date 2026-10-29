@@ -14,6 +14,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  * @phpstan-type ProviderConfig array{
  *     authorizeLanguageParameter: string,
  *     backendUserMustExistLocally: int,
+ *     backendUsersDefaultGroup: string,
  *     clientKey: string,
  *     clientScopeSeparator: string,
  *     clientScopes: string,
@@ -29,6 +30,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *     endpointToken: string,
  *     endpointUserInfo: string,
  *     frontendUserMustExistLocally: int,
+ *     frontendUsersDefaultGroup: string,
  *     mapping: MappingConfig,
  *     name: string,
  *     oauthProviderFactory: class-string<OAuthProviderFactoryInterface>,
@@ -39,7 +41,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  *     undeleteBackendUsers: int,
  *     undeleteFrontendUsers: int,
  *     useRequestPathAuthentication: int,
- *     usersDefaultGroup: string,
  *     usersStoragePids: array
  * }
  */
@@ -48,6 +49,7 @@ class Provider
     private string $administratorRole = '';
     private string $authorizeLanguageParameter = 'language';
     private bool $backendUserMustExistLocally = false;
+    private string $backendUsersDefaultGroup = '';
     private string $clientKey = '';
     private string $clientScopeSeparator = ' ';
     private string $clientScopes = 'openid';
@@ -63,6 +65,7 @@ class Provider
     private string $endpointToken = '';
     private string $endpointUserInfo = '';
     private bool $frontendUserMustExistLocally = false;
+    private string $frontendUsersDefaultGroup = '';
     private string $maintainerRole = '';
     /** @var MappingConfig */
     private array $mapping = [];
@@ -76,7 +79,6 @@ class Provider
     private bool $undeleteBackendUsers = false;
     private bool $undeleteFrontendUsers = false;
     private bool $useRequestPathAuthentication = false;
-    private string $usersDefaultGroup = '';
     /** @var int[] */
     private array $usersStoragePids = [0];
 
@@ -179,6 +181,11 @@ class Provider
         return $this->authorizeLanguageParameter;
     }
 
+    public function getBackendUsersDefaultGroup(): string
+    {
+        return $this->backendUsersDefaultGroup;
+    }
+
     public function getClientKey(): string
     {
         return $this->clientKey;
@@ -224,6 +231,11 @@ class Provider
         return $this->endpointUserInfo;
     }
 
+    public function getFrontendUsersDefaultGroup(): string
+    {
+        return $this->frontendUsersDefaultGroup;
+    }
+
     public function getMaintainerRole(): string
     {
         return $this->maintainerRole;
@@ -250,11 +262,6 @@ class Provider
     public function getRedirectUri(): string
     {
         return $this->redirectUri;
-    }
-
-    public function getUsersDefaultGroup(): string
-    {
-        return $this->usersDefaultGroup;
     }
 
     public function getUsersStoragePids(): array

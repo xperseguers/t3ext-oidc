@@ -254,7 +254,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             }
             throw new RuntimeException(
                 'Resource owner does not have a valid sub part: ' . json_encode($resourceOwnerObject->toArray())
-                    . '. Your access token has been revoked. Please try again.',
+                . '. Your access token has been revoked. Please try again.',
                 1490086626
             );
         }
@@ -378,7 +378,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         }
 
         $newUserGroups = [];
-        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->usersDefaultGroup, true);
+        $defaultUserGroups = GeneralUtility::intExplode(',', $this->config->{lcfirst($modeName) . 'UsersDefaultGroup'}, true);
 
         if (!empty($row['usergroup'])) {
             $currentUserGroups = GeneralUtility::intExplode(',', $row['usergroup'], true);
