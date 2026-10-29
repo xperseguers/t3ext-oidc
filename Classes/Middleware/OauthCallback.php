@@ -65,7 +65,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
                 case 'temporarily_unavailable':
                 case 'access_denied':
                     $this->logger->debug('Redirecting to login URL due to denied login', ['url' => $authContext->loginUrl]);
-                    return new RedirectResponse(GeneralUtility::locationHeaderUrl($authContext->loginUrl), 303);
+                    return new RedirectResponse(GeneralUtility::locationHeaderUrl($authContext->loginUrl, $request), 303);
                 default:
                     $this->logger->alert('Failed authentication at IdP', [
                         'error' => $error,
@@ -98,7 +98,7 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
 
         $cookie = $this->authenticationContextService->getCookieDeletionForAuthenticationContext($authContext);
 
-        return new RedirectResponse(GeneralUtility::locationHeaderUrl((string)$loginUrl), 303)
+        return new RedirectResponse(GeneralUtility::locationHeaderUrl((string)$loginUrl, $request), 303)
             ->withAddedHeader('Set-Cookie', (string)$cookie);
     }
 }
