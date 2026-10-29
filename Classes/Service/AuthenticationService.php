@@ -37,6 +37,7 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use LogicException;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use TYPO3\CMS\Core\Authentication\LoginType;
@@ -183,6 +184,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             // Probably a "server_error", meaning the code is not valid anymore
             $this->logger->error('Possibly replay: code has been refused by the authentication server', [
                 'code' => $code,
+                'exception' => $e,
+            ]);
+            return false;
+        } catch (ClientExceptionInterface $e) {
+            $this->logger->error('Connection to IdP failed', [
                 'exception' => $e,
             ]);
             return false;
