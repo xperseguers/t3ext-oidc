@@ -327,6 +327,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $mode = $this->authInfo['loginType'];
         $userTable = $this->db_user['table'];
         $userGroupTable = $mode === 'FE' ? 'fe_groups' : 'be_groups';
+        $usersStoragePids = $mode === 'FE' ? $this->config->usersStoragePids : [0];
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getQueryBuilderForTable($userTable);
@@ -335,7 +336,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $userFetchConditions = [
             $queryBuilder->expr()->in(
                 'pid',
-                $queryBuilder->createNamedParameter($this->config->usersStoragePids, ArrayParameterType::INTEGER)
+                $queryBuilder->createNamedParameter($usersStoragePids, ArrayParameterType::INTEGER)
             ),
             $queryBuilder->expr()->eq('tx_oidc', $queryBuilder->createNamedParameter($resourceOwnerObject->getId())),
         ];
