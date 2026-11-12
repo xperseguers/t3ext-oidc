@@ -1,7 +1,7 @@
 {
 	"name": "causal/oidc",
 	"type": "typo3-cms-extension",
-	"description": "This extension uses OpenID Connect to authenticate users.",
+	"description": "OpenID Connect Authentication - This extension uses OpenID Connect to authenticate users.",
 	"keywords": [
 		"TYPO3",
 		"OpenID",
@@ -77,7 +77,7 @@
 		"typo3/cms": {
 			"web-dir": ".Build/web",
 			"extension-key": "oidc",
-			"version": "6.0.1",
+			"version": "6.0.2",
 			"Package": {
 				"providesPackages": {}
 			}

@@ -1,6 +1,6 @@
 # OpenID Connect integration for TYPO3 - changelog
 
-## Version 6.y.z
+## Version 6.0.2 (2026-11-12)
 
 - The context-cookie is now removed, once the login was handled
 - The internal authenticate URL handling, based on configuration `authenticationUrlRoute`, within the extension's middleware
