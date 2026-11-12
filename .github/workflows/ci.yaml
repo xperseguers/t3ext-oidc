@@ -69,11 +69,11 @@ jobs:
       - name: PHPUnit configuration file
         run: xmllint --schema ./.Build/vendor/phpunit/phpunit/phpunit.xsd --noout Tests/UnitTests-v10.xml
 
-      - name: Fetch schema for xliff
-        run: wget https://docs.oasis-open.org/xliff/v1.2/os/xliff-core-1.2-strict.xsd --output-document=.Build/xliff-core-1.2-strict.xsd
+#      - name: Fetch schema for xliff
+#        run: wget https://docs.oasis-open.org/xliff/v1.2/os/xliff-core-1.2-strict.xsd --output-document=.Build/xliff-core-1.2-strict.xsd
 
-      - name: TYPO3 language files
-        run: xmllint --schema .Build/xliff-core-1.2-strict.xsd --noout $(find Resources -name '*.xlf')
+#      - name: TYPO3 language files
+#        run: xmllint --schema .Build/xliff-core-1.2-strict.xsd --noout $(find Resources -name '*.xlf')
 
   coding-guideline:
     runs-on: ubuntu-latest

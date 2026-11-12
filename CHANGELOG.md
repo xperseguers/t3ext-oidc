@@ -8,6 +8,8 @@
 - The internal authenticate URL handling, based on configuration `authenticationUrlRoute`, within the extension's middleware
   now lets the request pass through, if the required GET parameter `login_url` is not present.
   Hence, the route can be an actual TYPO3 page with content as well.
+- Newly created users now have `tstamp` set
+- Better handling for communication errors with IdP
 
 ## Version 6.0.0 (2026-09-10)
 

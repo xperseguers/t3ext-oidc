@@ -19,6 +19,7 @@ namespace Causal\Oidc\Security;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use TYPO3\CMS\Core\Security\SecretIdentifier;
 
 /**
  * Trait providing support for JWT using symmetric hash signing.
@@ -28,8 +29,7 @@ use Firebase\JWT\Key;
  *
  * @internal
  *
- * IMPORTANT: This is a _partial_ copy of \TYPO3\CMS\Core\Security\JwtTrait in TYPO3 v12
- * @todo update this to latest v13/14 counterparts
+ * IMPORTANT: This is a _partial_ copy of \TYPO3\CMS\Core\Security\JwtTrait in TYPO3 v14
  */
 trait JwtTrait
 {
@@ -38,19 +38,41 @@ trait JwtTrait
         return 'HS256';
     }
 
-    private static function createSigningKeyFromEncryptionKey(string $pepper = self::class): Key
-    {
-        if ($pepper === '') {
-            $pepper = self::class;
-        }
-        $encryptionKey = $GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey'] ?? '';
-        $keyMaterial = hash('sha256', $encryptionKey) . '/' . $pepper;
-        return new Key($keyMaterial, self::getDefaultSigningAlgorithm());
+    private static function deriveKey(
+        #[\SensitiveParameter]
+        string $baseKey,
+        string $context,
+    ): Key {
+        $jwtAlgo = self::getDefaultSigningAlgorithm();
+        [$hashAlgo, $length] = match ($jwtAlgo) {
+            'HS256' => ['sha256', 32],
+            'HS384' => ['sha384', 48],
+            'HS512' => ['sha512', 64],
+            default => throw new \InvalidArgumentException('Unsupported JWT algorithm: ' . $jwtAlgo, 1774954888),
+        };
+        return new Key(
+            hash_hkdf(
+                algo: $hashAlgo,
+                key: $baseKey,
+                length: $length,
+                info: $context,
+            ),
+            $jwtAlgo
+        );
     }
 
-    private static function encodeHashSignedJwt(array $payload, Key $key): string
+    private static function createSigningKeyFromEncryptionKey(string $context = self::class): Key
     {
-        return JWT::encode($payload, $key->getKeyMaterial(), self::getDefaultSigningAlgorithm());
+        return self::deriveKey(
+            $GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey'] ?? '',
+            $context === '' ? self::class : $context
+        );
+    }
+
+    private static function encodeHashSignedJwt(array $payload, Key $key, ?SecretIdentifier $identifier = null): string
+    {
+        $keyId = $identifier !== null ? json_encode($identifier) : null;
+        return JWT::encode($payload, $key->getKeyMaterial(), $key->getAlgorithm(), $keyId);
     }
 
     /**
@@ -59,7 +81,7 @@ trait JwtTrait
      * @param bool $associative
      * @phpstan-return ($associative is true ? array : \stdClass)
      */
-    private static function decodeJwt(string $jwt, Key $key, bool $associative = false)
+    private static function decodeJwt(string $jwt, Key $key, bool $associative = false): \stdClass|array
     {
         $payload = JWT::decode($jwt, $key);
         $encodedPayload = json_encode($payload);
