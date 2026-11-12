@@ -1,5 +1,12 @@
 # OpenID Connect integration for TYPO3 - changelog
 
+## Version 5.0.5 (2026-11-12)
+
+- Remove context cookie after hitting the callback URL (unless it's a code-verifier based request)
+- Newly created users now have `tstamp` set
+- Better handling for communication errors with IdP
+- Add pattern-field for be_groups TCA
+
 ## Version 5.0.4 (2026-09-17)
 
 - Gracefully handle missing extension configuration in TCA
