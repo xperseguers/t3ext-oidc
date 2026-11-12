@@ -96,9 +96,16 @@ class OauthCallback implements MiddlewareInterface, LoggerAwareInterface
 
         $this->logger->info('Redirecting to login URL', ['url' => (string)$loginUrl]);
 
+        $response = new RedirectResponse(GeneralUtility::locationHeaderUrl((string)$loginUrl), 303);
+
+        // if this authentication uses code-verifier do not remove the cookie
+        // it's needed in the next request within AuthenticationService
+        if ($authContext->codeVerifier) {
+            return $response;
+        }
+
         $cookie = $this->authenticationContextService->getCookieDeletionForAuthenticationContext($authContext);
 
-        return (new RedirectResponse(GeneralUtility::locationHeaderUrl((string)$loginUrl), 303))
-            ->withAddedHeader('Set-Cookie', (string)$cookie);
+        return $response->withAddedHeader('Set-Cookie', (string)$cookie);
     }
 }
