@@ -22,6 +22,15 @@ return [
                 'typo3/cms-frontend/authentication',
             ],
         ],
+        'oidcstoreaccesstoken' => [
+            'target' => \Causal\Oidc\Middleware\StoreAccessTokenMiddleware::class,
+            'after' => [
+                'typo3/cms-frontend/authentication',
+            ],
+            'before' => [
+                'typo3/cms-frontend/page-resolver',
+            ],
+        ],
     ],
     'backend' => [
         'oidccallback' => [

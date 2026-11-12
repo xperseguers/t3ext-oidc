@@ -114,6 +114,31 @@ by setting `enableCodeVerifier` in the extension configuration. A shared secret
 will be sent along preventing _Authorization Code Interception Attacks_. See
 [RFC7636](https://tools.ietf.org/html/rfc7636) for details.
 
+### Keep user data up to date
+
+It is possible that the user got updated inside the provider.
+It is therefore possible to configure TYPO3 to always fetch the user:
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['SVCONF']['auth']['setup']['FE_alwaysFetchUser'] = true;
+```
+
+The option will ensure the user is fetched from provider within each TYPO3
+request.
+
+### Respect expire time
+
+It is possible that the user is still logged into TYPO3, but its access token
+already expired.
+It is therefore possible to configure TYPO3 to always authenticate the user:
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['SVCONF']['auth']['setup']['FE_alwaysAuthUser'] = true;
+```
+
+The option will ensure the access token expiry is verified within each TYPO3
+request.
+
 ## Logging
 
 For debugging purposes it may be helpful to enable DEBUG-level logging.
