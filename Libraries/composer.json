@@ -1,0 +1,12 @@
+{
+	"name": "causal/oidc-lib",
+	"require": {
+		"league/oauth2-client": "^2.9",
+		"firebase/php-jwt": "^7.0.2"
+	},
+	"config": {
+		"classmap-authoritative": true,
+		"lock": false,
+		"prepend-autoloader": false
+	}
+}
