@@ -2,7 +2,7 @@
 
 ## Version 7.0.0
 
-- Breaking: Extension Configuration is now in `/config/system/oidc.yml`. Example is in README.
+- Breaking: Extension Configuration is now in `/config/system/oidc.yml`. Some configurations may be slightly renamed. Example is in README.
 - Breaking: OIDC claim to TYPO3 user mapping is now configured in `oidc.yaml` as well. The former TypoScript configuration has been dropped.
 - The context-cookie is now removed, once the login was handled
 - The internal authenticate URL handling, based on configuration `authenticationUrlRoute`, within the extension's middleware
