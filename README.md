@@ -68,7 +68,10 @@ authenticationUrlRoute: oidc/authentication
 
 providers:
   default:
+    administratorRole:
     authorizeLanguageParameter: language
+    backendUserMustExistLocally: 0
+    backendUsersDefaultGroup:
     clientKey: '%env(TYPO3_OIDC_CLIENT_KEY)%'
     clientScopeSeparator: '%env(TYPO3_OIDC_ENABLE_CODE_VERIFIER)%'
     clientScopes: '%env(TYPO3_OIDC_CLIENT_SCOPES)%'
@@ -84,14 +87,17 @@ providers:
     endpointToken: '%env(TYPO3_OIDC_ENDPOINT_TOKEN)%'
     endpointUserInfo: '%env(TYPO3_OIDC_ENDPOINT_USERINFO)%'
     frontendUserMustExistLocally: 0
+    frontendUsersDefaultGroup:
+    maintainerRole:
     mapping: []
     oauthProviderFactory:
+    reEnableBackendUsers: 0
     reEnableFrontendUsers: 0
     redirectUri: '%env(TYPO3_OIDC_REDIRECT_URI)%'
     revokeAccessTokenAfterLogin: 0
+    undeleteBackendUsers: 0
     undeleteFrontendUsers: 0
     useRequestPathAuthentication: 0
-    usersDefaultGroup:
     usersStoragePid: 0
   ```
 
