@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" target-language="de" original="messages" datatype="plaintext" product-name="oidc" date="2026-11-26T00:00:00+01:00">
+		<body>
+			<trans-unit id="login.description">
+				<source>OpenID Connect Login</source>
+				<target>Anmeldung über OpenID Connect</target>
+			</trans-unit>
+			<trans-unit id="login.error.headline">
+				<source>Login failed</source>
+				<target>Anmeldung fehlgeschlagen</target>
+			</trans-unit>
+			<trans-unit id="login.error.message">
+				<source>The login through OpenID Connect did not succeed. Please try again or contact your administrator.</source>
+				<target>Die Anmeldung über OpenID Connect ist fehlgeschlagen. Bitte versuchen Sie es erneut oder wenden Sie sich an Ihre Administration.</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
