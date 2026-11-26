@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file source-language="en" original="messages" datatype="plaintext" product-name="oidc" date="2026-11-26T00:00:00+01:00">
+		<body>
+			<trans-unit id="login.description">
+				<source>OpenID Connect Login</source>
+			</trans-unit>
+			<trans-unit id="login.error.headline">
+				<source>Login failed</source>
+			</trans-unit>
+			<trans-unit id="login.error.message">
+				<source>The login through OpenID Connect did not succeed. Please try again or contact your administrator.</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
